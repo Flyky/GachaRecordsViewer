@@ -2,7 +2,7 @@
 
 日期：2026-10-26
 
-状态：技术方案与实施参考；R02 独立 provider 探针已完成，正式业务模块按计划推进。仓库为 `Flyky/GachaRecordsViewer`。
+状态：技术方案与实施参考；R03 已实现配置、双数据库与初始化基础，正式业务模块按计划推进。实际配置和启动步骤见 [deployment.md](deployment.md)。仓库为 `Flyky/GachaRecordsViewer`。
 
 ## 1. 推荐技术栈
 
@@ -114,9 +114,12 @@ Token 默认用 AES-256-GCM 加密，主密钥存入持久化密钥文件或部�
 
 ## 6. 管理员初始化与配置建议
 
-示例只表示配置结构，不是已经存在的可运行配置：
+R03 已实现下列结构；占位值不是可复制运行的配置，请先启动服务生成真实 UUID、密码和主密钥，具体规则见 [deployment.md](deployment.md)：
 
 ```toml
+[installation]
+id = "<首次启动自动生成的部署 UUID>"
+
 [server]
 host = "0.0.0.0"
 port = 3000
@@ -125,7 +128,7 @@ user_timezone = "Asia/Shanghai"
 
 [database]
 driver = "sqlite" # sqlite 或 postgres
-sqlite_path = "./data/gacha.sqlite"
+sqlite_path = "./gacha.sqlite" # 相对配置文件所在目录
 # PostgreSQL 模式建议从 DATABASE_URL 环境变量读取连接信息
 
 [admin]
@@ -133,11 +136,7 @@ username = "admin"
 password = "<首次启动自动生成并持久化>"
 
 [security]
-credential_key_file = "./data/credential-key"
-
-[miyoushe]
-enabled = true
-region_scope = "cn"
+credential_key_file = "./credential-key"
 ```
 
 初始化规则：

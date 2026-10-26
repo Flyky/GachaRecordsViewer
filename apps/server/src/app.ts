@@ -3,12 +3,14 @@ import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fastifyStatic from '@fastify/static';
 import { APP_NAME, type HealthResponse } from '@gacha/contracts';
+import type { DatabaseConnection } from '@gacha/db';
 import Fastify from 'fastify';
 
 interface AppOptions {
   logger?: boolean;
   serveWeb?: boolean;
   webRoot?: string;
+  database?: Pick<DatabaseConnection, 'probe' | 'close'>;
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
@@ -20,6 +22,17 @@ export async function buildApp(options: AppOptions = {}) {
     status: 'ok',
     service: APP_NAME,
   }));
+
+  if (options.database) app.addHook('onClose', async () => { await options.database!.close(); });
+  app.get('/api/ready', async (_request, reply) => {
+    try {
+      if (!options.database) return reply.code(503).send({ status: 'unavailable', service: APP_NAME });
+      await options.database.probe();
+      return { status: 'ok', service: APP_NAME };
+    } catch {
+      return reply.code(503).send({ status: 'unavailable', service: APP_NAME });
+    }
+  });
 
   if (options.serveWeb) {
     const webRoot = options.webRoot ?? defaultWebRoot;

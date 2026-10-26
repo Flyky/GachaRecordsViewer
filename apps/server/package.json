@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --include ../../packages/contracts/dist/** src/index.ts",
+    "dev": "tsx watch --include ../../packages/contracts/dist/** --include ../../packages/db/dist/** src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js --serve-web",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -12,6 +12,8 @@
   "dependencies": {
     "@fastify/static": "10.1.7",
     "@gacha/contracts": "workspace:*",
+    "@gacha/db": "workspace:*",
+    "smol-toml": "1.9.1",
     "fastify": "5.12.7"
   },
   "devDependencies": {

@@ -9,13 +9,13 @@
     "pnpm": ">=11 <12"
   },
   "scripts": {
-    "dev": "pnpm --filter @gacha/contracts build && concurrently --kill-others --names contracts,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
+    "dev": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && concurrently --kill-others --names contracts,db,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/db dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
     "build": "pnpm -r build",
     "start": "pnpm --filter @gacha/server start",
-    "typecheck": "pnpm --filter @gacha/contracts build && pnpm -r typecheck",
+    "typecheck": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && pnpm -r typecheck",
     "lint": "eslint . --max-warnings 0",
     "probe:miyoushe": "pnpm --filter @gacha/providers probe",
-    "test": "pnpm --filter @gacha/contracts build && vitest run"
+    "test": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && vitest run"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

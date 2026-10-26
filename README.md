@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R02：基础工程与米游社命令行验证工具已可运行；官服原神角色池 10 条样本读取已通过本人扫码实测。正式登录、导入、查询和分析页面按后续轮次实现。
+当前完成到 R03：基础工程、米游社命令行验证工具、部署配置和双数据库持久化基础已可运行；官服原神角色池 10 条样本读取已通过本人扫码实测。正式登录、导入、查询和分析页面按后续轮次实现。
 
 ## 本地运行
 
@@ -22,9 +22,9 @@ pnpm build
 pnpm start
 ```
 
-此时单个服务在 [http://127.0.0.1:3000](http://127.0.0.1:3000) 提供前端和 API。`GET /api/health` 是进程存活检查，暂不代表数据库或米游社连接正常。缺少前端构建时服务会给出先构建的错误提示。
+此时单个服务在 [http://127.0.0.1:3000](http://127.0.0.1:3000) 提供前端和 API。`GET /api/health` 是进程存活检查，`GET /api/ready` 检查数据库是否可查询；两者都不检查米游社。
 
-服务端可读取 `HOST`、`PORT` 环境变量；生产端口默认 3000。开发代理当前固定使用 API 的 3000 端口，开发时请保持该默认值。完整部署配置与持久化将在 R03 加入。
+首次启动默认使用 SQLite，在 `data/` 下生成配置、数据库、管理员随机密码和凭证主密钥；重启保留。管理员密码在本机 `data/config.toml` 的 `[admin].password` 中读取，登录功能从 R04 开始实现。PostgreSQL 选择、环境变量、改密和恢复说明见[部署配置文档](docs/deployment.md)。开发代理固定使用 API 的 3000 端口，开发时请保持默认值。
 
 ## 工程命令
 
@@ -35,10 +35,10 @@ pnpm start
 | `pnpm start` | 启动已经构建的服务端并提供 SPA |
 | `pnpm typecheck` | 检查服务端、共享类型和 Vue 代码 |
 | `pnpm lint` | ESLint 检查，警告也视为失败 |
-| `pnpm test` | 检查基础服务与路由，以及米游社协议、状态、身份和脱敏边界 |
+| `pnpm test` | 服务、provider、SQLite 与配置测试；设置 `TEST_DATABASE_URL` 后包含真实 PostgreSQL 集成测试 |
 | `pnpm probe:miyoushe --region cn_gf01` | 本人扫码后，只读验证官服授权与少量祈愿分页；不保存凭证 |
 
-目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识，`packages/providers` 为上游适配与 R02 探针。其余业务模块在对应轮次建立。
+目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识，`packages/providers` 为上游适配与 R02 探针，`packages/db` 为仓储、双数据库 Schema 和迁移。其余业务模块在对应轮次建立。
 
 探针参数、扫码步骤、脱敏输出和已实测边界见 [R02 使用说明](docs/miyoushe-probe.md)。
 

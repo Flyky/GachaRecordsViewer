@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R02 米游社独立验证工具已完成，官服角色池样本链路实测通过。
+当前阶段：R03 部署配置、双数据库与初始化基础已完成，SQLite / PostgreSQL 均通过真实集成验证。
 
-下一轮：R03 部署配置、双数据库、初始化。
+下一轮：R04 本地认证与管理员 API。
 
 ## 1. 执行方式
 
@@ -53,7 +53,7 @@
 | R00 | 文档归档、仓库关联、逐轮计划 | 无 | `docs: define v1 requirements and implementation rounds` | 已完成 |
 | R01 | 工程骨架与基础运行 | R00 | `chore: scaffold TypeScript server and Vue workspace` | 已完成 |
 | R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 已完成：官服角色池两页实测通过 |
-| R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 未开始 |
+| R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 已完成 |
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 未开始 |
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 未开始 |
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 未开始 |
@@ -249,3 +249,17 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 检查：冻结锁文件安装、全工作区类型与 lint、生产构建、57 项测试通过（R01 8 项 + provider 49 项）；两次临时二维码均已清理。
 - 使用步骤、协议来源与实测边界见 [miyoushe-probe.md](miyoushe-probe.md)，许可说明见根目录 `THIRD_PARTY_NOTICES.md`。
 - 下一轮：R03，不在本轮提前实现数据库或正式授权页面。
+
+### R03：部署配置、双数据库、初始化，2026-10-26
+
+- 新增 `packages/db`：SQLite / PostgreSQL 独立 Drizzle Schema、各自版本迁移与共享仓储基础，覆盖部署状态、用户、会话、社区身份、凭证、游戏档案、抽卡记录、导入批次、刷新任务和物品字典。
+- 记录 ID 全程为字符串；唯一约束区分所有者，同一 UID 可由不同本地用户保存。档案、记录、凭证、任务之间的复合外键约束所有者，数据库直接拒绝跨账号关联。
+- SQLite 启用外键、WAL、busy timeout 和连接内事务串行调度；PostgreSQL 使用最多 4 个连接及迁移 / 初始化 advisory lock。切换连接不自动搬迁数据，已有部署拒绝指向空库。
+- 实现严格 TOML 校验和环境变量覆盖、持久化目录、原子创建配置 / 密钥、初始化锁及部署标记。首次生成随机管理员密码和 32 字节凭证主密钥，重启保留；丢失配置、密钥或数据库时拒绝静默重建。
+- 配置管理员密码变更后更新持久化认证版本并撤销管理员会话，普通会话不受影响。只建立认证持久化基础，没有提前提供 R04 登录 / 管理接口或 R05 页面。
+- 增加 `/api/ready` 真实数据库就绪检查；保留 `/api/health` 为进程存活检查。初始化和就绪错误不输出数据库连接、密码或密钥。
+- 验证环境：沿用本机 Node 24.22.1；SQLite 使用 better-sqlite3 12.11.1；另在忽略目录启动独立 PostgreSQL 18.4 实例，只监听本机，不修改系统服务或启动 Docker Desktop，验证结束后停止该实例。
+- 检查：冻结锁文件安装、全工作区类型检查、零警告 lint、生产构建通过；87 项测试通过，包含两种真实数据库的迁移幂等、唯一 / 外键、所有者、事务回滚、并发写入、级联删除、重启和管理员会话撤销。
+- 两种数据库均实际启动构建后的生产服务，验证 SPA、健康 / 就绪、私有文件隔离和进程重启后配置、密钥、用户与记录保留。现有 5173 开发预览和 3000 API 仍可访问。
+- 配置格式、PostgreSQL 选择、改密、缺失文件与测试步骤见 [deployment.md](deployment.md)。真实 JSON、运行数据、测试数据库、凭证和工具均不提交。
+- 下一轮：R04；不自动继续开发或推送远端。

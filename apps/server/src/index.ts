@@ -1,28 +1,25 @@
 import { buildApp } from './app.js';
+import { initializeDeployment, StartupError } from './deployment.js';
 
-const port = Number(process.env.PORT ?? '3000');
-if (!Number.isInteger(port) || port < 1 || port > 65535) {
-  throw new Error('PORT must be an integer between 1 and 65535.');
-}
-
-const app = await buildApp({
-  logger: true,
-  serveWeb: process.argv.includes('--serve-web'),
-});
-
-for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.once(signal, () => {
-    void app.close().catch((error: unknown) => {
-      app.log.error(error);
-      process.exitCode = 1;
-    });
-  });
-}
-
+let deployment: Awaited<ReturnType<typeof initializeDeployment>> | undefined;
+let app: Awaited<ReturnType<typeof buildApp>> | undefined;
 try {
-  await app.listen({ port, host: process.env.HOST ?? '127.0.0.1' });
+  deployment = await initializeDeployment();
+  app = await buildApp({ logger: true, serveWeb: process.argv.includes('--serve-web'), database: deployment.connection });
+  const key = deployment.credentialKey;
+  app.addHook('onClose', async () => { key.fill(0); });
+  app.log.info({ database: deployment.connection.kind, configFile: deployment.config.configFile }, 'Deployment initialized');
+  const runningApp = app;
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      void runningApp.close().catch(() => { console.error('Server shutdown failed.'); process.exitCode = 1; });
+    });
+  }
+  await app.listen({ port: deployment.config.port, host: deployment.config.host });
 } catch (error) {
-  app.log.error(error);
+  console.error(error instanceof StartupError ? error.message : 'Server startup failed. Check local deployment configuration and port availability.');
   process.exitCode = 1;
-  await app.close();
+  if (app) await app.close().catch(() => undefined);
+  else if (deployment) await deployment.connection.close().catch(() => undefined);
+  deployment?.credentialKey.fill(0);
 }

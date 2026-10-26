@@ -2,7 +2,7 @@
 
 日期：2026-10-26（Asia/Shanghai）
 
-状态：R02 独立授权探针已完成，官服角色池样本链路已实测通过，正式业务按逐轮计划继续实现。
+状态：R03 部署配置、双数据库与初始化基础已完成；R02 官服角色池样本链路已实测通过，正式业务按逐轮计划继续实现。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
@@ -10,7 +10,7 @@
 
 后续开发从[第一版逐轮实施计划](implementation-plan.md)推进，每轮完成必要验证后 commit。
 
-开发工具与本轮结果：[R02 米游社验证工具](miyoushe-probe.md)。
+运行说明：[R03 部署配置与数据库](deployment.md)；开发工具：[R02 米游社验证工具](miyoushe-probe.md)。
 
 1. [需求规格与验收标准](requirements.md)：逐项对应用户的 12 条需求，区分确定需求、建议默认值与未来扩展。
 2. [UIGF 与米游社调研](research-uigf-miyoushe.md)：规范版本、授权路径、接口依据、已失效方案及待实测项目。

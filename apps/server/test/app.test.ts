@@ -11,6 +11,23 @@ afterEach(async () => {
 });
 
 describe('application bootstrap', () => {
+  it('checks database readiness separately from liveness and closes the connection', async () => {
+    let available = true, closed = false;
+    const app = await buildApp({ database: {
+      probe: async () => { if (!available) throw new Error('private database credentials'); },
+      close: async () => { closed = true; },
+    } });
+    apps.push(app);
+    expect((await app.inject('/api/ready')).statusCode).toBe(200);
+    available = false;
+    const response = await app.inject('/api/ready');
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({ status: 'unavailable', service: APP_NAME });
+    expect(response.body).not.toContain('private');
+    expect((await app.inject('/api/health')).statusCode).toBe(200);
+    await app.close(); apps.splice(apps.indexOf(app), 1);
+    expect(closed).toBe(true);
+  });
   it('serves the health contract without requiring a frontend build', async () => {
     const app = await buildApp();
     apps.push(app);
