@@ -18,6 +18,15 @@ export function repositories(connection: DatabaseConnection) {
   const query = connection.executor.query;
   return {
     sessions: {
+      async adminVersion() {
+        return (await query<{ admin_session_version: string }>(sql`SELECT admin_session_version FROM app_state WHERE id='primary'`))[0]?.admin_session_version;
+      },
+      async remove(idHash: string) {
+        await connection.executor.execute(sql`DELETE FROM sessions WHERE id_hash=${idHash}`);
+      },
+      async removeExpired(now: string) {
+        await connection.executor.execute(sql`DELETE FROM sessions WHERE expires_at<=${now}`);
+      },
       async create(input: { idHash: string; kind: 'admin' | 'user'; ownerId?: string; authVersion: string; expiresAt: string }) {
         await connection.executor.execute(sql`INSERT INTO sessions (id_hash, kind, owner_id, auth_version, expires_at)
           VALUES (${input.idHash}, ${input.kind}, ${input.ownerId ?? null}, ${input.authVersion}, ${input.expiresAt})`);
@@ -30,8 +39,25 @@ export function repositories(connection: DatabaseConnection) {
       async create(input: { id?: string; username: string; passwordHash: string }) {
         const id = input.id ?? randomUUID();
         const username = input.username.trim().toLowerCase();
-        return (await query<UserRow>(sql`INSERT INTO users (id, username, password_hash, created_at)
-          VALUES (${id}, ${username}, ${input.passwordHash}, ${new Date().toISOString()}) RETURNING *`))[0]!;
+        const user = (await query<UserRow>(sql`INSERT INTO users (id, username, password_hash, created_at)
+          VALUES (${id}, ${username}, ${input.passwordHash}, ${new Date().toISOString()})
+          ON CONFLICT (username) DO NOTHING RETURNING *`))[0];
+        if (!user) throw new PersistenceError('USERNAME_TAKEN');
+        return user;
+      },
+      async findById(id: string) {
+        return (await query<UserRow>(sql`SELECT * FROM users WHERE id=${id}`))[0];
+      },
+      list: () => query<UserRow>(sql`SELECT * FROM users ORDER BY username`),
+      async setPassword(id: string, input: { passwordHash: string; isInitialPassword: boolean; expectedVersion?: number }) {
+        return connection.transaction(async (tx) => {
+          const condition = input.expectedVersion === undefined ? sql`` : sql` AND session_version=${input.expectedVersion}`;
+          const user = (await tx.query<UserRow>(sql`UPDATE users SET password_hash=${input.passwordHash},
+            is_initial_password=${input.isInitialPassword ? 1 : 0}, session_version=session_version+1
+            WHERE id=${id}${condition} RETURNING *`))[0];
+          if (user) await tx.execute(sql`DELETE FROM sessions WHERE owner_id=${id}`);
+          return user;
+        });
       },
       async findByUsername(username: string) {
         return (await query<UserRow>(sql`SELECT * FROM users WHERE username=${username.trim().toLowerCase()}`))[0];

@@ -64,6 +64,7 @@ export function parseConfiguration(source: string, file: string, dataDirectory: 
   if (admin.username !== 'admin') throw new StartupError('INVALID_ADMIN_USERNAME');
   const adminPassword = string(admin.password);
   if (adminPassword.length < 8) throw new StartupError('ADMIN_PASSWORD_TOO_SHORT');
+  if (adminPassword.length > 1024) throw new StartupError('ADMIN_PASSWORD_TOO_LONG');
   const driver = env.DATABASE_DRIVER ?? database.driver;
   let connection: DatabaseConfig;
   if (driver === 'sqlite') {

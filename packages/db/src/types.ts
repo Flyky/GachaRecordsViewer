@@ -21,7 +21,7 @@ export interface DatabaseConnection {
   close(): Promise<void>;
 }
 export class PersistenceError extends Error {
-  constructor(readonly code: 'OWNER_MISMATCH' | 'INSTALLATION_MISMATCH' | 'KEY_MISMATCH') {
+  constructor(readonly code: 'OWNER_MISMATCH' | 'INSTALLATION_MISMATCH' | 'KEY_MISMATCH' | 'USERNAME_TAKEN') {
     super(code);
     this.name = 'PersistenceError';
   }

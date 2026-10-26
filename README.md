@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R03：基础工程、米游社命令行验证工具、部署配置和双数据库持久化基础已可运行；官服原神角色池 10 条样本读取已通过本人扫码实测。正式登录、导入、查询和分析页面按后续轮次实现。
+当前完成到 R04：本地登录、改密与管理员创建／重置账号 API 已可用，具有独立会话、CSRF 校验及登录限速。登录与管理页面从 R05 开始；导入、查询和分析按后续轮次实现。
 
 ## 本地运行
 
@@ -24,7 +24,7 @@ pnpm start
 
 此时单个服务在 [http://127.0.0.1:3000](http://127.0.0.1:3000) 提供前端和 API。`GET /api/health` 是进程存活检查，`GET /api/ready` 检查数据库是否可查询；两者都不检查米游社。
 
-首次启动默认使用 SQLite，在 `data/` 下生成配置、数据库、管理员随机密码和凭证主密钥；重启保留。管理员密码在本机 `data/config.toml` 的 `[admin].password` 中读取，登录功能从 R04 开始实现。PostgreSQL 选择、环境变量、改密和恢复说明见[部署配置文档](docs/deployment.md)。开发代理固定使用 API 的 3000 端口，开发时请保持默认值。
+首次启动默认使用 SQLite，在 `data/` 下生成配置、数据库、管理员随机密码和凭证主密钥；重启保留。管理员密码在本机 `data/config.toml` 的 `[admin].password` 中读取。接口用法见[认证与管理员 API](docs/auth-api.md)，数据库选择和恢复说明见[部署配置文档](docs/deployment.md)。开发代理固定使用 API 的 3000 端口，开发时请保持默认值。
 
 ## 工程命令
 

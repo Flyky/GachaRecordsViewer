@@ -5,7 +5,12 @@ let deployment: Awaited<ReturnType<typeof initializeDeployment>> | undefined;
 let app: Awaited<ReturnType<typeof buildApp>> | undefined;
 try {
   deployment = await initializeDeployment();
-  app = await buildApp({ logger: true, serveWeb: process.argv.includes('--serve-web'), database: deployment.connection });
+  const serveWeb = process.argv.includes('--serve-web');
+  app = await buildApp({ logger: true, serveWeb, database: deployment.connection, auth: {
+    connection: deployment.connection, adminPassword: deployment.config.adminPassword,
+    adminSessionVersion: deployment.adminSessionVersion, credentialKey: deployment.credentialKey,
+    publicUrl: deployment.config.publicUrl, development: !serveWeb,
+  } });
   const key = deployment.credentialKey;
   app.addHook('onClose', async () => { key.fill(0); });
   app.log.info({ database: deployment.connection.kind, configFile: deployment.config.configFile }, 'Deployment initialized');

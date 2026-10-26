@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R03 部署配置、双数据库与初始化基础已完成，SQLite / PostgreSQL 均通过真实集成验证。
+当前阶段：R04 本地认证与管理员 API 已完成，关键认证流程通过 SQLite 集成验证。
 
-下一轮：R04 本地认证与管理员 API。
+下一轮：R05 登录、密码与管理页面。
 
 ## 1. 执行方式
 
@@ -22,6 +22,7 @@
 - 普通可逆开发继续按已授权范围完成，不在每次运行测试、写文件或 commit 前重新询问。真实账号扫码、官方交互验证等本人操作在具体环节提示。
 - commit 默认保存在本地 `main`，以远端已有提交为基础。用户要求的是每轮 commit；push、PR、远程发布与版本标签不作为自动执行步骤，需用户另外安排。
 - 用户后续说“继续”时，先读取最新状态，再推进下一项未完成任务；如有待本人操作的项，保留其状态并推进不依赖它的下一项。
+- 用户自 R04 起要求减少验证与消耗：优先只检查本轮改动的类型、静态规则和关键行为；已有通过结果不重复扩测。全量构建、浏览器、双数据库验证仅在实际改动需要或联合验收时执行，明确记录未重跑的范围。
 
 ## 2. 第一版范围
 
@@ -54,7 +55,7 @@
 | R01 | 工程骨架与基础运行 | R00 | `chore: scaffold TypeScript server and Vue workspace` | 已完成 |
 | R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 已完成：官服角色池两页实测通过 |
 | R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 已完成 |
-| R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 未开始 |
+| R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 已完成 |
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 未开始 |
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 未开始 |
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 未开始 |
@@ -263,3 +264,14 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 两种数据库均实际启动构建后的生产服务，验证 SPA、健康 / 就绪、私有文件隔离和进程重启后配置、密钥、用户与记录保留。现有 5173 开发预览和 3000 API 仍可访问。
 - 配置格式、PostgreSQL 选择、改密、缺失文件与测试步骤见 [deployment.md](deployment.md)。真实 JSON、运行数据、测试数据库、凭证和工具均不提交。
 - 下一轮：R04；不自动继续开发或推送远端。
+
+### R04：本地认证与管理员 API，2026-10-26
+
+- 实现普通账号登录、退出、当前会话、校验当前密码后改密；初始密码状态仅用于提醒，允许继续使用，也允许改回初始密码后恢复提醒。
+- 实现独立管理员登录／退出／当前会话、普通账号列表、创建账号及重置密码；创建和重置密码固定为 `12345678`，不提供自助注册。
+- 普通密码采用 Argon2id，随机会话通过独立 HttpOnly Cookie 传递、数据库仅存摘要；改密／重置事务更新账号版本并撤销全部旧会话，配置改管理密码后旧管理会话失效。
+- API 写入校验配置 Origin 和会话绑定 CSRF；启用 HTTPS Secure Cookie、no-store、严格字段校验、登录／当前密码验证限速及敏感错误脱敏。新增共享响应类型供 R05 接入。
+- 按用户要求减少验证：六组 SQLite 认证集成用例通过，覆盖账号创建、密码哈希、Cookie、会话摘要、越权、Origin／CSRF、改密与重置、会话撤销／过期、重启及限速；执行改动范围类型与 lint 检查。
+- 本轮未重跑全量测试、双数据库集成、生产构建或浏览器验证；PostgreSQL 认证端到端留待联合验收，不沿用 R03 结果宣称已实测。数据库 Schema 无变更。
+- 接口与客户端约定见 [auth-api.md](auth-api.md)。本轮不提前实现 R05 页面，真实数据和配置不提交。
+- 下一轮：R05；本地 commit，不自动推送。
