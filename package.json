@@ -1,0 +1,31 @@
+{
+  "name": "gacha-records-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=11 <12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @gacha/contracts build && concurrently --kill-others --names contracts,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter @gacha/server start",
+    "typecheck": "pnpm --filter @gacha/contracts build && pnpm -r typecheck",
+    "lint": "eslint . --max-warnings 0",
+    "test": "pnpm --filter @gacha/contracts build && vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.10.0",
+    "concurrently": "10.0.6",
+    "eslint": "10.13.0",
+    "eslint-plugin-vue": "10.11.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "vue-eslint-parser": "10.4.1"
+  }
+}

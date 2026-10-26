@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R00 规划；尚未开始应用代码实现。
+当前阶段：R01 工程骨架已完成；业务功能尚未开始实现。
 
-下一轮：R01 工程骨架。
+下一轮：R02 米游社最小验证工具。
 
 ## 1. 执行方式
 
@@ -50,8 +50,8 @@
 
 | 轮次 | 任务 | 主要依赖 | 建议 commit | 当前状态 |
 | --- | --- | --- | --- | --- |
-| R00 | 文档归档、仓库关联、逐轮计划 | 无 | `docs: define v1 requirements and implementation rounds` | 已完成：本轮文档提交 |
-| R01 | 工程骨架与基础运行 | R00 | `chore: scaffold TypeScript server and Vue workspace` | 未开始 |
+| R00 | 文档归档、仓库关联、逐轮计划 | 无 | `docs: define v1 requirements and implementation rounds` | 已完成 |
+| R01 | 工程骨架与基础运行 | R00 | `chore: scaffold TypeScript server and Vue workspace` | 已完成 |
 | R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 未开始 |
 | R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 未开始 |
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 未开始 |
@@ -225,3 +225,15 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 祈愿链接定义已确认，列为下一版必要任务 `VNext-01`；首版仍按 R01–R16 执行。
 - 更新忽略规则，原始旧 JSON 和新 UIGF 样例均不提交。
 - 本轮为文档补充 commit；下一轮仍为 R01，没有提前实现应用代码。
+
+### R01：工程骨架与基础运行，2026-10-26
+
+- 建立 pnpm workspace：`apps/server`、`apps/web`、`packages/contracts`，提供统一开发、生产构建、类型检查、lint 和测试命令。
+- 服务端为 Fastify 5，提供 `/api/health`；生产模式提供构建后的静态前端和 SPA 深链接；未知 API、缺失资源和非导航请求保持 JSON 404。
+- 前端为 Vue 3 / Vite / Naive UI，加入基础应用页和 Vue Router；没有提前实现账号、数据库、导入或统计。
+- 直接依赖锁定版本并提交 lockfile。TypeScript 使用与当前类型 / lint 工具兼容的稳定 5.9.3；pnpm 11 配置放在 workspace 文件，仅允许必要的 esbuild 安装脚本。
+- 环境：系统默认 Node 为 16，本轮使用机器已有 Node 24.22.1 完成验证，未修改全局安装。README 明确要求先选择 Node 24。
+- 验证：冻结锁文件安装、三个工作区包的类型检查、零警告 lint、8 项服务启动 / 静态路由测试、生产构建均通过。
+- 实际运行验证：开发前端 5173 → API 3000 代理、生产单服务 3100、浏览器渲染、历史路由直达、390px 手机宽度均通过，无页面脚本错误；生产缺失 API / 资源 / 私有 JSON 请求返回 404。
+- 浏览器截图和临时检查脚本仅留在已忽略的 `test-results/`，真实 JSON、依赖目录和构建产物均不提交。
+- 下一轮：R02；米游社真实账号链路仍未验证。

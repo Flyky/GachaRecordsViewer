@@ -2,7 +2,7 @@
 
 日期：2026-10-26（Asia/Shanghai）
 
-状态：需求整理与方案建议；尚未开始应用实现。
+状态：R01 工程骨架已完成，业务功能按逐轮计划继续实现。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 

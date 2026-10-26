@@ -1,0 +1,20 @@
+{
+  "name": "@gacha/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --include ../../packages/contracts/dist/** src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js --serve-web",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.7",
+    "@gacha/contracts": "workspace:*",
+    "fastify": "5.12.7"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

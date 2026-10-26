@@ -2,7 +2,42 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前处于第一版规划阶段，尚未开始应用代码实现。
+当前完成到 R01 工程骨架：可以启动基础页面与健康检查，登录、导入、查询和分析等功能按后续轮次实现。
+
+## 本地运行
+
+需要 Node.js 24 LTS 和 pnpm 11.25.0。先确认 `node --version` 为 `v24.x`；项目不会修改系统全局 Node 安装。
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+开发页面：[http://127.0.0.1:5173](http://127.0.0.1:5173)。API 默认监听 `127.0.0.1:3000`，Vite 将 `/api` 转发给 API；共享包在开发时自动编译。
+
+生产构建与启动：
+
+```sh
+pnpm build
+pnpm start
+```
+
+此时单个服务在 [http://127.0.0.1:3000](http://127.0.0.1:3000) 提供前端和 API。`GET /api/health` 是进程存活检查，暂不代表数据库或米游社连接正常。缺少前端构建时服务会给出先构建的错误提示。
+
+服务端可读取 `HOST`、`PORT` 环境变量；生产端口默认 3000。开发代理当前固定使用 API 的 3000 端口，开发时请保持该默认值。完整部署配置与持久化将在 R03 加入。
+
+## 工程命令
+
+| 命令 | 用途 |
+| --- | --- |
+| `pnpm dev` | 共享包 watch、API watch、Vite 同时运行，退出时一并停止 |
+| `pnpm build` | 按依赖顺序构建共享包、服务端与前端 |
+| `pnpm start` | 启动已经构建的服务端并提供 SPA |
+| `pnpm typecheck` | 检查服务端、共享类型和 Vue 代码 |
+| `pnpm lint` | ESLint 检查，警告也视为失败 |
+| `pnpm test` | 运行基础启动、静态服务和 SPA / API 路由边界测试 |
+
+目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识。其余业务模块在对应轮次建立，不放入未实现的业务占位代码。
 
 ## 第一版计划
 
