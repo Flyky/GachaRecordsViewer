@@ -14,6 +14,7 @@
     "start": "pnpm --filter @gacha/server start",
     "typecheck": "pnpm --filter @gacha/contracts build && pnpm -r typecheck",
     "lint": "eslint . --max-warnings 0",
+    "probe:miyoushe": "pnpm --filter @gacha/providers probe",
     "test": "pnpm --filter @gacha/contracts build && vitest run"
   },
   "devDependencies": {

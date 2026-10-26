@@ -122,3 +122,4 @@ credential-key*
 playwright-report/
 test-results/
 .pnpm-store/
+.probe/

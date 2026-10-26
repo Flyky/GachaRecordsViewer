@@ -2,7 +2,7 @@
 
 日期：2026-10-26
 
-状态：技术方案与实施参考；R01 工程骨架已完成，业务模块尚未实现。仓库为 `Flyky/GachaRecordsViewer`。
+状态：技术方案与实施参考；R02 独立 provider 探针已完成，正式业务模块按计划推进。仓库为 `Flyky/GachaRecordsViewer`。
 
 ## 1. 推荐技术栈
 

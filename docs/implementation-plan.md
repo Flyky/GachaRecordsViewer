@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R01 工程骨架已完成；业务功能尚未开始实现。
+当前阶段：R02 米游社独立验证工具已完成，官服角色池样本链路实测通过。
 
-下一轮：R02 米游社最小验证工具。
+下一轮：R03 部署配置、双数据库、初始化。
 
 ## 1. 执行方式
 
@@ -52,7 +52,7 @@
 | --- | --- | --- | --- | --- |
 | R00 | 文档归档、仓库关联、逐轮计划 | 无 | `docs: define v1 requirements and implementation rounds` | 已完成 |
 | R01 | 工程骨架与基础运行 | R00 | `chore: scaffold TypeScript server and Vue workspace` | 已完成 |
-| R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 未开始 |
+| R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 已完成：官服角色池两页实测通过 |
 | R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 未开始 |
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 未开始 |
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 未开始 |
@@ -237,3 +237,15 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 实际运行验证：开发前端 5173 → API 3000 代理、生产单服务 3100、浏览器渲染、历史路由直达、390px 手机宽度均通过，无页面脚本错误；生产缺失 API / 资源 / 私有 JSON 请求返回 404。
 - 浏览器截图和临时检查脚本仅留在已忽略的 `test-results/`，真实 JSON、依赖目录和构建产物均不提交。
 - 下一轮：R02；米游社真实账号链路仍未验证。
+
+### R02：米游社最小验证工具，2026-10-26
+
+- 新增 `packages/providers` 与 `pnpm probe:miyoushe`；实现 App 扫码、同会话设备上下文、DS、SToken / 其他凭证补充、绑定角色、AuthKey 与有界祈愿分页。
+- 默认不保存凭证或记录，二维码本机生成且正常退出后清理；输出只包含脱敏身份、状态与统计；网络及上游错误不反射敏感消息。
+- 第一次真实扫码取得凭证与角色列表，但原样例 UID 未绑定，正确拒绝。用户明确选择官服 `10***44` 后，第二次扫码验证成功。
+- 已实测：当前机器网络、官服 `cn_gf01`、角色活动池 `301`，两页各 5 条；SToken / LToken / Cookie Token 与 AuthKey 均取得，未抓取全历史、未写数据库。
+- 未实测：渠道服祈愿、其他池、国际服、星铁、最终部署环境、全量 / 增量入库及重启保存授权。
+- 用户补入所选官服的 UIGF v4.1 文件，11,326 条记录，已通过标准校验，作为后续本地参考；原始文件不提交。
+- 检查：冻结锁文件安装、全工作区类型与 lint、生产构建、57 项测试通过（R01 8 项 + provider 49 项）；两次临时二维码均已清理。
+- 使用步骤、协议来源与实测边界见 [miyoushe-probe.md](miyoushe-probe.md)，许可说明见根目录 `THIRD_PARTY_NOTICES.md`。
+- 下一轮：R03，不在本轮提前实现数据库或正式授权页面。

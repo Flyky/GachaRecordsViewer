@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R01 工程骨架：可以启动基础页面与健康检查，登录、导入、查询和分析等功能按后续轮次实现。
+当前完成到 R02：基础工程与米游社命令行验证工具已可运行；官服原神角色池 10 条样本读取已通过本人扫码实测。正式登录、导入、查询和分析页面按后续轮次实现。
 
 ## 本地运行
 
@@ -35,13 +35,16 @@ pnpm start
 | `pnpm start` | 启动已经构建的服务端并提供 SPA |
 | `pnpm typecheck` | 检查服务端、共享类型和 Vue 代码 |
 | `pnpm lint` | ESLint 检查，警告也视为失败 |
-| `pnpm test` | 运行基础启动、静态服务和 SPA / API 路由边界测试 |
+| `pnpm test` | 检查基础服务与路由，以及米游社协议、状态、身份和脱敏边界 |
+| `pnpm probe:miyoushe --region cn_gf01` | 本人扫码后，只读验证官服授权与少量祈愿分页；不保存凭证 |
 
-目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识。其余业务模块在对应轮次建立，不放入未实现的业务占位代码。
+目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识，`packages/providers` 为上游适配与 R02 探针。其余业务模块在对应轮次建立。
+
+探针参数、扫码步骤、脱敏输出和已实测边界见 [R02 使用说明](docs/miyoushe-probe.md)。
 
 ## 第一版计划
 
-支持本地多账号、管理员创建 / 重置账号、UIGF v4.x 原神导入导出、完整记录查询和既有统计分析，以及米游社授权与手动刷新。数据库默认 SQLite，可配置 PostgreSQL。米游社实时能力仍需真实账号验证。
+支持本地多账号、管理员创建 / 重置账号、UIGF v4.x 原神导入导出、完整记录查询和既有统计分析，以及米游社授权与手动刷新。数据库默认 SQLite，可配置 PostgreSQL。R02 已验证有限的官服样本链路；其他卡池与最终部署环境仍需分别验证。
 
 技术方案为 Node.js 24 LTS + TypeScript + Fastify 5，前端采用 Vue 3 + Vite + Naive UI + ECharts，Drizzle 分别适配两种数据库。
 
