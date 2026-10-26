@@ -106,6 +106,7 @@ dist
 # Personal gacha data and runtime secrets
 gacha-list-*.json
 uigf-*.json
+/[Uu][Ii][Gg][Ff]*.json
 data/
 config.local.toml
 config.toml
