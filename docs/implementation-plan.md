@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R04 本地认证与管理员 API 已完成，关键认证流程通过 SQLite 集成验证。
+当前阶段：R05 登录、密码与管理页面已完成，关键账号流程通过隔离浏览器验证。
 
-下一轮：R05 登录、密码与管理页面。
+下一轮：R06 抽卡领域逻辑与元数据。
 
 ## 1. 执行方式
 
@@ -56,7 +56,7 @@
 | R02 | 米游社最小验证工具 | R01 | `feat: add Miyoushe authorization feasibility probe` | 已完成：官服角色池两页实测通过 |
 | R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 已完成 |
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 已完成 |
-| R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 未开始 |
+| R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 已完成 |
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 未开始 |
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 未开始 |
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 未开始 |
@@ -275,3 +275,14 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 本轮未重跑全量测试、双数据库集成、生产构建或浏览器验证；PostgreSQL 认证端到端留待联合验收，不沿用 R03 结果宣称已实测。数据库 Schema 无变更。
 - 接口与客户端约定见 [auth-api.md](auth-api.md)。本轮不提前实现 R05 页面，真实数据和配置不提交。
 - 下一轮：R05；本地 commit，不自动推送。
+
+### R05：登录、密码与管理页面，2026-10-26
+
+- 按用户要求先执行一次 push，远端 `main` 从初始化提交更新至 R04 的 `ae570c7`。本轮新代码随后单独本地提交，不重复推送。
+- 实现 `/login`、登录后的概览／导航／账号与档案区域、`/settings` 改密及退出。初始密码提醒可关闭，当前会话内保持；重新登录初始密码会恢复提醒。
+- 实现独立 `/admin` 登录和管理界面，仅提供创建普通账号、账号列表辅助选择与重置密码；重置前确认目标、初始密码及旧会话失效，普通页面没有管理链接。
+- 前端接入独立会话和 CSRF，提供会话失效／网络错误／限速／重复账号等反馈；按账号重新挂载页面，避免切换账号沿用旧表单。表单提供标签、密码显隐、自动填充和提交中状态。
+- 游戏档案为空，查询、统计和导入导航暂不开放，不提前实现 R06–R09 功能。
+- 精简验证：前端类型检查、零警告 lint、前端生产构建通过；一次隔离浏览器流程覆盖创建、登录、忽略提醒及刷新、改密、退出、重置和会话失效，390px 页面无横向溢出，无页面脚本异常。
+- 使用合成账号与临时 SQLite，不修改真实记录；未重跑后端全量、双库集成。测试脚本、截图和数据不提交，临时服务验证后关闭。
+- 使用说明见 [account-pages.md](account-pages.md)。下一轮：R06。

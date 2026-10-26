@@ -1,6 +1,6 @@
 # 部署配置与数据库（R03）
 
-配置、初始化、持久化及 R04 认证 API 已实现，接口用法见 [auth-api.md](auth-api.md)。登录和管理页面从 R05 开始；容器交付和整站升级验收安排在 R16。
+配置、初始化、持久化及认证 API 已实现，接口用法见 [auth-api.md](auth-api.md)。R05 登录和管理页面已完成，使用步骤见 [account-pages.md](account-pages.md)；容器交付和整站升级验收安排在 R16。
 
 ## 启动与文件
 
