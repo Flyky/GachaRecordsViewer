@@ -11,6 +11,8 @@
     "generate": "drizzle-kit generate --config drizzle.sqlite.config.ts && drizzle-kit generate --config drizzle.postgres.config.ts"
   },
   "dependencies": {
+    "@gacha/contracts": "workspace:*",
+    "@gacha/uigf": "workspace:*",
     "better-sqlite3": "12.11.1",
     "drizzle-orm": "0.45.4",
     "pg": "8.23.1"

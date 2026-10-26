@@ -1,0 +1,1 @@
+ALTER TABLE "gacha_records" ADD COLUMN "metadata_json" text DEFAULT '{}' NOT NULL;

@@ -7,6 +7,7 @@ import type { DatabaseConnection } from '@gacha/db';
 import Fastify from 'fastify';
 import { registerAuth, type AuthOptions } from './auth/routes.js';
 import { ApiError } from './auth/security.js';
+import { registerUigf } from './uigf.js';
 
 interface AppOptions {
   logger?: boolean;
@@ -35,7 +36,10 @@ export async function buildApp(options: AppOptions = {}) {
     app.log.error({ requestId: request.id }, 'Request failed');
     return reply.code(500).send({ error: { code: 'INTERNAL_ERROR' } });
   });
-  if (options.auth) await registerAuth(app, options.auth);
+  if (options.auth) {
+    await registerAuth(app, options.auth);
+    registerUigf(app, options.auth);
+  }
 
   app.get<{ Reply: HealthResponse }>('/api/health', async () => ({
     status: 'ok',

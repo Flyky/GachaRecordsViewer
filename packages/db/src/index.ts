@@ -3,3 +3,5 @@ export { bindInstallation, repositories } from './repositories.js';
 export type { UserRow, ProfileRow, RecordInput } from './repositories.js';
 export { PersistenceError } from './types.js';
 export type { DatabaseConfig, DatabaseConnection, InstallationState, SqlExecutor } from './types.js';
+export { uigfRepository, ImportError } from './imports.js';
+export type { PreviewState } from './imports.js';

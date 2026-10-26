@@ -9,13 +9,14 @@
     "pnpm": ">=11 <12"
   },
   "scripts": {
-    "dev": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && concurrently --kill-others --names contracts,db,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/db dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
+    "dev": "pnpm build:backend-deps && concurrently --kill-others --names contracts,core,uigf,db,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/gacha-core dev\" \"pnpm --filter @gacha/uigf dev\" \"pnpm --filter @gacha/db dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
+    "build:backend-deps": "pnpm --filter @gacha/db... build",
     "build": "pnpm -r build",
     "start": "pnpm --filter @gacha/server start",
-    "typecheck": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && pnpm -r typecheck",
+    "typecheck": "pnpm build:backend-deps && pnpm -r typecheck",
     "lint": "eslint . --max-warnings 0",
     "probe:miyoushe": "pnpm --filter @gacha/providers probe",
-    "test": "pnpm --filter @gacha/contracts build && pnpm --filter @gacha/db build && vitest run"
+    "test": "pnpm build:backend-deps && vitest run"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

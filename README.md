@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R06：账号页面已可用，并已建立抽卡排序、卡池归组、五星间隔和本地物品字典的领域逻辑。导入、查询和分析页面按后续轮次实现。
+当前完成到 R07：账号页面已可用，UIGF 多 UID 预览、事务导入、标准导出和档案列表 API 已完成。导入、查询和分析页面按后续轮次实现。
 
 ## 本地运行
 
@@ -43,6 +43,8 @@ pnpm start
 目录：`apps/server` 为 Fastify，`apps/web` 为 Vue，`packages/contracts` 为共享 API 类型与应用标识，`packages/providers` 为上游适配与 R02 探针，`packages/db` 为仓储、双数据库 Schema 和迁移。其余业务模块在对应轮次建立。
 
 `packages/gacha-core` 提供无损记录排序、游戏时区、组内计数与本地物品补全；规则、来源和更新步骤见 [R06 领域逻辑](docs/gacha-core.md)。
+
+`packages/uigf` 固化 v4.0/v4.1/v4.2 标准并负责解析与导出；API、冲突规则和限制见 [R07 UIGF 导入导出](docs/uigf-import-export.md)。
 
 探针参数、扫码步骤、脱敏输出和已实测边界见 [R02 使用说明](docs/miyoushe-probe.md)。
 

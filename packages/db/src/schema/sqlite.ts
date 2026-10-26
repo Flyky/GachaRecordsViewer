@@ -54,6 +54,7 @@ export const gachaRecords = sqliteTable('gacha_records', {
   itemId: text('item_id').notNull(), gachaType: text('gacha_type').notNull(), pityGroup: text('pity_group').notNull(),
   timeLocal: text('time_local').notNull(), timeUtc: text('time_utc').notNull(),
   name: text('name'), itemType: text('item_type'), rank: integer('rank'), source: text('source').notNull(),
+  metadataJson: text('metadata_json').notNull().default('{}'),
 }, (t) => [primaryKey({ columns: [t.profileId, t.recordId] }),
   foreignKey({ columns: [t.ownerId, t.profileId], foreignColumns: [gameProfiles.ownerId, gameProfiles.id] }).onDelete('cascade'),
   index('records_owner_profile_time_idx').on(t.ownerId, t.profileId, t.timeUtc),

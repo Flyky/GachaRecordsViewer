@@ -13,6 +13,20 @@ Copyright (c) 2020 theBowja. The complete MIT notice is distributed in
 Genshin Impact and its game content belong to their respective owners. This
 project is not affiliated with miHoYo.
 
+## UIGF JSON Schemas
+
+The versioned JSON Schemas in `packages/uigf/src/schemas/` were extracted from
+[UIGF-org/UIGF-org.github.io](https://github.com/UIGF-org/UIGF-org.github.io), commit
+`0bba3809236602d4ada66a84a17de4e0ab89d170`, under the MIT License:
+
+- `docs/zh/standards/uigf-legacy-v4.0.md`
+- `docs/zh/standards/uigf-legacy-v4.1.md`
+- `docs/zh/standards/uigf.md` (v4.2)
+
+Copyright (c) 2022 Masterain. The complete license is reproduced in
+[packages/uigf/SCHEMA_LICENSE](packages/uigf/SCHEMA_LICENSE).
+Only formatting has changed; the complete upstream schemas are retained.
+
 ## TeyvatGuide
 
 The Miyoushe provider implements protocol behavior and parameters researched from

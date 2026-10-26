@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R06 抽卡领域逻辑与本地元数据已完成，关键计算规则通过定向验证。
+当前阶段：R07 UIGF 导入导出后端已完成，两种数据库通过定向验证。
 
-下一轮：R07 UIGF 导入导出后端。
+下一轮：R08 数据管理与多 UID 页面。
 
 ## 1. 执行方式
 
@@ -58,7 +58,7 @@
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 已完成 |
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 已完成 |
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 已完成 |
-| R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 未开始 |
+| R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 已完成 |
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 未开始 |
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 未开始 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 未开始 |
@@ -295,3 +295,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 按精简策略完成本包类型、零警告 lint、构建与 9 组关键测试；覆盖长 ID、同秒、跨年／闰日、归组、补早期历史、显式缺口、未知星级与字典补全。没有重跑浏览器、认证或双数据库验证。
 - 没有读取真实用户 JSON、修改数据库结构或增加页面；本轮使用合成样例。规则与更新说明见 [gacha-core.md](gacha-core.md)。
 - 下一轮：R07；本轮只建立本地 commit，不自动推送。
+
+### R07：UIGF 导入导出后端，2026-10-27
+
+- 新增 `@gacha/uigf`，固定 v4.0/v4.1/v4.2 原始 Schema 和许可，严格解析原神必需字段、无损 ID、时区与分组；跳过星铁、绝区零、千星奇域，明确报告无原神数据和未知版本。
+- 提供普通用户专属预览、选择档案事务导入、完整档案标准导出及档案列表 API。预览签名绑定用户、文件、档案版本且 15 分钟有效；确认时检查变化，关键冲突整批不写入。
+- 两库增加原始可选元数据列；按 owner / UID 合并、ID 去重，缺失字段补全而不静默覆盖。成功批次持久化指纹与报告，纯重复不增加记录或数据版本。
+- 导出默认 v4.0，可选 v4.1/v4.2，显式字段投影并重新校验标准；v4.2 最多 19 位记录 ID，旧版更长 ID 不截断，返回版本不兼容提示。
+- 精简验证：11 项测试通过，包含 SQLite 与真实 PostgreSQL 18.4 的相同导入／导出契约及认证 API 边界；受影响范围类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止。
+- 未重跑全量／浏览器验证，未读取或导入真实用户 JSON；本轮只提供后端。接口、冲突、元数据、限制与测试边界见 [uigf-import-export.md](uigf-import-export.md)。
+- 下一轮：R08；本地 commit，不自动推送。

@@ -53,6 +53,9 @@ importers:
       '@gacha/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@gacha/uigf':
+        specifier: workspace:*
+        version: link:../../packages/uigf
       argon2:
         specifier: 0.45.1
         version: 0.45.1
@@ -96,6 +99,12 @@ importers:
 
   packages/db:
     dependencies:
+      '@gacha/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@gacha/uigf':
+        specifier: workspace:*
+        version: link:../uigf
       better-sqlite3:
         specifier: 12.11.1
         version: 12.11.1
@@ -134,6 +143,15 @@ importers:
       tsx:
         specifier: 4.23.15
         version: 4.23.15
+
+  packages/uigf:
+    dependencies:
+      '@gacha/gacha-core':
+        specifier: workspace:*
+        version: link:../gacha-core
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
 
 packages:
 
