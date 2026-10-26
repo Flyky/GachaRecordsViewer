@@ -1,8 +1,8 @@
 # GachaRecordsViewer 重写前期文档
 
-日期：2026-10-26（Asia/Shanghai）
+日期：2026-10-27（Asia/Shanghai）
 
-状态：R05 登录、密码与管理页面已完成。R02 官服角色池样本链路已实测通过。
+状态：R06 抽卡领域逻辑与本地元数据已完成；账号页面已可使用。R02 官服角色池样本链路已实测通过。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
@@ -15,6 +15,8 @@
 前端接入：[R04 本地认证与管理员 API](auth-api.md)。
 
 账号使用：[R05 登录、密码与管理页面](account-pages.md)。
+
+领域规则：[R06 排序、次数与本地元数据](gacha-core.md)。
 
 1. [需求规格与验收标准](requirements.md)：逐项对应用户的 12 条需求，区分确定需求、建议默认值与未来扩展。
 2. [UIGF 与米游社调研](research-uigf-miyoushe.md)：规范版本、授权路径、接口依据、已失效方案及待实测项目。

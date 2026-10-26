@@ -1,4 +1,17 @@
-# Third-party protocol references
+# Third-party references
+
+## genshin-db metadata snapshot
+
+`packages/gacha-core/src/catalog/genshin-items.json` is extracted from
+[`theBowja/genshin-db`](https://github.com/theBowja/genshin-db), npm version
+`5.2.14`. It contains factual item IDs, types, rarities and names, without images,
+descriptions, character statistics or game assets. The exact source version is
+pinned in the package manifest and lockfile.
+
+Copyright (c) 2020 theBowja. The complete MIT notice is distributed in
+[`packages/gacha-core/METADATA_LICENSE`](packages/gacha-core/METADATA_LICENSE).
+Genshin Impact and its game content belong to their respective owners. This
+project is not affiliated with miHoYo.
 
 ## TeyvatGuide
 

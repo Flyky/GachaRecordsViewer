@@ -1,0 +1,3334 @@
+{
+  "schemaVersion": 1,
+  "game": "hk4e",
+  "source": {
+    "name": "genshin-db",
+    "version": "5.2.14",
+    "url": "https://github.com/theBowja/genshin-db",
+    "license": "MIT",
+    "retrievedAt": "2026-10-26T16:06:32.190Z"
+  },
+  "items": [
+    {
+      "id": "11301",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "冷刃",
+        "en-us": "Cool Steel"
+      }
+    },
+    {
+      "id": "11302",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "黎明神剑",
+        "en-us": "Harbinger of Dawn"
+      }
+    },
+    {
+      "id": "11303",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "旅行剑",
+        "en-us": "Traveler's Handy Sword"
+      }
+    },
+    {
+      "id": "11304",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "暗铁剑",
+        "en-us": "Dark Iron Sword"
+      }
+    },
+    {
+      "id": "11305",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "吃虎鱼刀",
+        "en-us": "Fillet Blade"
+      }
+    },
+    {
+      "id": "11306",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "飞天御剑",
+        "en-us": "Skyrider Sword"
+      }
+    },
+    {
+      "id": "11401",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西风剑",
+        "en-us": "Favonius Sword"
+      }
+    },
+    {
+      "id": "11402",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "笛剑",
+        "en-us": "The Flute"
+      }
+    },
+    {
+      "id": "11403",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "祭礼剑",
+        "en-us": "Sacrificial Sword"
+      }
+    },
+    {
+      "id": "11404",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "宗室长剑",
+        "en-us": "Royal Longsword"
+      }
+    },
+    {
+      "id": "11405",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "匣里龙吟",
+        "en-us": "Lion's Roar"
+      }
+    },
+    {
+      "id": "11406",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "试作斩岩",
+        "en-us": "Prototype Rancour"
+      }
+    },
+    {
+      "id": "11407",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "铁蜂刺",
+        "en-us": "Iron Sting"
+      }
+    },
+    {
+      "id": "11408",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑岩长剑",
+        "en-us": "Blackcliff Longsword"
+      }
+    },
+    {
+      "id": "11409",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑剑",
+        "en-us": "The Black Sword"
+      }
+    },
+    {
+      "id": "11410",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "暗巷闪光",
+        "en-us": "The Alley Flash"
+      }
+    },
+    {
+      "id": "11412",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "降临之剑",
+        "en-us": "Sword of Descension"
+      }
+    },
+    {
+      "id": "11413",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "腐殖之剑",
+        "en-us": "Festering Desire"
+      }
+    },
+    {
+      "id": "11414",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "天目影打刀",
+        "en-us": "Amenoma Kageuchi"
+      }
+    },
+    {
+      "id": "11415",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "辰砂之纺锤",
+        "en-us": "Cinnabar Spindle"
+      }
+    },
+    {
+      "id": "11416",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "笼钓瓶一心",
+        "en-us": "Kagotsurube Isshin"
+      }
+    },
+    {
+      "id": "11417",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "原木刀",
+        "en-us": "Sapwood Blade"
+      }
+    },
+    {
+      "id": "11418",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西福斯的月光",
+        "en-us": "Xiphos' Moonlight"
+      }
+    },
+    {
+      "id": "11419",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "「一心传」名刀",
+        "en-us": "Prized Isshin Blade"
+      }
+    },
+    {
+      "id": "11420",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "「一心传」名刀",
+        "en-us": "Prized Isshin Blade"
+      }
+    },
+    {
+      "id": "11421",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "「一心传」名刀",
+        "en-us": "Prized Isshin Blade"
+      }
+    },
+    {
+      "id": "11422",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "东花坊时雨",
+        "en-us": "Toukabou Shigure"
+      }
+    },
+    {
+      "id": "11424",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "狼牙",
+        "en-us": "Wolf-Fang"
+      }
+    },
+    {
+      "id": "11425",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "海渊终曲",
+        "en-us": "Finale of the Deep"
+      }
+    },
+    {
+      "id": "11426",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "灰河渡手",
+        "en-us": "Fleuve Cendre Ferryman"
+      }
+    },
+    {
+      "id": "11427",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "船坞长剑",
+        "en-us": "The Dockhand's Assistant"
+      }
+    },
+    {
+      "id": "11428",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "水仙十字之剑",
+        "en-us": "Sword of Narzissenkreuz"
+      }
+    },
+    {
+      "id": "11430",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "弥坚骨",
+        "en-us": "Sturdy Bone"
+      }
+    },
+    {
+      "id": "11431",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "息燧之笛",
+        "en-us": "Flute of Ezpitzal"
+      }
+    },
+    {
+      "id": "11432",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "厄水之祸",
+        "en-us": "Calamity of Eshu"
+      }
+    },
+    {
+      "id": "11433",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "谧音吹哨",
+        "en-us": "Serenity's Call"
+      }
+    },
+    {
+      "id": "11434",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "织月者的曙色",
+        "en-us": "Moonweaver's Dawn"
+      }
+    },
+    {
+      "id": "11435",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "熔猎异端之刃",
+        "en-us": "Heretic's Molten Blade"
+      }
+    },
+    {
+      "id": "11436",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "引火之源",
+        "en-us": "Emberwell"
+      }
+    },
+    {
+      "id": "11437",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "新枝",
+        "en-us": "New Bough"
+      }
+    },
+    {
+      "id": "11438",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "银釭",
+        "en-us": "Silver Light"
+      }
+    },
+    {
+      "id": "11501",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "风鹰剑",
+        "en-us": "Aquila Favonia"
+      }
+    },
+    {
+      "id": "11502",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "天空之刃",
+        "en-us": "Skyward Blade"
+      }
+    },
+    {
+      "id": "11503",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "苍古自由之誓",
+        "en-us": "Freedom-Sworn"
+      }
+    },
+    {
+      "id": "11504",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "斫峰之刃",
+        "en-us": "Summit Shaper"
+      }
+    },
+    {
+      "id": "11505",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "磐岩结绿",
+        "en-us": "Primordial Jade Cutter"
+      }
+    },
+    {
+      "id": "11509",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "雾切之回光",
+        "en-us": "Mistsplitter Reforged"
+      }
+    },
+    {
+      "id": "11510",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "波乱月白经津",
+        "en-us": "Haran Geppaku Futsu"
+      }
+    },
+    {
+      "id": "11511",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "圣显之钥",
+        "en-us": "Key of Khaj-Nisut"
+      }
+    },
+    {
+      "id": "11512",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "裁叶萃光",
+        "en-us": "Light of Foliar Incision"
+      }
+    },
+    {
+      "id": "11513",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "静水流涌之辉",
+        "en-us": "Splendor of Tranquil Waters"
+      }
+    },
+    {
+      "id": "11514",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "有乐御簾切",
+        "en-us": "Uraku Misugiri"
+      }
+    },
+    {
+      "id": "11515",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "赦罪",
+        "en-us": "Absolution"
+      }
+    },
+    {
+      "id": "11516",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "岩峰巡歌",
+        "en-us": "Peak Patrol Song"
+      }
+    },
+    {
+      "id": "11517",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "苍耀",
+        "en-us": "Azurelight"
+      }
+    },
+    {
+      "id": "11518",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "黑蚀",
+        "en-us": "Athame Artis"
+      }
+    },
+    {
+      "id": "11519",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "朏魄含光",
+        "en-us": "Lightbearing Moonshard"
+      }
+    },
+    {
+      "id": "11520",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "白湖冬羽",
+        "en-us": "Whitelake Frostfeather"
+      }
+    },
+    {
+      "id": "11521",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "星锋剑",
+        "en-us": "Exaiphanes Blade"
+      }
+    },
+    {
+      "id": "11522",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "蝶变",
+        "en-us": "Beyond the Chrysalis"
+      }
+    },
+    {
+      "id": "12301",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "铁影阔剑",
+        "en-us": "Ferrous Shadow"
+      }
+    },
+    {
+      "id": "12302",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "沐浴龙血的剑",
+        "en-us": "Bloodtainted Greatsword"
+      }
+    },
+    {
+      "id": "12303",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "白铁大剑",
+        "en-us": "White Iron Greatsword"
+      }
+    },
+    {
+      "id": "12305",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "以理服人",
+        "en-us": "Debate Club"
+      }
+    },
+    {
+      "id": "12306",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "飞天大御剑",
+        "en-us": "Skyrider Greatsword"
+      }
+    },
+    {
+      "id": "12401",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西风大剑",
+        "en-us": "Favonius Greatsword"
+      }
+    },
+    {
+      "id": "12402",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "钟剑",
+        "en-us": "The Bell"
+      }
+    },
+    {
+      "id": "12403",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "祭礼大剑",
+        "en-us": "Sacrificial Greatsword"
+      }
+    },
+    {
+      "id": "12404",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "宗室大剑",
+        "en-us": "Royal Greatsword"
+      }
+    },
+    {
+      "id": "12405",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "雨裁",
+        "en-us": "Rainslasher"
+      }
+    },
+    {
+      "id": "12406",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "试作古华",
+        "en-us": "Prototype Archaic"
+      }
+    },
+    {
+      "id": "12407",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "白影剑",
+        "en-us": "Whiteblind"
+      }
+    },
+    {
+      "id": "12408",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑岩斩刀",
+        "en-us": "Blackcliff Slasher"
+      }
+    },
+    {
+      "id": "12409",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "螭骨剑",
+        "en-us": "Serpent Spine"
+      }
+    },
+    {
+      "id": "12410",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "千岩古剑",
+        "en-us": "Lithic Blade"
+      }
+    },
+    {
+      "id": "12411",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "雪葬的星银",
+        "en-us": "Snow-Tombed Starsilver"
+      }
+    },
+    {
+      "id": "12412",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "衔珠海皇",
+        "en-us": "Luxurious Sea-Lord"
+      }
+    },
+    {
+      "id": "12414",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "桂木斩长正",
+        "en-us": "Katsuragikiri Nagamasa"
+      }
+    },
+    {
+      "id": "12415",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "玛海菈的水色",
+        "en-us": "Makhaira Aquamarine"
+      }
+    },
+    {
+      "id": "12416",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "恶王丸",
+        "en-us": "Akuoumaru"
+      }
+    },
+    {
+      "id": "12417",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "森林王器",
+        "en-us": "Forest Regalia"
+      }
+    },
+    {
+      "id": "12418",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "饰铁之花",
+        "en-us": "Mailed Flower"
+      }
+    },
+    {
+      "id": "12424",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "聊聊棒",
+        "en-us": "Talking Stick"
+      }
+    },
+    {
+      "id": "12425",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "浪影阔剑",
+        "en-us": "Tidal Shadow"
+      }
+    },
+    {
+      "id": "12426",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "「究极霸王超级魔剑」",
+        "en-us": "\"Ultimate Overlord's Mega Magic Sword\""
+      }
+    },
+    {
+      "id": "12427",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "便携动力锯",
+        "en-us": "Portable Power Saw"
+      }
+    },
+    {
+      "id": "12430",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "硕果钩",
+        "en-us": "Fruitful Hook"
+      }
+    },
+    {
+      "id": "12431",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "撼地者",
+        "en-us": "Earth Shaker"
+      }
+    },
+    {
+      "id": "12432",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "拾慧铸熔",
+        "en-us": "Flame-Forged Insight"
+      }
+    },
+    {
+      "id": "12433",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "万能钥匙",
+        "en-us": "Master Key"
+      }
+    },
+    {
+      "id": "12435",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "金律铸影",
+        "en-us": "Forged by the Golden Melody"
+      }
+    },
+    {
+      "id": "12436",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "救赎之斩",
+        "en-us": "Blade of Atonement"
+      }
+    },
+    {
+      "id": "12501",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "天空之傲",
+        "en-us": "Skyward Pride"
+      }
+    },
+    {
+      "id": "12502",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "狼的末路",
+        "en-us": "Wolf's Gravestone"
+      }
+    },
+    {
+      "id": "12503",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "松籁响起之时",
+        "en-us": "Song of Broken Pines"
+      }
+    },
+    {
+      "id": "12504",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "无工之剑",
+        "en-us": "The Unforged"
+      }
+    },
+    {
+      "id": "12510",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "赤角石溃杵",
+        "en-us": "Redhorn Stonethresher"
+      }
+    },
+    {
+      "id": "12511",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "苇海信标",
+        "en-us": "Beacon of the Reed Sea"
+      }
+    },
+    {
+      "id": "12512",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "裁断",
+        "en-us": "Verdict"
+      }
+    },
+    {
+      "id": "12513",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "山王长牙",
+        "en-us": "Fang of the Mountain King"
+      }
+    },
+    {
+      "id": "12514",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "焚曜千阳",
+        "en-us": "A Thousand Blazing Suns"
+      }
+    },
+    {
+      "id": "12515",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "狼的武功歌",
+        "en-us": "Gest of the Mighty Wolf"
+      }
+    },
+    {
+      "id": "12516",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "超越之匙",
+        "en-us": "A Teaspoon of Transcendence"
+      }
+    },
+    {
+      "id": "13301",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "白缨枪",
+        "en-us": "White Tassel"
+      }
+    },
+    {
+      "id": "13302",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "钺矛",
+        "en-us": "Halberd"
+      }
+    },
+    {
+      "id": "13303",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "黑缨枪",
+        "en-us": "Black Tassel"
+      }
+    },
+    {
+      "id": "13401",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "匣里灭辰",
+        "en-us": "Dragon's Bane"
+      }
+    },
+    {
+      "id": "13402",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "试作星镰",
+        "en-us": "Prototype Starglitter"
+      }
+    },
+    {
+      "id": "13403",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "流月针",
+        "en-us": "Crescent Pike"
+      }
+    },
+    {
+      "id": "13404",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑岩刺枪",
+        "en-us": "Blackcliff Pole"
+      }
+    },
+    {
+      "id": "13405",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "决斗之枪",
+        "en-us": "Deathmatch"
+      }
+    },
+    {
+      "id": "13406",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "千岩长枪",
+        "en-us": "Lithic Spear"
+      }
+    },
+    {
+      "id": "13407",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西风长枪",
+        "en-us": "Favonius Lance"
+      }
+    },
+    {
+      "id": "13408",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "宗室猎枪",
+        "en-us": "Royal Spear"
+      }
+    },
+    {
+      "id": "13409",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "龙脊长枪",
+        "en-us": "Dragonspine Spear"
+      }
+    },
+    {
+      "id": "13414",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "喜多院十文字",
+        "en-us": "Kitain Cross Spear"
+      }
+    },
+    {
+      "id": "13415",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "「渔获」",
+        "en-us": "\"The Catch\""
+      }
+    },
+    {
+      "id": "13416",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "断浪长鳍",
+        "en-us": "Wavebreaker's Fin"
+      }
+    },
+    {
+      "id": "13417",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "贯月矢",
+        "en-us": "Moonpiercer"
+      }
+    },
+    {
+      "id": "13419",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "风信之锋",
+        "en-us": "Missive Windspear"
+      }
+    },
+    {
+      "id": "13424",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "峡湾长歌",
+        "en-us": "Ballad of the Fjords"
+      }
+    },
+    {
+      "id": "13425",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "公义的酬报",
+        "en-us": "Rightful Reward"
+      }
+    },
+    {
+      "id": "13426",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "沙中伟贤的对答",
+        "en-us": "Dialogues of the Desert Sages"
+      }
+    },
+    {
+      "id": "13427",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "勘探钻机",
+        "en-us": "Prospector's Drill"
+      }
+    },
+    {
+      "id": "13430",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "镇山之钉",
+        "en-us": "Mountain-Bracing Bolt"
+      }
+    },
+    {
+      "id": "13431",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "虹的行迹",
+        "en-us": "Footprint of the Rainbow"
+      }
+    },
+    {
+      "id": "13432",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "且住亭御咄",
+        "en-us": "Tamayuratei no Ohanashi"
+      }
+    },
+    {
+      "id": "13433",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "掘金之锹",
+        "en-us": "Prospector's Shovel"
+      }
+    },
+    {
+      "id": "13434",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "圣祭者的辉杖",
+        "en-us": "Sacrificer's Staff"
+      }
+    },
+    {
+      "id": "13435",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "寒息",
+        "en-us": "Frostbreath"
+      }
+    },
+    {
+      "id": "13436",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "戍望谣歌",
+        "en-us": "Song of the Vigil"
+      }
+    },
+    {
+      "id": "13501",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "护摩之杖",
+        "en-us": "Staff of Homa"
+      }
+    },
+    {
+      "id": "13502",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "天空之脊",
+        "en-us": "Skyward Spine"
+      }
+    },
+    {
+      "id": "13504",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "贯虹之槊",
+        "en-us": "Vortex Vanquisher"
+      }
+    },
+    {
+      "id": "13505",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "和璞鸢",
+        "en-us": "Primordial Jade Winged-Spear"
+      }
+    },
+    {
+      "id": "13507",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "息灾",
+        "en-us": "Calamity Queller"
+      }
+    },
+    {
+      "id": "13509",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "薙草之稻光",
+        "en-us": "Engulfing Lightning"
+      }
+    },
+    {
+      "id": "13511",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "赤沙之杖",
+        "en-us": "Staff of the Scarlet Sands"
+      }
+    },
+    {
+      "id": "13512",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "赤月之形",
+        "en-us": "Crimson Moon's Semblance"
+      }
+    },
+    {
+      "id": "13513",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "柔灯挽歌",
+        "en-us": "Lumidouce Elegy"
+      }
+    },
+    {
+      "id": "13514",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "香韵奏者",
+        "en-us": "Symphonist of Scents"
+      }
+    },
+    {
+      "id": "13515",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "支离轮光",
+        "en-us": "Fractured Halo"
+      }
+    },
+    {
+      "id": "13516",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "血染荒城",
+        "en-us": "Bloodsoaked Ruins"
+      }
+    },
+    {
+      "id": "13517",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "灾悔",
+        "en-us": "Disaster and Remorse"
+      }
+    },
+    {
+      "id": "14301",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "魔导绪论",
+        "en-us": "Magic Guide"
+      }
+    },
+    {
+      "id": "14302",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "讨龙英杰谭",
+        "en-us": "Thrilling Tales of Dragon Slayers"
+      }
+    },
+    {
+      "id": "14303",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "异世界行记",
+        "en-us": "Otherworldly Story"
+      }
+    },
+    {
+      "id": "14304",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "翡玉法球",
+        "en-us": "Emerald Orb"
+      }
+    },
+    {
+      "id": "14305",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "甲级宝珏",
+        "en-us": "Twin Nephrite"
+      }
+    },
+    {
+      "id": "14401",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西风秘典",
+        "en-us": "Favonius Codex"
+      }
+    },
+    {
+      "id": "14402",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "流浪乐章",
+        "en-us": "The Widsith"
+      }
+    },
+    {
+      "id": "14403",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "祭礼残章",
+        "en-us": "Sacrificial Fragments"
+      }
+    },
+    {
+      "id": "14404",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "宗室秘法录",
+        "en-us": "Royal Grimoire"
+      }
+    },
+    {
+      "id": "14405",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "匣里日月",
+        "en-us": "Solar Pearl"
+      }
+    },
+    {
+      "id": "14406",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "试作金珀",
+        "en-us": "Prototype Amber"
+      }
+    },
+    {
+      "id": "14407",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "万国诸海图谱",
+        "en-us": "Mappa Mare"
+      }
+    },
+    {
+      "id": "14408",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑岩绯玉",
+        "en-us": "Blackcliff Agate"
+      }
+    },
+    {
+      "id": "14409",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "昭心",
+        "en-us": "Eye of Perception"
+      }
+    },
+    {
+      "id": "14410",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "暗巷的酒与诗",
+        "en-us": "Wine and Song"
+      }
+    },
+    {
+      "id": "14412",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "忍冬之果",
+        "en-us": "Frostbearer"
+      }
+    },
+    {
+      "id": "14413",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "嘟嘟可故事集",
+        "en-us": "Dodoco Tales"
+      }
+    },
+    {
+      "id": "14414",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "白辰之环",
+        "en-us": "Hakushin Ring"
+      }
+    },
+    {
+      "id": "14415",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "证誓之明瞳",
+        "en-us": "Oathsworn Eye"
+      }
+    },
+    {
+      "id": "14416",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "流浪的晚星",
+        "en-us": "Wandering Evenstar"
+      }
+    },
+    {
+      "id": "14417",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "盈满之实",
+        "en-us": "Fruit of Fulfillment"
+      }
+    },
+    {
+      "id": "14424",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "遗祀玉珑",
+        "en-us": "Sacrificial Jade"
+      }
+    },
+    {
+      "id": "14425",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "纯水流华",
+        "en-us": "Flowing Purity"
+      }
+    },
+    {
+      "id": "14426",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "无垠蔚蓝之歌",
+        "en-us": "Ballad of the Boundless Blue"
+      }
+    },
+    {
+      "id": "14427",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "苍纹角杯",
+        "en-us": "Ash-Graven Drinking Horn"
+      }
+    },
+    {
+      "id": "14430",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "乘浪的回旋",
+        "en-us": "Waveriding Whirl"
+      }
+    },
+    {
+      "id": "14431",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "木棉之环",
+        "en-us": "Ring of Yaxche"
+      }
+    },
+    {
+      "id": "14432",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "天光的纺琴",
+        "en-us": "Etherlight Spindlelute"
+      }
+    },
+    {
+      "id": "14433",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "乌髓孑灯",
+        "en-us": "Blackmarrow Lantern"
+      }
+    },
+    {
+      "id": "14434",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "霜辰",
+        "en-us": "Dawning Frost"
+      }
+    },
+    {
+      "id": "14435",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "群王局戏",
+        "en-us": "Clash of Kings"
+      }
+    },
+    {
+      "id": "14436",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "寸心余响",
+        "en-us": "Echoes of the Heart"
+      }
+    },
+    {
+      "id": "14437",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "凝雪沉心",
+        "en-us": "Winter's Heavy Heart"
+      }
+    },
+    {
+      "id": "14501",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "天空之卷",
+        "en-us": "Skyward Atlas"
+      }
+    },
+    {
+      "id": "14502",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "四风原典",
+        "en-us": "Lost Prayer to the Sacred Winds"
+      }
+    },
+    {
+      "id": "14504",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "尘世之锁",
+        "en-us": "Memory of Dust"
+      }
+    },
+    {
+      "id": "14505",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "碧落之珑",
+        "en-us": "Jadefall's Splendor"
+      }
+    },
+    {
+      "id": "14506",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "不灭月华",
+        "en-us": "Everlasting Moonglow"
+      }
+    },
+    {
+      "id": "14509",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "神乐之真意",
+        "en-us": "Kagura's Verity"
+      }
+    },
+    {
+      "id": "14511",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "千夜浮梦",
+        "en-us": "A Thousand Floating Dreams"
+      }
+    },
+    {
+      "id": "14512",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "图莱杜拉的回忆",
+        "en-us": "Tulaytullah's Remembrance"
+      }
+    },
+    {
+      "id": "14513",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "金流监督",
+        "en-us": "Cashflow Supervision"
+      }
+    },
+    {
+      "id": "14514",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "万世流涌大典",
+        "en-us": "Tome of the Eternal Flow"
+      }
+    },
+    {
+      "id": "14515",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "鹤鸣余音",
+        "en-us": "Crane's Echoing Call"
+      }
+    },
+    {
+      "id": "14516",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "冲浪时光",
+        "en-us": "Surf's Up"
+      }
+    },
+    {
+      "id": "14517",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "祭星者之望",
+        "en-us": "Starcaller's Watch"
+      }
+    },
+    {
+      "id": "14518",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "寝正月初晴",
+        "en-us": "Sunny Morning Sleep-In"
+      }
+    },
+    {
+      "id": "14519",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "溢彩心念",
+        "en-us": "Vivid Notions"
+      }
+    },
+    {
+      "id": "14520",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "纺夜天镜",
+        "en-us": "Nightweaver's Looking Glass"
+      }
+    },
+    {
+      "id": "14521",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "真语秘匣",
+        "en-us": "Reliquary of Truth"
+      }
+    },
+    {
+      "id": "14522",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "帷间夜曲",
+        "en-us": "Nocturne's Curtain Call"
+      }
+    },
+    {
+      "id": "14523",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "尘光七谕",
+        "en-us": "Angelos' Heptades"
+      }
+    },
+    {
+      "id": "14524",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "漩流颂歌",
+        "en-us": "Hymn of the Maelstrom"
+      }
+    },
+    {
+      "id": "15301",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "鸦羽弓",
+        "en-us": "Raven Bow"
+      }
+    },
+    {
+      "id": "15302",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "神射手之誓",
+        "en-us": "Sharpshooter's Oath"
+      }
+    },
+    {
+      "id": "15303",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "反曲弓",
+        "en-us": "Recurve Bow"
+      }
+    },
+    {
+      "id": "15304",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "弹弓",
+        "en-us": "Slingshot"
+      }
+    },
+    {
+      "id": "15305",
+      "itemType": "weapon",
+      "rank": 3,
+      "names": {
+        "zh-cn": "信使",
+        "en-us": "Messenger"
+      }
+    },
+    {
+      "id": "15401",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "西风猎弓",
+        "en-us": "Favonius Warbow"
+      }
+    },
+    {
+      "id": "15402",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "绝弦",
+        "en-us": "The Stringless"
+      }
+    },
+    {
+      "id": "15403",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "祭礼弓",
+        "en-us": "Sacrificial Bow"
+      }
+    },
+    {
+      "id": "15404",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "宗室长弓",
+        "en-us": "Royal Bow"
+      }
+    },
+    {
+      "id": "15405",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "弓藏",
+        "en-us": "Rust"
+      }
+    },
+    {
+      "id": "15406",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "试作澹月",
+        "en-us": "Prototype Crescent"
+      }
+    },
+    {
+      "id": "15407",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "钢轮弓",
+        "en-us": "Compound Bow"
+      }
+    },
+    {
+      "id": "15408",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "黑岩战弓",
+        "en-us": "Blackcliff Warbow"
+      }
+    },
+    {
+      "id": "15409",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "苍翠猎弓",
+        "en-us": "The Viridescent Hunt"
+      }
+    },
+    {
+      "id": "15410",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "暗巷猎手",
+        "en-us": "Alley Hunter"
+      }
+    },
+    {
+      "id": "15411",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "落霞",
+        "en-us": "Fading Twilight"
+      }
+    },
+    {
+      "id": "15412",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "幽夜华尔兹",
+        "en-us": "Mitternachts Waltz"
+      }
+    },
+    {
+      "id": "15413",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "风花之颂",
+        "en-us": "Windblume Ode"
+      }
+    },
+    {
+      "id": "15414",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "破魔之弓",
+        "en-us": "Hamayumi"
+      }
+    },
+    {
+      "id": "15415",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "掠食者",
+        "en-us": "Predator"
+      }
+    },
+    {
+      "id": "15416",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "曚云之月",
+        "en-us": "Mouun's Moon"
+      }
+    },
+    {
+      "id": "15417",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "王下近侍",
+        "en-us": "King's Squire"
+      }
+    },
+    {
+      "id": "15418",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "竭泽",
+        "en-us": "End of the Line"
+      }
+    },
+    {
+      "id": "15419",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "鹮穿之喙",
+        "en-us": "Ibis Piercer"
+      }
+    },
+    {
+      "id": "15424",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "烈阳之嗣",
+        "en-us": "Scion of the Blazing Sun"
+      }
+    },
+    {
+      "id": "15425",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "静谧之曲",
+        "en-us": "Song of Stillness"
+      }
+    },
+    {
+      "id": "15426",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "筑云",
+        "en-us": "Cloudforged"
+      }
+    },
+    {
+      "id": "15427",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "测距规",
+        "en-us": "Range Gauge"
+      }
+    },
+    {
+      "id": "15430",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "缀花之翎",
+        "en-us": "Flower-Wreathed Feathers"
+      }
+    },
+    {
+      "id": "15431",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "碎链",
+        "en-us": "Chain Breaker"
+      }
+    },
+    {
+      "id": "15432",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "冷寂迸音",
+        "en-us": "Sequence of Solitude"
+      }
+    },
+    {
+      "id": "15433",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "罗网勾针",
+        "en-us": "Snare Hook"
+      }
+    },
+    {
+      "id": "15434",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "虹蛇的雨弦",
+        "en-us": "Rainbow Serpent's Rain Bow"
+      }
+    },
+    {
+      "id": "15435",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "悬黎千钧",
+        "en-us": "Jade Vista"
+      }
+    },
+    {
+      "id": "15436",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "霜雪誓约",
+        "en-us": "Covenant of Frost and Snow"
+      }
+    },
+    {
+      "id": "15437",
+      "itemType": "weapon",
+      "rank": 4,
+      "names": {
+        "zh-cn": "柔风游弦",
+        "en-us": "Breezeborne Refrain"
+      }
+    },
+    {
+      "id": "15501",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "天空之翼",
+        "en-us": "Skyward Harp"
+      }
+    },
+    {
+      "id": "15502",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "阿莫斯之弓",
+        "en-us": "Amos' Bow"
+      }
+    },
+    {
+      "id": "15503",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "终末嗟叹之诗",
+        "en-us": "Elegy for the End"
+      }
+    },
+    {
+      "id": "15507",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "冬极白星",
+        "en-us": "Polar Star"
+      }
+    },
+    {
+      "id": "15508",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "若水",
+        "en-us": "Aqua Simulacra"
+      }
+    },
+    {
+      "id": "15509",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "飞雷之弦振",
+        "en-us": "Thundering Pulse"
+      }
+    },
+    {
+      "id": "15511",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "猎人之径",
+        "en-us": "Hunter's Path"
+      }
+    },
+    {
+      "id": "15512",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "最初的大魔术",
+        "en-us": "The First Great Magic"
+      }
+    },
+    {
+      "id": "15513",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "白雨心弦",
+        "en-us": "Silvershower Heartstrings"
+      }
+    },
+    {
+      "id": "15514",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "星鹫赤羽",
+        "en-us": "Astral Vulture's Crimson Plumage"
+      }
+    },
+    {
+      "id": "15515",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "黎明破晓之史",
+        "en-us": "The Daybreak Chronicles"
+      }
+    },
+    {
+      "id": "15516",
+      "itemType": "weapon",
+      "rank": 5,
+      "names": {
+        "zh-cn": "霜结的誓金枝",
+        "en-us": "Golden Frostbound Oath"
+      }
+    },
+    {
+      "id": "10000002",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "神里绫华",
+        "en-us": "Kamisato Ayaka"
+      }
+    },
+    {
+      "id": "10000003",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "琴",
+        "en-us": "Jean"
+      }
+    },
+    {
+      "id": "10000005",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "空",
+        "en-us": "Aether"
+      }
+    },
+    {
+      "id": "10000006",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "丽莎",
+        "en-us": "Lisa"
+      }
+    },
+    {
+      "id": "10000007",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "荧",
+        "en-us": "Lumine"
+      }
+    },
+    {
+      "id": "10000014",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "芭芭拉",
+        "en-us": "Barbara"
+      }
+    },
+    {
+      "id": "10000015",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "凯亚",
+        "en-us": "Kaeya"
+      }
+    },
+    {
+      "id": "10000016",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "迪卢克",
+        "en-us": "Diluc"
+      }
+    },
+    {
+      "id": "10000020",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "雷泽",
+        "en-us": "Razor"
+      }
+    },
+    {
+      "id": "10000021",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "安柏",
+        "en-us": "Amber"
+      }
+    },
+    {
+      "id": "10000022",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "温迪",
+        "en-us": "Venti"
+      }
+    },
+    {
+      "id": "10000023",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "香菱",
+        "en-us": "Xiangling"
+      }
+    },
+    {
+      "id": "10000024",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "北斗",
+        "en-us": "Beidou"
+      }
+    },
+    {
+      "id": "10000025",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "行秋",
+        "en-us": "Xingqiu"
+      }
+    },
+    {
+      "id": "10000026",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "魈",
+        "en-us": "Xiao"
+      }
+    },
+    {
+      "id": "10000027",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "凝光",
+        "en-us": "Ningguang"
+      }
+    },
+    {
+      "id": "10000029",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "可莉",
+        "en-us": "Klee"
+      }
+    },
+    {
+      "id": "10000030",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "钟离",
+        "en-us": "Zhongli"
+      }
+    },
+    {
+      "id": "10000031",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "菲谢尔",
+        "en-us": "Fischl"
+      }
+    },
+    {
+      "id": "10000032",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "班尼特",
+        "en-us": "Bennett"
+      }
+    },
+    {
+      "id": "10000033",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "达达利亚",
+        "en-us": "Tartaglia"
+      }
+    },
+    {
+      "id": "10000034",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "诺艾尔",
+        "en-us": "Noelle"
+      }
+    },
+    {
+      "id": "10000035",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "七七",
+        "en-us": "Qiqi"
+      }
+    },
+    {
+      "id": "10000036",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "重云",
+        "en-us": "Chongyun"
+      }
+    },
+    {
+      "id": "10000037",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "甘雨",
+        "en-us": "Ganyu"
+      }
+    },
+    {
+      "id": "10000038",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "阿贝多",
+        "en-us": "Albedo"
+      }
+    },
+    {
+      "id": "10000039",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "迪奥娜",
+        "en-us": "Diona"
+      }
+    },
+    {
+      "id": "10000041",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "莫娜",
+        "en-us": "Mona"
+      }
+    },
+    {
+      "id": "10000042",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "刻晴",
+        "en-us": "Keqing"
+      }
+    },
+    {
+      "id": "10000043",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "砂糖",
+        "en-us": "Sucrose"
+      }
+    },
+    {
+      "id": "10000044",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "辛焱",
+        "en-us": "Xinyan"
+      }
+    },
+    {
+      "id": "10000045",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "罗莎莉亚",
+        "en-us": "Rosaria"
+      }
+    },
+    {
+      "id": "10000046",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "胡桃",
+        "en-us": "Hu Tao"
+      }
+    },
+    {
+      "id": "10000047",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "枫原万叶",
+        "en-us": "Kaedehara Kazuha"
+      }
+    },
+    {
+      "id": "10000048",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "烟绯",
+        "en-us": "Yanfei"
+      }
+    },
+    {
+      "id": "10000049",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "宵宫",
+        "en-us": "Yoimiya"
+      }
+    },
+    {
+      "id": "10000050",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "托马",
+        "en-us": "Thoma"
+      }
+    },
+    {
+      "id": "10000051",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "优菈",
+        "en-us": "Eula"
+      }
+    },
+    {
+      "id": "10000052",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "雷电将军",
+        "en-us": "Raiden Shogun"
+      }
+    },
+    {
+      "id": "10000053",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "早柚",
+        "en-us": "Sayu"
+      }
+    },
+    {
+      "id": "10000054",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "珊瑚宫心海",
+        "en-us": "Sangonomiya Kokomi"
+      }
+    },
+    {
+      "id": "10000055",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "五郎",
+        "en-us": "Gorou"
+      }
+    },
+    {
+      "id": "10000056",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "九条裟罗",
+        "en-us": "Kujou Sara"
+      }
+    },
+    {
+      "id": "10000057",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "荒泷一斗",
+        "en-us": "Arataki Itto"
+      }
+    },
+    {
+      "id": "10000058",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "八重神子",
+        "en-us": "Yae Miko"
+      }
+    },
+    {
+      "id": "10000059",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "鹿野院平藏",
+        "en-us": "Shikanoin Heizou"
+      }
+    },
+    {
+      "id": "10000060",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "夜兰",
+        "en-us": "Yelan"
+      }
+    },
+    {
+      "id": "10000061",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "绮良良",
+        "en-us": "Kirara"
+      }
+    },
+    {
+      "id": "10000062",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "埃洛伊",
+        "en-us": "Aloy"
+      }
+    },
+    {
+      "id": "10000063",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "申鹤",
+        "en-us": "Shenhe"
+      }
+    },
+    {
+      "id": "10000064",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "云堇",
+        "en-us": "Yun Jin"
+      }
+    },
+    {
+      "id": "10000065",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "久岐忍",
+        "en-us": "Kuki Shinobu"
+      }
+    },
+    {
+      "id": "10000066",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "神里绫人",
+        "en-us": "Kamisato Ayato"
+      }
+    },
+    {
+      "id": "10000067",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "柯莱",
+        "en-us": "Collei"
+      }
+    },
+    {
+      "id": "10000068",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "多莉",
+        "en-us": "Dori"
+      }
+    },
+    {
+      "id": "10000069",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "提纳里",
+        "en-us": "Tighnari"
+      }
+    },
+    {
+      "id": "10000070",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "妮露",
+        "en-us": "Nilou"
+      }
+    },
+    {
+      "id": "10000071",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "赛诺",
+        "en-us": "Cyno"
+      }
+    },
+    {
+      "id": "10000072",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "坎蒂丝",
+        "en-us": "Candace"
+      }
+    },
+    {
+      "id": "10000073",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "纳西妲",
+        "en-us": "Nahida"
+      }
+    },
+    {
+      "id": "10000074",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "莱依拉",
+        "en-us": "Layla"
+      }
+    },
+    {
+      "id": "10000075",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "流浪者",
+        "en-us": "Wanderer"
+      }
+    },
+    {
+      "id": "10000076",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "珐露珊",
+        "en-us": "Faruzan"
+      }
+    },
+    {
+      "id": "10000077",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "瑶瑶",
+        "en-us": "Yaoyao"
+      }
+    },
+    {
+      "id": "10000078",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "艾尔海森",
+        "en-us": "Alhaitham"
+      }
+    },
+    {
+      "id": "10000079",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "迪希雅",
+        "en-us": "Dehya"
+      }
+    },
+    {
+      "id": "10000080",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "米卡",
+        "en-us": "Mika"
+      }
+    },
+    {
+      "id": "10000081",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "卡维",
+        "en-us": "Kaveh"
+      }
+    },
+    {
+      "id": "10000082",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "白术",
+        "en-us": "Baizhu"
+      }
+    },
+    {
+      "id": "10000083",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "琳妮特",
+        "en-us": "Lynette"
+      }
+    },
+    {
+      "id": "10000084",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "林尼",
+        "en-us": "Lyney"
+      }
+    },
+    {
+      "id": "10000085",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "菲米尼",
+        "en-us": "Freminet"
+      }
+    },
+    {
+      "id": "10000086",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "莱欧斯利",
+        "en-us": "Wriothesley"
+      }
+    },
+    {
+      "id": "10000087",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "那维莱特",
+        "en-us": "Neuvillette"
+      }
+    },
+    {
+      "id": "10000088",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "夏洛蒂",
+        "en-us": "Charlotte"
+      }
+    },
+    {
+      "id": "10000089",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "芙宁娜",
+        "en-us": "Furina"
+      }
+    },
+    {
+      "id": "10000090",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "夏沃蕾",
+        "en-us": "Chevreuse"
+      }
+    },
+    {
+      "id": "10000091",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "娜维娅",
+        "en-us": "Navia"
+      }
+    },
+    {
+      "id": "10000092",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "嘉明",
+        "en-us": "Gaming"
+      }
+    },
+    {
+      "id": "10000093",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "闲云",
+        "en-us": "Xianyun"
+      }
+    },
+    {
+      "id": "10000094",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "千织",
+        "en-us": "Chiori"
+      }
+    },
+    {
+      "id": "10000095",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "希格雯",
+        "en-us": "Sigewinne"
+      }
+    },
+    {
+      "id": "10000096",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "阿蕾奇诺",
+        "en-us": "Arlecchino"
+      }
+    },
+    {
+      "id": "10000097",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "赛索斯",
+        "en-us": "Sethos"
+      }
+    },
+    {
+      "id": "10000098",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "克洛琳德",
+        "en-us": "Clorinde"
+      }
+    },
+    {
+      "id": "10000099",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "艾梅莉埃",
+        "en-us": "Emilie"
+      }
+    },
+    {
+      "id": "10000100",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "卡齐娜",
+        "en-us": "Kachina"
+      }
+    },
+    {
+      "id": "10000101",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "基尼奇",
+        "en-us": "Kinich"
+      }
+    },
+    {
+      "id": "10000102",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "玛拉妮",
+        "en-us": "Mualani"
+      }
+    },
+    {
+      "id": "10000103",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "希诺宁",
+        "en-us": "Xilonen"
+      }
+    },
+    {
+      "id": "10000104",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "恰斯卡",
+        "en-us": "Chasca"
+      }
+    },
+    {
+      "id": "10000105",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "欧洛伦",
+        "en-us": "Ororon"
+      }
+    },
+    {
+      "id": "10000106",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "玛薇卡",
+        "en-us": "Mavuika"
+      }
+    },
+    {
+      "id": "10000107",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "茜特菈莉",
+        "en-us": "Citlali"
+      }
+    },
+    {
+      "id": "10000108",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "蓝砚",
+        "en-us": "Lan Yan"
+      }
+    },
+    {
+      "id": "10000109",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "梦见月瑞希",
+        "en-us": "Yumemizuki Mizuki"
+      }
+    },
+    {
+      "id": "10000110",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "伊安珊",
+        "en-us": "Iansan"
+      }
+    },
+    {
+      "id": "10000111",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "瓦雷莎",
+        "en-us": "Varesa"
+      }
+    },
+    {
+      "id": "10000112",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "爱可菲",
+        "en-us": "Escoffier"
+      }
+    },
+    {
+      "id": "10000113",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "伊法",
+        "en-us": "Ifa"
+      }
+    },
+    {
+      "id": "10000114",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "丝柯克",
+        "en-us": "Skirk"
+      }
+    },
+    {
+      "id": "10000115",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "塔利雅",
+        "en-us": "Dahlia"
+      }
+    },
+    {
+      "id": "10000116",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "伊涅芙",
+        "en-us": "Ineffa"
+      }
+    },
+    {
+      "id": "10000117",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "奇偶·男性",
+        "en-us": "Manekin"
+      }
+    },
+    {
+      "id": "10000118",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "奇偶·女性",
+        "en-us": "Manekina"
+      }
+    },
+    {
+      "id": "10000119",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "菈乌玛",
+        "en-us": "Lauma"
+      }
+    },
+    {
+      "id": "10000120",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "菲林斯",
+        "en-us": "Flins"
+      }
+    },
+    {
+      "id": "10000121",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "爱诺",
+        "en-us": "Aino"
+      }
+    },
+    {
+      "id": "10000122",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "奈芙尔",
+        "en-us": "Nefer"
+      }
+    },
+    {
+      "id": "10000123",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "杜林",
+        "en-us": "Durin"
+      }
+    },
+    {
+      "id": "10000124",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "雅珂达",
+        "en-us": "Jahoda"
+      }
+    },
+    {
+      "id": "10000125",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "哥伦比娅",
+        "en-us": "Columbina"
+      }
+    },
+    {
+      "id": "10000126",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "兹白",
+        "en-us": "Zibai"
+      }
+    },
+    {
+      "id": "10000127",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "叶洛亚",
+        "en-us": "Illuga"
+      }
+    },
+    {
+      "id": "10000128",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "法尔伽",
+        "en-us": "Varka"
+      }
+    },
+    {
+      "id": "10000129",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "洛恩",
+        "en-us": "Lohen"
+      }
+    },
+    {
+      "id": "10000130",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "莉奈娅",
+        "en-us": "Linnea"
+      }
+    },
+    {
+      "id": "10000131",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "尼可",
+        "en-us": "Nicole"
+      }
+    },
+    {
+      "id": "10000132",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "布伦妮",
+        "en-us": "Prune"
+      }
+    },
+    {
+      "id": "10000133",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "桑多涅",
+        "en-us": "Sandrone"
+      }
+    },
+    {
+      "id": "10000140",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "沃雅妮莎",
+        "en-us": "Vodyanitsa"
+      }
+    },
+    {
+      "id": "10000143",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "薇斯纳",
+        "en-us": "Vesna"
+      }
+    },
+    {
+      "id": "10000148",
+      "itemType": "character",
+      "rank": 4,
+      "names": {
+        "zh-cn": "阿罗夏",
+        "en-us": "Alyosha"
+      }
+    },
+    {
+      "id": "10000150",
+      "itemType": "character",
+      "rank": 5,
+      "names": {
+        "zh-cn": "奥黛塔",
+        "en-us": "Odette"
+      }
+    }
+  ]
+}

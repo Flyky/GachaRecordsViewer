@@ -1,12 +1,12 @@
 # 第一版逐轮实施计划
 
-更新：2026-10-26
+更新：2026-10-27
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R05 登录、密码与管理页面已完成，关键账号流程通过隔离浏览器验证。
+当前阶段：R06 抽卡领域逻辑与本地元数据已完成，关键计算规则通过定向验证。
 
-下一轮：R06 抽卡领域逻辑与元数据。
+下一轮：R07 UIGF 导入导出后端。
 
 ## 1. 执行方式
 
@@ -57,7 +57,7 @@
 | R03 | 部署配置、双数据库、初始化 | R01 | `feat: add deployment config and dual database persistence` | 已完成 |
 | R04 | 本地认证与管理员 API | R03 | `feat: implement local auth and admin account APIs` | 已完成 |
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 已完成 |
-| R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 未开始 |
+| R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 已完成 |
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 未开始 |
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 未开始 |
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 未开始 |
@@ -286,3 +286,12 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：前端类型检查、零警告 lint、前端生产构建通过；一次隔离浏览器流程覆盖创建、登录、忽略提醒及刷新、改密、退出、重置和会话失效，390px 页面无横向溢出，无页面脚本异常。
 - 使用合成账号与临时 SQLite，不修改真实记录；未重跑后端全量、双库集成。测试脚本、截图和数据不提交，临时服务验证后关闭。
 - 使用说明见 [account-pages.md](account-pages.md)。下一轮：R06。
+
+### R06：抽卡领域逻辑与元数据，2026-10-27
+
+- 新增独立 `@gacha/gacha-core` 包，实现十进制字符串 ID 无损比较、时间／同秒排序、游戏时区转换、原始卡池与保底分组映射，以及 `301/400` 共享计数。
+- 从完整已保存历史计算组内累计和五星间隔，再供筛选、倒序与分页使用；补入更早历史可以重算。默认首段不完整，明确缺口由调用方提供，未知星级或冲突不输出确定保底值。
+- 从固定的 `genshin-db@5.2.14` 生成 369 条本地精简字典，记录来源、版本与许可，提供显式更新脚本；上游包仅用于开发期生成，运行时不联网。未知 ID 不猜元数据，冲突和来源逐字段保留。
+- 按精简策略完成本包类型、零警告 lint、构建与 9 组关键测试；覆盖长 ID、同秒、跨年／闰日、归组、补早期历史、显式缺口、未知星级与字典补全。没有重跑浏览器、认证或双数据库验证。
+- 没有读取真实用户 JSON、修改数据库结构或增加页面；本轮使用合成样例。规则与更新说明见 [gacha-core.md](gacha-core.md)。
+- 下一轮：R07；本轮只建立本地 commit，不自动推送。
