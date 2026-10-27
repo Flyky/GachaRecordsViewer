@@ -60,7 +60,7 @@ export interface RecordPageResponse {
 }
 
 export interface AnalysisMetadata { incompleteRecords: number; conflictRecords: number; unknownRankRecords: number }
-export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; historyCount: number; metadataIssues: AnalysisMetadata }
+export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; dictionaryVersion: string; historyCount: number; metadataIssues: AnalysisMetadata }
 export interface ItemStatistic { itemId: string; name: string | null; quantity: number }
 export interface ItemAnalysisResponse extends AnalysisContext {
   itemType: 'character' | 'weapon'; order: 'asc' | 'desc'; selectedTypeCount: number; otherTypeCount: number;
@@ -93,6 +93,12 @@ export interface CommunityAccount {
 }
 export interface CommunityAccountsResponse { accounts: CommunityAccount[] }
 export interface CredentialRevealResponse { accountId: string; mid: string | null; type: CredentialKind; value: string }
+export interface ImportableCredentials { accountId: string; mid?: string; stoken?: string; ltoken?: string; cookieToken?: string }
+export interface CredentialExportResponse { credentials: ImportableCredentials }
+export interface DictionaryStatus {
+  source: string; version: string; count: number; updatedAt: string;
+  storage: 'builtin' | 'database'; updating: boolean; cacheWarning: boolean;
+}
 
 export interface MiyousheQrSession {
   id: string;

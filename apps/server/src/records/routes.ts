@@ -21,7 +21,7 @@ export function registerRecords(app: FastifyInstance, options: AuthOptions) {
     const query = parseRecordQuery(request.query);
     try {
       const snapshot = await repository.export(request.principal!.user!.id, request.params.profileId);
-      return queryRecords(request.params.profileId, snapshot, query);
+      return queryRecords(request.params.profileId, snapshot, query, options.metadataCatalog);
     } catch (error) {
       if (error instanceof ImportError && error.code === 'PROFILE_NOT_FOUND') throw new ApiError(404, 'PROFILE_NOT_FOUND');
       throw error;

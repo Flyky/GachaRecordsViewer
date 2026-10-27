@@ -2,9 +2,11 @@ import { decimalId, GachaError, type ItemType, type Rank } from './primitives.js
 
 export interface MetadataSource { name: string; version: string; url: string; license: string; retrievedAt: string }
 export interface ItemMetadata { id: string; itemType: ItemType; rank: Rank; names: Readonly<Record<string, string>> }
+export interface MetadataSnapshot { schemaVersion: 1; game: 'hk4e'; source: MetadataSource; items: ItemMetadata[] }
 export interface MetadataCatalog {
   source: Readonly<MetadataSource>;
   size: number;
+  all(): readonly Readonly<ItemMetadata>[];
   get(itemId: string): Readonly<ItemMetadata> | undefined;
   find(name: string, language: string, itemType: ItemType, rank: Rank): Readonly<ItemMetadata> | undefined;
 }
@@ -56,7 +58,7 @@ export function createMetadataCatalog(input: unknown): MetadataCatalog {
     if (!Object.keys(names).length) throw new GachaError('INVALID_METADATA');
     items.set(id, Object.freeze({ id, itemType: row.itemType, rank: row.rank, names: Object.freeze(names) }));
   }
-  return Object.freeze({ source: Object.freeze(origin), size: items.size, get: (itemId: string) => items.get(decimalId(itemId)),
+  return Object.freeze({ source: Object.freeze(origin), size: items.size, all: () => [...items.values()], get: (itemId: string) => items.get(decimalId(itemId)),
     find: (name: string, language: string, itemType: ItemType, rank: Rank) => {
       const matches = [...items.values()].filter((item) => item.names[language.toLowerCase()] === name && item.itemType === itemType && item.rank === rank);
       return matches.length === 1 ? matches[0] : undefined;

@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue';
-import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse } from '@gacha/contracts';
+import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus } from '@gacha/contracts';
 import { appUrl } from './base.js';
 
 type Role = 'user' | 'admin';
@@ -99,6 +99,8 @@ export async function changePassword(currentPassword: string, newPassword: strin
 export const listUsers = () => request<AdminUsersResponse>('/api/admin/users', 'admin');
 export const createUser = (username: string) => request<AccountPasswordResponse>('/api/admin/users', 'admin', { username });
 export const resetPassword = (id: string) => request<AccountPasswordResponse>(`/api/admin/users/${encodeURIComponent(id)}/reset-password`, 'admin', {});
+export const getDictionary = () => request<DictionaryStatus>('/api/admin/dictionary', 'admin');
+export const refreshDictionary = () => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', {}, 60000);
 export function errorMessage(error: unknown) {
   if (!(error instanceof ApiError)) return '操作未完成，请稍后重试。';
   if (error.code === 'RATE_LIMITED') return `尝试次数较多，请约 ${Math.max(1, Math.ceil(error.retryAfter / 60))} 分钟后再试。`;
@@ -108,6 +110,8 @@ export function errorMessage(error: unknown) {
     USERNAME_TAKEN: '这个账号已存在，请换一个名称。', INVALID_USERNAME: '账号需为 3–32 位字母、数字、点、短横线或下划线，以字母或数字开头；不能使用 admin。',
     INVALID_REQUEST: '请检查填写内容是否符合要求。', USER_NOT_FOUND: '该账号已不存在，请刷新列表。',
     ORIGIN_REJECTED: '当前访问地址与服务配置不一致，请使用正确的站点地址。', CSRF_REJECTED: '登录状态已变化，请刷新页面后重试。',
+    DICTIONARY_BUSY: '字典正在刷新，请稍后重试。', DICTIONARY_UNAVAILABLE: '服务正在停止，请稍后重试。',
+    DICTIONARY_REFRESH_FAILED: '字典刷新失败，已保留原字典。请检查服务器到 genshin-db 数据源的网络连接后重试。',
   };
   return messages[error.code] ?? '操作未完成，请稍后重试。';
 }

@@ -1,5 +1,6 @@
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { compareIds, decimalId, gameTime, genshinMetadata, pityGroup, resolveMetadata, type ItemType, type Rank, type MetadataHints } from '@gacha/gacha-core';
+import { compareIds, decimalId, gameTime, genshinMetadata, pityGroup, resolveMetadata, type ItemType, type Rank, type MetadataHints, type MetadataCatalog } from '@gacha/gacha-core';
+export type { MetadataCatalog, MetadataSnapshot } from '@gacha/gacha-core';
 import v40 from './schemas/v4.0.json' with { type: 'json' };
 import v41 from './schemas/v4.1.json' with { type: 'json' };
 import v42 from './schemas/v4.2.json' with { type: 'json' };
@@ -58,12 +59,12 @@ export function rawMetadataHints(metadata: RawMetadata): MetadataHints {
     ...(rank ? { rank } : {}), ...(type ? { itemType: type } : {}),
     ...(metadata.rank_type && rank === undefined ? { untrustedFields: ['rank'] } : {}) };
 }
-export function resolveRawMetadata(itemId: string, metadata: RawMetadata) {
-  const resolved = resolveMetadata(itemId, rawMetadataHints(metadata), genshinMetadata, metadata.lang ?? 'zh-cn');
+export function resolveRawMetadata(itemId: string, metadata: RawMetadata, catalog: MetadataCatalog = genshinMetadata) {
+  const resolved = resolveMetadata(itemId, rawMetadataHints(metadata), catalog, metadata.lang ?? 'zh-cn');
   return { name: resolved.name, itemType: resolved.itemType, rank: resolved.rank,
     incomplete: resolved.status !== 'complete', conflict: !!resolved.conflicts.length };
 }
-export function decodeUigf(input: unknown): DecodedUigf {
+export function decodeUigf(input: unknown, catalog: MetadataCatalog = genshinMetadata): DecodedUigf {
   const document = object(input);
   if (!document.info) throw new UigfError('UNSUPPORTED_FORMAT');
   const version = object(document.info).version;
@@ -95,7 +96,7 @@ export function decodeUigf(input: unknown): DecodedUigf {
         }
       }
       if (profile.lang) metadata.lang = profile.lang;
-      const resolved = resolveRawMetadata(record.item_id, metadata);
+      const resolved = resolveRawMetadata(record.item_id, metadata, catalog);
       if (resolved.incomplete) metadataIncomplete++;
       if (resolved.conflict) metadataConflicts++;
       return { id: record.id, itemId: record.item_id, gachaType: record.gacha_type, pityGroup: group, timeLocal: record.time,

@@ -1,5 +1,5 @@
 import { RECORD_PAGE_SIZES, RECORD_POOLS, type RecordPageRequest, type RecordPageResponse } from '@gacha/contracts';
-import { gameTime } from '@gacha/gacha-core';
+import { gameTime, type MetadataCatalog } from '@gacha/gacha-core';
 import type { ExportProfile } from '@gacha/uigf';
 import { ApiError } from '../auth/security.js';
 import { analyzeProfile } from '../history.js';
@@ -29,8 +29,8 @@ export function parseRecordQuery(query: RecordQueryStrings): RecordPageRequest {
 }
 
 /** Read a complete owner-scoped snapshot, analyze once, then filter/reverse/slice. */
-export function queryRecords(profileId: string, profile: ExportProfile, query: RecordPageRequest): RecordPageResponse {
-  const history = analyzeProfile(profile);
+export function queryRecords(profileId: string, profile: ExportProfile, query: RecordPageRequest, catalog?: MetadataCatalog): RecordPageResponse {
+  const history = analyzeProfile(profile, catalog);
   const needle = query.name?.toLowerCase() ?? '';
   const filtered = history.records.filter((record) =>
     (!query.from || record.time >= query.from) && (!query.to || record.time <= query.to) &&

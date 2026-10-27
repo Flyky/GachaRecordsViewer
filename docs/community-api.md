@@ -18,6 +18,7 @@
 | `POST /api/community/accounts/:id/credentials` | 同上 | 验证成功后整组替换，返回 `{ account }` |
 | `POST /api/community/accounts/:id/validate` | `{}` 或 `{ "profileId": "本人的绑定档案 ID" }` | 重新校验并更新能力，返回 `{ account }` |
 | `POST /api/community/accounts/:id/reveal` | `{ "type": "stoken" }`，亦可 `ltoken` / `cookieToken` | `{ accountId, mid, type, value }`，仅显式查看时返回明文，供后续页面查看／复制 |
+| `POST /api/community/accounts/:id/export-credentials` | `{}` | `{ credentials }`，R17 新增，仅本人主动复制时返回可重新导入的 JSON 字段，不含设备／主密钥／AuthKey |
 | `POST /api/community/accounts/:id/unlink` | `{}` | 204，删除凭证与社区绑定，保留抽卡历史 |
 
 默认账号响应只包含本地 ID、provider、米游社 accountId、能力、凭证存在状态和固定遮挡值，以及绑定档案的 ID／UID／region／timezone。不会包含 Token、mid、密文、AuthKey 或上游个人资料。缺失凭证的 `maskedValue` 为 null；已有但失效的凭证仍可由本人查看。

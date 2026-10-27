@@ -31,6 +31,12 @@
 .bound-profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
 .credential-panel { margin-top: 22px; border-top: 1px solid #e5ebe4; padding-top: 14px; }
 .credential-panel h3 { margin: 0; }
+.credential-panel > .list-heading { flex-wrap: wrap; gap: 10px; }
+.credential-export { margin-top: 15px; }
+.credential-export label { display: block; margin-bottom: 8px; font-size: 12px; }
+.dictionary-settings { padding: 24px; margin-bottom: 22px; }
+.dictionary-settings .list-heading { flex-wrap: wrap; gap: 12px; }
+.dictionary-info { overflow-wrap: anywhere; }
 .credential-row { margin-top: 15px; border: 1px solid #e5ebe4; border-radius: 8px; padding: 14px; min-width: 0; }
 .credential-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px; }
 .credential-value { font-family: ui-monospace, Consolas, monospace; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 140px; overflow: auto; background: #f5f7f3; border-radius: 5px; padding: 10px; margin: 10px 0; user-select: text; }
@@ -820,7 +826,10 @@ h2 {
 .analysis-pending { opacity: .55; pointer-events: none; }
 .item-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
 .item-stat-grid.weapons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.item-stat-column { min-width: 0; border: 1px solid #e6eade; border-radius: 9px; padding: 20px; }
+.item-stat-column { display: flex; flex-direction: column; min-width: 0; max-height: 440px; overflow: hidden; border: 1px solid #e6eade; border-radius: 9px; padding: 20px; }
+.item-stat-column > h3 { flex-shrink: 0; }
+.item-stat-column > ul { min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px; }
+.item-stat-column > ul:focus-visible { outline: 2px solid #326963; outline-offset: 3px; border-radius: 3px; }
 .item-stat-column h3 { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; font-weight: 600; margin: 0 0 16px; }
 .item-stat-column h3 small { font-size: 11px; font-weight: 400; color: #8b9786; white-space: nowrap; }
 .item-stat-column ul, .unclassified-details ul { padding: 0; margin: 0; list-style: none; }
@@ -884,6 +893,7 @@ h2 {
 @media (max-width: 760px) {
   .analysis-section { padding: 22px 16px; }
   .item-stat-grid, .item-stat-grid.weapons { grid-template-columns: 1fr; }
+  .item-stat-column { max-height: 360px; }
   .analysis-select { width: 180px; }
   .monthly-chart { height: 300px; }
   .records-filter, .records-table-section { padding: 22px 16px; }

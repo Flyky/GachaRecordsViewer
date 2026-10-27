@@ -6,6 +6,8 @@
 
 ## Debian 部署入口
 
+最新一轮：[R17 更新说明](docs/r17-updates.md)——管理员在线刷新字典、复制可导入的米游社凭证 JSON、统计卡片限高。更新源码后重新构建即可，配置保留，无数据库迁移。
+
 - [Debian：Docker 与原生 Node.js 完整步骤](docs/debian-deployment.md)
 - [容器备份、恢复与升级](docs/operations.md)
 - [配置字段与初始化规则](docs/deployment.md)

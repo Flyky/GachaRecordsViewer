@@ -15,7 +15,7 @@ const noBody = { type: 'object', additionalProperties: false, properties: {} };
 export async function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions } = {}) {
   const service = communityService(auth.connection, auth.credentialKey, options, auth.now), limiter = new AuthLimiter(auth.now ?? Date.now);
   const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
-  const sync = await syncService(auth.connection, service, options.sync, auth.now), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
+  const sync = await syncService(auth.connection, service, options.sync, auth.now, auth.metadataCatalog), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
   app.addHook('onClose', async () => { await sync.close(); qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };
@@ -85,6 +85,9 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
   app.post<{ Params: { accountId: string }; Body: { type: CredentialKind } }>('/api/community/accounts/:accountId/reveal', {
     onRequest: app.authenticateUser, schema: { params, body: { type: 'object', required: ['type'], additionalProperties: false, properties: { type: { type: 'string', enum: ['stoken', 'ltoken', 'cookieToken'] } } } },
   }, (request, reply) => respond(reply, async () => service.reveal(owner(request), request.params.accountId, request.body.type)));
+  app.post<{ Params: { accountId: string }; Body: Record<string, never> }>('/api/community/accounts/:accountId/export-credentials', {
+    onRequest: app.authenticateUser, schema: { params, body: noBody },
+  }, (request, reply) => respond(reply, async () => service.exportCredentials(owner(request), request.params.accountId)));
   app.post<{ Params: { accountId: string }; Body: Record<string, never> }>('/api/community/accounts/:accountId/unlink', {
     onRequest: app.authenticateUser, schema: { params, body: noBody },
   }, (request, reply) => respond(reply, async () => { await service.unlink(owner(request), request.params.accountId); sync.stopCommunity(owner(request), request.params.accountId); return reply.code(204).send(); }));

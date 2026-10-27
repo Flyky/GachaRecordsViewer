@@ -163,7 +163,11 @@ watch(() => [currentProfile.value?.id, currentProfile.value?.dataVersion] as con
               <h3 :class="`rarity-${group.rank}`">
                 {{ group.rank }} 星 <small>{{ group.total.toLocaleString() }} 次</small>
               </h3>
-              <ul v-if="group.items.length">
+              <ul
+                v-if="group.items.length"
+                tabindex="0"
+                :aria-label="`${group.rank} 星物品列表，可滚动查看更多`"
+              >
                 <li
                   v-for="item in group.items"
                   :key="item.itemId"

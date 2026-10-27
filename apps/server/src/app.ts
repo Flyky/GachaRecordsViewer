@@ -14,6 +14,7 @@ import { registerCommunity } from './community/routes.js';
 import type { CommunityOptions } from './community/service.js';
 import type { QrOptions } from './community/qr.js';
 import type { SyncOptions } from './community/sync.js';
+import { metadataService, registerMetadata, type MetadataOptions } from './metadata.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -23,6 +24,7 @@ interface AppOptions {
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
   community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions };
+  metadata?: MetadataOptions;
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
@@ -80,11 +82,15 @@ export async function buildApp(options: AppOptions = {}) {
   if (prefix) registerHealth(app);
   await app.register(async (site) => {
     if (options.auth) {
-      await registerAuth(site, options.auth);
-      registerUigf(site, options.auth);
-      registerRecords(site, options.auth);
-      registerAnalysis(site, options.auth);
-      await registerCommunity(site, options.auth, options.community);
+      const metadata = await metadataService(options.auth.connection, options.metadata);
+      site.addHook('onClose', async () => { await metadata.close(); });
+      const auth = { ...options.auth, metadataCatalog: metadata.catalog };
+      await registerAuth(site, auth);
+      registerMetadata(site, metadata);
+      registerUigf(site, auth);
+      registerRecords(site, auth);
+      registerAnalysis(site, auth);
+      await registerCommunity(site, auth, options.community);
     }
     registerHealth(site);
     if (options.serveWeb) {

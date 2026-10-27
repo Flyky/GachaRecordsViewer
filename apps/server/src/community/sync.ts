@@ -1,7 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import type { SyncJob, SyncPool } from '@gacha/contracts';
 import { ImportError, publicJob, SyncError, syncRepository, syncState, type DatabaseConnection, type PoolState, type StoredJob, type SyncState } from '@gacha/db';
-import { gameTime, genshinMetadata, pityGroup, type Rank } from '@gacha/gacha-core';
+import { gameTime, genshinMetadata, pityGroup, type Rank, type MetadataCatalog } from '@gacha/gacha-core';
 import { MiyousheClient, ProbeError, type DeviceContext } from '@gacha/providers';
 import { resolveRawMetadata, type ImportRecord, type RawMetadata } from '@gacha/uigf';
 import { ApiError } from '../auth/security.js';
@@ -21,8 +21,8 @@ const fatal = (error: unknown) => error instanceof SyncError && error.code !== '
   && ['auth_invalid', 'expired', 'verification_required', 'role_mismatch', 'cancelled'].includes(error.code);
 const initialPool = (pool: SyncPool): PoolState => ({ pool, status: 'queued', pages: 0, fetched: 0, inserted: 0, duplicates: 0, enriched: 0,
   retries: 0, authKeyRenewals: 0, code: null, stopReason: null, cursor: '0', newestId: null, checkpoint: null });
-export async function syncService(connection: DatabaseConnection, community: ReturnType<typeof communityService>, options: SyncOptions = {}, now = Date.now) {
-  const repo = syncRepository(connection), wait = options.wait ?? ((ms, signal) => delay(ms, undefined, { signal }));
+export async function syncService(connection: DatabaseConnection, community: ReturnType<typeof communityService>, options: SyncOptions = {}, now = Date.now, catalog: MetadataCatalog = genshinMetadata) {
+  const repo = syncRepository(connection, catalog), wait = options.wait ?? ((ms, signal) => delay(ms, undefined, { signal }));
   const timestamp = () => new Date(now()).toISOString();
   await repo.recover('SERVER_RESTARTED', timestamp());
   let stopping = false, runner: Promise<void> | undefined, scheduled = false, lastRequest = 0;
@@ -79,9 +79,9 @@ export async function syncService(connection: DatabaseConnection, community: Ret
               try {
                 const type = record.itemType === '角色' ? 'character' : record.itemType === '武器' ? 'weapon' : null;
                 const itemId = record.itemId ?? (record.name && type && ['3', '4', '5'].includes(record.rankType ?? '')
-                  ? genshinMetadata.find(record.name, 'zh-cn', type, Number(record.rankType) as Rank)?.id : undefined);
+                  ? catalog.find(record.name, 'zh-cn', type, Number(record.rankType) as Rank)?.id : undefined);
                 if (!itemId) throw new SyncError('ITEM_ID_UNRESOLVED');
-                const resolved = resolveRawMetadata(itemId, metadata);
+                const resolved = resolveRawMetadata(itemId, metadata, catalog);
                 return { id: record.id, itemId, gachaType: record.gachaType, pityGroup: pityGroup(record.gachaType), timeLocal: record.time,
                   timeUtc: gameTime(record.time, 8).timeUtc, name: resolved.name, itemType: resolved.itemType, rank: resolved.rank, metadata };
               } catch (error) { if (error instanceof SyncError) throw error; throw new ProbeError('protocol', 'history'); }

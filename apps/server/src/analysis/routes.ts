@@ -1,6 +1,6 @@
 import { RECORD_POOLS, type DailyAnalysisResponse, type ItemAnalysisResponse, type MonthlyAnalysisResponse, type RecordPool } from '@gacha/contracts';
 import { ImportError, uigfRepository } from '@gacha/db';
-import { dailyStatistics, itemStatistics, monthlyStatistics } from '@gacha/gacha-core';
+import { dailyStatistics, genshinMetadata, itemStatistics, monthlyStatistics } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { ApiError } from '../auth/security.js';
@@ -15,7 +15,9 @@ export function registerAnalysis(app: FastifyInstance, options: AuthOptions) {
   async function snapshot(owner: string, profileId: string) {
     try {
       const saved = await repository.snapshot(owner, profileId);
-      return { context: { profileId, uid: saved.uid, timezone: saved.timezone, dataVersion: saved.dataVersion }, history: analyzeProfile(saved).records };
+      const catalog = options.metadataCatalog ?? genshinMetadata;
+      return { context: { profileId, uid: saved.uid, timezone: saved.timezone, dataVersion: saved.dataVersion,
+        dictionaryVersion: `${catalog.source.name}@${catalog.source.version}` }, history: analyzeProfile(saved, catalog).records };
     } catch (error) {
       if (error instanceof ImportError && error.code === 'PROFILE_NOT_FOUND') throw new ApiError(404, 'PROFILE_NOT_FOUND');
       throw error;

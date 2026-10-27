@@ -1,12 +1,27 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NButton, NInput, NModal, NSpin, NTag } from 'naive-ui';
-import type { LocalUser } from '@gacha/contracts';
+import type { LocalUser, DictionaryStatus } from '@gacha/contracts';
 import BrandMark from '../components/BrandMark.vue';
-import { adminSession, createUser, errorMessage, listUsers, loginAdmin, logout, refreshAdmin, resetPassword } from '../auth.js';
+import { adminSession, createUser, errorMessage, listUsers, loginAdmin, logout, refreshAdmin, resetPassword, getDictionary, refreshDictionary } from '../auth.js';
 const checking = ref(true), busy = ref(false), password = ref(''), username = ref('');
 const error = ref(''), success = ref(''), users = ref<LocalUser[]>([]), target = ref<LocalUser | null>(null), showReset = ref(false);
 const listError = ref(''), loadingUsers = ref(false);
+const dictionary = shallowRef<DictionaryStatus | null>(null), dictionaryBusy = ref(false), dictionaryError = ref(''), dictionaryNotice = ref('');
+let active = true, dictionaryEpoch = 0;
+onUnmounted(() => { active = false; dictionaryEpoch++; });
+watch(adminSession, (session) => { if (!session) { dictionaryEpoch++; dictionary.value = null; dictionaryBusy.value = false; dictionaryError.value = ''; dictionaryNotice.value = ''; } });
+async function loadDictionary(refresh = false) {
+  if (dictionaryBusy.value) return;
+  const epoch = ++dictionaryEpoch; dictionaryBusy.value = true; dictionaryError.value = ''; dictionaryNotice.value = '';
+  try {
+    const result = await (refresh ? refreshDictionary() : getDictionary());
+    if (!active || epoch !== dictionaryEpoch || !adminSession.value) return;
+    dictionary.value = result;
+    if (refresh) dictionaryNotice.value = `字典已刷新，共 ${result.count} 个物品。新的查询、导入和刷新会立即使用，无需重启。`;
+  } catch (cause) { if (active && epoch === dictionaryEpoch && adminSession.value) dictionaryError.value = errorMessage(cause); }
+  finally { if (active && epoch === dictionaryEpoch) dictionaryBusy.value = false; }
+}
 watch(adminSession, (session) => { if (!session) { users.value = []; target.value = null; showReset.value = false; success.value = ''; } });
 async function loadUsers() {
   loadingUsers.value = true; listError.value = '';
@@ -14,13 +29,13 @@ async function loadUsers() {
   finally { loadingUsers.value = false; }
 }
 onMounted(async () => {
-  try { await refreshAdmin(); if (adminSession.value) await loadUsers(); } catch (cause) { error.value = errorMessage(cause); }
+  try { await refreshAdmin(); if (adminSession.value) await Promise.all([loadUsers(), loadDictionary()]); } catch (cause) { error.value = errorMessage(cause); }
   finally { checking.value = false; }
 });
 async function signIn() {
   if (busy.value) return;
   busy.value = true; error.value = '';
-  try { await loginAdmin(password.value); password.value = ''; await loadUsers(); } catch (cause) { error.value = errorMessage(cause); password.value = ''; }
+  try { await loginAdmin(password.value); password.value = ''; await Promise.all([loadUsers(), loadDictionary()]); } catch (cause) { error.value = errorMessage(cause); password.value = ''; }
   finally { busy.value = false; }
 }
 async function signOut() {
@@ -53,7 +68,7 @@ async function reset() {
 <template>
   <div class="admin-page">
     <header class="admin-header">
-      <BrandMark /><span class="admin-label">账号管理</span><NButton
+      <BrandMark /><span class="admin-label">管理页面</span><NButton
         v-if="adminSession"
         quaternary
         :loading="busy"
@@ -76,7 +91,7 @@ async function reset() {
       <p class="eyebrow">
         ADMINISTRATOR
       </p><h1>管理员登录</h1><p class="muted">
-        登录后可创建普通账号或重置密码。
+        登录后可管理普通账号和刷新物品字典。
       </p>
       <form
         class="stack-form"
@@ -123,9 +138,9 @@ async function reset() {
     >
       <section class="page-heading">
         <p class="eyebrow">
-          ACCOUNT MANAGEMENT
-        </p><h1>普通账号管理</h1><p class="muted">
-          创建账号，或帮助使用者重新登录。
+          ADMINISTRATION
+        </p><h1>管理设置</h1><p class="muted">
+          管理普通账号，更新原神物品字典。
         </p>
       </section>
       <p
@@ -141,6 +156,48 @@ async function reset() {
       >
         {{ error }}
       </p>
+      <section class="surface dictionary-settings">
+        <div class="list-heading">
+          <h2>物品字典</h2><NButton
+            :loading="dictionaryBusy"
+            :disabled="busy || dictionaryBusy"
+            @click="loadDictionary(true)"
+          >
+            刷新字典
+          </NButton>
+        </div>
+        <p class="muted">
+          获取最新角色与武器名称、ID、类型和星级。更新后立即生效，重启后保留；失败时继续使用原字典。
+        </p>
+        <p
+          v-if="dictionary"
+          class="field-hint dictionary-info"
+        >
+          {{ dictionary.storage === 'database' ? '已保存的在线字典' : '随应用内置字典' }} · {{ dictionary.count }} 个物品<br>
+          {{ dictionary.source }} · {{ dictionary.version }}<br>
+          获取时间：{{ new Date(dictionary.updatedAt).toLocaleString() }}
+        </p>
+        <p
+          v-if="dictionary?.cacheWarning"
+          class="feedback"
+        >
+          保存的字典暂不可用，当前使用内置字典，可尝试刷新。
+        </p>
+        <p
+          v-if="dictionaryError"
+          class="feedback error"
+          role="alert"
+        >
+          {{ dictionaryError }}
+        </p>
+        <p
+          v-if="dictionaryNotice"
+          class="feedback success"
+          role="status"
+        >
+          {{ dictionaryNotice }}
+        </p>
+      </section>
       <div class="admin-grid">
         <section class="surface create-account">
           <h2>创建普通账号</h2><p class="muted">

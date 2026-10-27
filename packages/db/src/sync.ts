@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { SyncJob, SyncPool, SyncPoolProgress } from '@gacha/contracts';
-import type { ImportRecord } from '@gacha/uigf';
+import type { ImportRecord, MetadataCatalog } from '@gacha/uigf';
 import { sql } from 'drizzle-orm';
 import { mergeOnlineRecords } from './imports.js';
 import type { ProfileRow } from './repositories.js';
@@ -25,7 +25,7 @@ export function publicJob(row: StoredJob): SyncJob {
     pools: state.pools.map(({ pool, status, pages, fetched, inserted, duplicates, enriched, retries, authKeyRenewals, code, stopReason }) =>
       ({ pool, status, pages, fetched, inserted, duplicates, enriched, retries, authKeyRenewals, code, stopReason })) };
 }
-export function syncRepository(connection: DatabaseConnection) {
+export function syncRepository(connection: DatabaseConnection, catalog?: MetadataCatalog) {
   const transaction = <T>(owner: string, action: (tx: SqlExecutor) => Promise<T>) => connection.transaction(async (tx) => {
     if (connection.kind === 'postgres') await tx.execute(sql`SELECT pg_advisory_xact_lock(72407001, hashtext(${owner}))`);
     return action(tx);
@@ -83,7 +83,7 @@ export function syncRepository(connection: DatabaseConnection) {
     }),
     page: (owner: string, id: string, state: SyncState, pool: SyncPool, incoming: ImportRecord[]) => transaction(owner, async (tx) => {
       const { profile } = await active(tx, owner, id), next = structuredClone(state), progress = next.pools.find((entry) => entry.pool === pool)!;
-      const counts = await mergeOnlineRecords(tx, owner, profile, incoming);
+      const counts = await mergeOnlineRecords(tx, owner, profile, incoming, catalog);
       progress.pages++; progress.fetched += incoming.length; progress.inserted += counts.inserted; progress.duplicates += counts.duplicates; progress.enriched += counts.enriched;
       await tx.execute(sql`UPDATE sync_jobs SET status='running', progress_json=${JSON.stringify(next)} WHERE owner_id=${owner} AND id=${id}`);
       return progress;

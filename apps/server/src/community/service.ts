@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CapabilityResult, CommunityAccount, CommunityCapabilities, CredentialKind } from '@gacha/contracts';
+import type { CapabilityResult, CommunityAccount, CommunityCapabilities, CredentialKind, CredentialExportResponse } from '@gacha/contracts';
 import { CommunityError, communityRepository, repositories, type CredentialAuthorization, type DatabaseConnection, type StoredCommunity } from '@gacha/db';
 import { createDevice, MiyousheClient, parseCredentials, ProbeError, type DeviceContext, type GameRole, type ManualCredentials } from '@gacha/providers';
 import { ApiError } from '../auth/security.js';
@@ -146,6 +146,12 @@ export function communityService(connection: DatabaseConnection, masterKey: Buff
       const row = await repo.get(owner, id), bundle = unpack(owner, row), value = bundle[type];
       if (!value) throw new ApiError(404, 'CREDENTIAL_NOT_AVAILABLE');
       return { accountId: row.account_id, mid: bundle.mid ?? null, type, value };
+    }),
+    exportCredentials: (owner: string, id: string) => operation(owner, async (): Promise<CredentialExportResponse> => {
+      const row = await repo.get(owner, id), bundle = unpack(owner, row);
+      const credentials = parseCredentials(JSON.stringify({ accountId: bundle.accountId, mid: bundle.mid,
+        stoken: bundle.stoken, ltoken: bundle.ltoken, cookieToken: bundle.cookieToken }));
+      return { credentials };
     }),
     unlink: (owner: string, id: string) => operation(owner, async () => { await repo.remove(owner, id); }),
   };

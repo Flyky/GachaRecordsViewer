@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { GameProfileSummary, ImportProfileReport, ImportResultResponse } from '@gacha/contracts';
-import { decimalId, resolveRawMetadata, type DecodedUigf, type ExportProfile, type ImportProfile, type ImportRecord, type RawMetadata } from '@gacha/uigf';
+import { decimalId, resolveRawMetadata, type DecodedUigf, type ExportProfile, type ImportProfile, type ImportRecord, type RawMetadata, type MetadataCatalog } from '@gacha/uigf';
 import { sql } from 'drizzle-orm';
 import type { ProfileRow } from './repositories.js';
 import type { DatabaseConnection, SqlExecutor } from './types.js';
@@ -21,7 +21,7 @@ function recordFromRow(row: RecordRow): ImportRecord {
 async function records(tx: SqlExecutor, owner: string, profile: string) {
   return (await tx.query<RecordRow>(sql`SELECT * FROM gacha_records WHERE owner_id=${owner} AND profile_id=${profile}`)).map(recordFromRow);
 }
-function mergeMetadata(existing: ImportRecord, incoming: ImportRecord) {
+function mergeMetadata(existing: ImportRecord, incoming: ImportRecord, catalog?: MetadataCatalog) {
   const metadata = { ...existing.metadata };
   let warning = false, changed = false;
   for (const key of ['name', 'item_type', 'rank_type', 'count'] as const) {
@@ -38,10 +38,10 @@ function mergeMetadata(existing: ImportRecord, incoming: ImportRecord) {
     }
   }
   if (!changed) return { record: existing, changed, warning };
-  const effective = resolveRawMetadata(existing.itemId, metadata);
+  const effective = resolveRawMetadata(existing.itemId, metadata, catalog);
   return { record: { ...existing, metadata, name: effective.name, itemType: effective.itemType, rank: effective.rank }, changed, warning };
 }
-async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profileId?: string) {
+async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profileId?: string, catalog?: MetadataCatalog) {
   const target = profileId ? sql` AND id=${profileId}` : sql``;
   const matches = await tx.query<ProfileRow>(sql`SELECT * FROM game_profiles WHERE owner_id=${owner} AND game='hk4e' AND uid=${input.uid} ${target} ORDER BY id`);
   const profile = matches[0];
@@ -74,7 +74,7 @@ async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profil
       continue;
     }
     report.duplicates++;
-    const merged = mergeMetadata(existing, incoming);
+    const merged = mergeMetadata(existing, incoming, catalog);
     if (merged.warning) report.metadataWarnings++;
     if (merged.changed) { combined.set(key, merged.record); if (originalIds.has(key)) updates.add(key); }
   }
@@ -83,9 +83,9 @@ async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profil
 }
 
 /** Called inside the sync transaction, reusing UIGF's critical-field and metadata merge rules. */
-export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile: ProfileRow, incoming: ImportRecord[]) {
+export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile: ProfileRow, incoming: ImportRecord[], catalog?: MetadataCatalog) {
   const entry = await plan(tx, owner, { index: 0, uid: profile.uid, timezone: profile.timezone, lang: 'zh-cn', records: incoming,
-    metadataIncomplete: 0, metadataConflicts: 0 }, profile.id);
+    metadataIncomplete: 0, metadataConflicts: 0 }, profile.id, catalog);
   if (entry.report.conflicts || entry.report.blockers.length) throw new ImportError('RECORD_CONFLICT');
   for (const record of entry.inserts) await tx.execute(sql`INSERT INTO gacha_records
     (owner_id, profile_id, record_id, item_id, gacha_type, pity_group, time_local, time_utc, name, item_type, rank, source, metadata_json)
@@ -98,7 +98,7 @@ export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile
 }
 
 /** One owner lock serializes preview/merge/export; every read and write also scopes its SQL by owner. */
-export function uigfRepository(connection: DatabaseConnection) {
+export function uigfRepository(connection: DatabaseConnection, catalog?: MetadataCatalog) {
   async function transaction<T>(owner: string, work: (tx: SqlExecutor) => Promise<T>) {
     return connection.transaction(async (tx) => {
       if (connection.kind === 'postgres') await tx.execute(sql`SELECT pg_advisory_xact_lock(72407001, hashtext(${owner}))`);
@@ -114,14 +114,14 @@ export function uigfRepository(connection: DatabaseConnection) {
   return {
     preview: (owner: string, input: DecodedUigf) => transaction(owner, async (tx) => {
       const result: ImportProfileReport[] = [];
-      for (const profile of input.profiles) result.push((await plan(tx, owner, profile)).report);
+      for (const profile of input.profiles) result.push((await plan(tx, owner, profile, undefined, catalog)).report);
       return result;
     }),
     import: (owner: string, input: DecodedUigf, indexes: number[], states: PreviewState[], fileHash: string): Promise<ImportResultResponse> => transaction(owner, async (tx) => {
       if (!indexes.length || new Set(indexes).size !== indexes.length || indexes.some((index) => !Number.isInteger(index) || !input.profiles[index])) throw new ImportError('INVALID_SELECTION');
       const plans: Awaited<ReturnType<typeof plan>>[] = [];
       for (const index of indexes) {
-        const current = await plan(tx, owner, input.profiles[index]!);
+        const current = await plan(tx, owner, input.profiles[index]!, undefined, catalog);
         const state = states.find((entry) => entry.index === index);
         if (!state || state.targetProfileId !== current.report.targetProfileId || state.dataVersion !== current.report.dataVersion) throw new ImportError('PREVIEW_STALE');
         plans.push(current);
@@ -153,15 +153,19 @@ export function uigfRepository(connection: DatabaseConnection) {
       return { uid, timezone, lang, records };
     },
     list: (owner: string): Promise<GameProfileSummary[]> => transaction(owner, async (tx) => {
-      const rows = await tx.query<ProfileRow & { record_count: string | number; first_time: string | null; last_time: string | null; incomplete: string | number }>(sql`
+      const rows = await tx.query<ProfileRow & { record_count: string | number; first_time: string | null; last_time: string | null }>(sql`
         SELECT p.*, (SELECT count(*) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS record_count,
         (SELECT min(time_local) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS first_time,
-        (SELECT max(time_local) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS last_time,
-        (SELECT count(*) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id AND (name IS NULL OR item_type IS NULL OR rank IS NULL)) AS incomplete
+        (SELECT max(time_local) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS last_time
         FROM game_profiles p WHERE owner_id=${owner} AND game='hk4e' ORDER BY uid, region, id`);
+      const metadataRows = await tx.query<{ profile_id: string; item_id: string; metadata_json: string }>(sql`SELECT profile_id,item_id,metadata_json FROM gacha_records WHERE owner_id=${owner}`);
+      const incomplete = new Map<string, number>();
+      for (const row of metadataRows) if (resolveRawMetadata(row.item_id, JSON.parse(row.metadata_json) as RawMetadata, catalog).incomplete) {
+        incomplete.set(row.profile_id, (incomplete.get(row.profile_id) ?? 0) + 1);
+      }
       return rows.map((row) => ({ id: row.id, uid: row.uid, game: 'hk4e', region: row.region, timezone: row.timezone, lang: row.lang,
         historyStatus: row.history_status, dataVersion: row.data_version, recordCount: Number(row.record_count),
-        firstTime: row.first_time, lastTime: row.last_time, metadataIncomplete: Number(row.incomplete) }));
+        firstTime: row.first_time, lastTime: row.last_time, metadataIncomplete: incomplete.get(row.id) ?? 0 }));
     }),
   };
 }

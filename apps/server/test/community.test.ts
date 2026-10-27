@@ -103,6 +103,15 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       expect((await post(`${accountUrl(account.id)}/validate`, {})).statusCode).toBe(200);
       expect(new Set(calls.map((call) => call.device)).size).toBe(1);
       expect(calls.some((call) => /createQR|queryQR|getGachaLog/.test(call.path))).toBe(false);
+      const beforeExport = calls.length;
+      expect((await post(`${accountUrl(account.id)}/export-credentials`, {}, b)).statusCode).toBe(404);
+      expect((await post(`${accountUrl(account.id)}/export-credentials`, {}, admin)).statusCode).toBe(401);
+      expect((await app.inject({ method: 'POST', url: `${accountUrl(account.id)}/export-credentials`, payload: {}, headers: { origin, cookie: a.cookie } })).statusCode).toBe(403);
+      const exported = await post(`${accountUrl(account.id)}/export-credentials`, {});
+      expect(exported.headers['cache-control']).toBe('no-store');
+      expect(exported.json()).toEqual({ credentials: { accountId: '12345', mid: 'fixture-mid', stoken: secret, ltoken: `ltoken:${secret}`, cookieToken: `cookie:${secret}` } });
+      expect(calls.length).toBe(beforeExport);
+      expect((await post('/api/community/accounts', { input: JSON.stringify(exported.json().credentials) }, b)).statusCode).toBe(201);
       expect(logs).not.toMatch(/fixture-private|fixture-mid|identity_code|cookie_token=/);
     });
     it('preserves the old set on failed replacement, marks expired validation safely, stops at challenges and unlinks without deleting history', async () => {

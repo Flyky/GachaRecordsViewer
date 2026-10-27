@@ -6,17 +6,18 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { AuthOptions } from './auth/routes.js';
 import { ApiError, equalSecret } from './auth/security.js';
 
-interface PreviewTicket { owner: string; fileHash: string; expiresAt: number; states: PreviewState[] }
+interface PreviewTicket { owner: string; fileHash: string; expiresAt: number; states: PreviewState[]; dictionaryVersion: string }
 const documentProperty = { type: 'object' };
 const bodySchema = (extra: Record<string, unknown> = {}) => ({
   type: 'object', required: ['document', ...Object.keys(extra)], additionalProperties: false,
   properties: { document: documentProperty, ...extra },
 });
 export function registerUigf(app: FastifyInstance, options: AuthOptions) {
-  const repo = uigfRepository(options.connection), now = options.now ?? Date.now;
+  const repo = uigfRepository(options.connection, options.metadataCatalog), now = options.now ?? Date.now;
   const key = createHmac('sha256', options.credentialKey).update('uigf-preview-v1').digest();
   app.addHook('onClose', async () => { key.fill(0); });
   const signature = (payload: string) => createHmac('sha256', key).update(payload).digest('base64url');
+  const dictionaryVersion = () => options.metadataCatalog ? `${options.metadataCatalog.source.name}@${options.metadataCatalog.source.version}` : 'bundled';
   const fingerprint = (document: unknown) => createHash('sha256').update(JSON.stringify(document)).digest('hex');
   function sign(ticket: PreviewTicket) {
     const payload = Buffer.from(JSON.stringify(ticket)).toString('base64url');
@@ -28,6 +29,7 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
     const ticket = JSON.parse(Buffer.from(payload, 'base64url').toString()) as PreviewTicket;
     if (ticket.owner !== owner || ticket.fileHash !== fileHash) throw new ApiError(400, 'INVALID_PREVIEW_TOKEN');
     if (ticket.expiresAt <= now()) throw new ApiError(409, 'PREVIEW_EXPIRED');
+    if (ticket.dictionaryVersion !== dictionaryVersion()) throw new ApiError(409, 'PREVIEW_STALE');
     return ticket;
   }
   async function respond<T>(reply: FastifyReply, action: () => Promise<T>) {
@@ -43,11 +45,11 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
   app.post<{ Body: { document: unknown } }>('/api/uigf/preview', {
     onRequest: app.authenticateUser, bodyLimit: MAX_UPLOAD_BYTES, schema: { body: bodySchema() },
   }, (request, reply) => respond(reply, async (): Promise<ImportPreviewResponse> => {
-    const owner = request.principal!.user!.id, input = decodeUigf(request.body.document);
+    const owner = request.principal!.user!.id, input = decodeUigf(request.body.document, options.metadataCatalog);
     const profiles = await repo.preview(owner, input), fileHash = fingerprint(request.body.document), expiresAt = now() + 15 * 60_000;
     return { version: input.version, fileHash, expiresAt, profiles, skippedBlocks: input.skippedBlocks,
       warnings: input.profiles.length ? [] : ['NO_GENSHIN_DATA'],
-      previewToken: sign({ owner, fileHash, expiresAt, states: profiles.map(({ index, targetProfileId, dataVersion }) => ({ index, targetProfileId, dataVersion })) }) };
+      previewToken: sign({ owner, fileHash, expiresAt, dictionaryVersion: dictionaryVersion(), states: profiles.map(({ index, targetProfileId, dataVersion }) => ({ index, targetProfileId, dataVersion })) }) };
   }));
   app.post<{ Body: { document: unknown; previewToken: string; profileIndexes: number[] } }>('/api/uigf/import', {
     onRequest: app.authenticateUser, bodyLimit: MAX_UPLOAD_BYTES,
@@ -56,7 +58,7 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
   }, (request, reply) => respond(reply, async () => {
     const owner = request.principal!.user!.id, { document, previewToken, profileIndexes } = request.body;
     const fileHash = fingerprint(document), ticket = verify(previewToken, owner, fileHash);
-    return repo.import(owner, decodeUigf(document), profileIndexes, ticket.states, fileHash);
+    return repo.import(owner, decodeUigf(document, options.metadataCatalog), profileIndexes, ticket.states, fileHash);
   }));
   app.get('/api/profiles', { onRequest: app.authenticateUser }, (request, reply) => respond(reply, async () => ({ profiles: await repo.list(request.principal!.user!.id) })));
   app.get<{ Params: { profileId: string }; Querystring: { version?: string } }>('/api/uigf/export/:profileId', {
