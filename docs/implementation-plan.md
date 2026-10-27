@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R11 三组统计分析页面已完成，核心交互与跨档案隔离通过浏览器验证。
+当前阶段：R12 米游社凭证与账号管理后端代码完成，两库模拟上游契约通过，新增真实上游校验待实测。
 
-下一轮：R12 米游社凭证与账号管理后端。
+下一轮：R13 内置 App 扫码授权后端。
 
 ## 1. 执行方式
 
@@ -23,6 +23,7 @@
 - commit 默认保存在本地 `main`，以远端已有提交为基础。用户要求的是每轮 commit；push、PR、远程发布与版本标签不作为自动执行步骤，需用户另外安排。
 - 用户后续说“继续”时，先读取最新状态，再推进下一项未完成任务；如有待本人操作的项，保留其状态并推进不依赖它的下一项。
 - 用户自 R04 起要求减少验证与消耗：优先只检查本轮改动的类型、静态规则和关键行为；已有通过结果不重复扩测。全量构建、浏览器、双数据库验证仅在实际改动需要或联合验收时执行，明确记录未重跑的范围。
+- 用户自 R12 起要求扫码测试放在最后，询问并收到回复后才创建二维码和轮询；允许将授权 Token 本地加密保存以供后续测试复用，失效后再请求重新授权。
 
 ## 2. 第一版范围
 
@@ -63,7 +64,7 @@
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
-| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 未开始 |
+| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成 / 待实测：新增上游校验 |
 | R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 未开始 |
 | R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 未开始 |
 | R15 | 米游社页面、Token 与刷新交互 | R05、R12、R13、R14 | `feat: add Miyoushe account token and sync screens` | 未开始 |
@@ -344,3 +345,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：前端类型、零警告 lint、构建通过；Edge 合成数据流程覆盖数量与月度对账、图例／实际缩放、默认筛选／闰日／0 抽 hover、池清除、版本重取、迟到响应、空档案、账号隔离、resize 和 390px 布局，无页面脚本异常。修复检查发现的图例与 tooltip 定位问题。
 - 临时服务验证后关闭，未读取真实 JSON；后端／Schema 未变，未重跑无关全量或双库验证。详情见 [analysis-pages.md](analysis-pages.md)。
 - 下一轮：R12；本地 commit，不自动 push。
+
+### R12：米游社凭证与账号后端，2026-10-27
+
+- 实现当前用户社区账号列表／详情、Cookie／JSON 手动凭证解析、校验、整组替换、本人 reveal 和解绑 API。SToken、LToken、Cookie Token 分别反映能力，缺少 SToken 不宣称祈愿可用。
+- 核对固定版本社区源码，补充 LToken 身份校验与签名差异；角色接口使用 Cookie Token，验证挑战立即停止。仅显式指定本人的绑定档案时生成并丢弃一次 AuthKey，状态明确限定为未读取历史。
+- Token 与设备上下文通过 AES-256-GCM 和持久化主密钥保存，AAD 绑定所有者／账号／凭证版本；默认响应遮挡，日志不记录凭证。重启可解密复用，真实 Token 尚未保存。
+- 角色绑定补全既有离线档案 region，保留历史；绑定冲突整组回滚。替换前验证，失败保留旧值；解绑或角色移除取消本人相关未完成任务，解绑删除凭证并保留历史。owner 锁与凭证版本拒绝并发迟到覆盖。
+- 精简验证：73 项定向测试通过，含 provider 回归／新校验、加密、SQLite 与真实 PostgreSQL 各 5 组契约；受影响类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止，没有重跑前端／浏览器或无关全量。
+- 未读取真实 JSON、调用真实米游社账号或开始扫码。新增实时校验保留待实测，不能沿用 R02 样本结论宣布全部可用。遵照用户要求，后续扫码安排在最后并先询问，可加密持久化授权供后续测试使用。
+- 接口与范围见 [community-api.md](community-api.md)。无 Schema 迁移，扫码、刷新和页面分别留给 R13／R14／R15；下一轮 R13，本地 commit，不自动 push。

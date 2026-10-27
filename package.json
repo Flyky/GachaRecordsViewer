@@ -9,8 +9,8 @@
     "pnpm": ">=11 <12"
   },
   "scripts": {
-    "dev": "pnpm build:backend-deps && concurrently --kill-others --names contracts,core,uigf,db,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/gacha-core dev\" \"pnpm --filter @gacha/uigf dev\" \"pnpm --filter @gacha/db dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
-    "build:backend-deps": "pnpm --filter @gacha/db... build",
+    "dev": "pnpm build:backend-deps && concurrently --kill-others --names contracts,core,providers,uigf,db,api,web \"pnpm --filter @gacha/contracts dev\" \"pnpm --filter @gacha/gacha-core dev\" \"pnpm --filter @gacha/providers dev\" \"pnpm --filter @gacha/uigf dev\" \"pnpm --filter @gacha/db dev\" \"pnpm --filter @gacha/server dev\" \"pnpm --filter @gacha/web dev\"",
+    "build:backend-deps": "pnpm --filter @gacha/db... --filter @gacha/providers build",
     "build": "pnpm -r build",
     "start": "pnpm --filter @gacha/server start",
     "typecheck": "pnpm build:backend-deps && pnpm -r typecheck",

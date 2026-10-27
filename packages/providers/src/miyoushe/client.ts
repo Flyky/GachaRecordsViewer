@@ -6,6 +6,7 @@ const endpoints = {
   createQr: `${passport}/account/ma-cn-passport/app/createQRLogin`,
   queryQr: `${passport}/account/ma-cn-passport/app/queryQRLoginStatus`,
   ltoken: `${passport}/account/auth/api/getLTokenBySToken`,
+  verifyLtoken: 'https://passport-api-v4.mihoyo.com/account/ma-cn-session/web/verifyLtoken',
   cookieToken: `${passport}/account/auth/api/getCookieAccountInfoBySToken`,
   roles: 'https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookie',
   authkey: 'https://api-takumi.mihoyo.com/binding/api/genAuthKey',
@@ -127,7 +128,7 @@ export class MiyousheClient {
     const body = options.body === undefined ? '' : JSON.stringify(options.body);
     const headers = endpoint === 'history'
       ? { 'user-agent': `GachaRecordsViewer R02` } as Record<string, string>
-      : this.headers(body, sortedQuery(query), options.mode ?? 'normal');
+      : this.headers(endpoint === 'verifyLtoken' && options.body ? sortedQuery(options.body as Record<string, string>) : body, sortedQuery(query), options.mode ?? 'normal');
     if (options.cookie) headers.cookie = cookieHeader(options.cookie);
     if (options.clientType) headers['x-rpc-client_type'] = options.clientType;
     const timeout = AbortSignal.timeout(this.timeoutMs);
@@ -209,11 +210,20 @@ export class MiyousheClient {
     };
   }
 
-  async getLToken(credentials: Credentials): Promise<void> {
+  async getLToken(credentials: Credentials): Promise<string> {
     const data = await this.request('ltoken', {
       query: { stoken: credentials.stoken }, cookie: this.sessionCookie(credentials),
     });
-    text(data.ltoken, 'ltoken');
+    return text(data.ltoken, 'ltoken');
+  }
+
+  async verifyLToken(accountId: string, ltoken: string): Promise<{ accountId: string; mid: string }> {
+    const data = await this.request('verifyLtoken', { body: { ltoken: text(ltoken, 'verifyLtoken') },
+      cookie: { ltuid: identifier(accountId, 'verifyLtoken'), ltoken: text(ltoken, 'verifyLtoken') } });
+    const user = object(data.user_info, 'verifyLtoken');
+    const verifiedId = identifier(user.aid, 'verifyLtoken');
+    if (verifiedId !== accountId) throw new ProbeError('role_mismatch', 'verifyLtoken');
+    return { accountId: verifiedId, mid: text(user.mid, 'verifyLtoken') };
   }
 
   async getCookieToken(credentials: Credentials): Promise<string> {
@@ -225,8 +235,12 @@ export class MiyousheClient {
   }
 
   async getRoles(credentials: Credentials, cookieToken: string): Promise<GameRole[]> {
-    const data = await this.request('roles', { cookie: { account_id: credentials.accountId, cookie_token: cookieToken } });
-    if (!Array.isArray(data.list)) throw new ProbeError('protocol', 'roles');
+    return this.listRoles(credentials.accountId, cookieToken);
+  }
+
+  async listRoles(accountId: string, cookieToken: string): Promise<GameRole[]> {
+    const data = await this.request('roles', { cookie: { account_id: identifier(accountId, 'roles'), cookie_token: text(cookieToken, 'roles') } });
+    if (!Array.isArray(data.list) || data.list.length > 64) throw new ProbeError('protocol', 'roles');
     return data.list.map((value: unknown) => object(value, 'roles'))
       .filter((role) => role.game_biz === 'hk4e_cn')
       .map((role) => {

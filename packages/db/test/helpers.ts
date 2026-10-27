@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
+export { sql } from 'drizzle-orm';
 
 const testRoot = fileURLToPath(new URL('../../../test-results/', import.meta.url));
 export async function temporaryDirectory() {

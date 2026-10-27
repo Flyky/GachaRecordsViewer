@@ -4,26 +4,29 @@ import { fileURLToPath } from 'node:url';
 import fastifyStatic from '@fastify/static';
 import { APP_NAME, type HealthResponse } from '@gacha/contracts';
 import type { DatabaseConnection } from '@gacha/db';
-import Fastify from 'fastify';
+import Fastify, { type FastifyServerOptions } from 'fastify';
 import { registerAuth, type AuthOptions } from './auth/routes.js';
 import { ApiError } from './auth/security.js';
 import { registerUigf } from './uigf.js';
 import { registerRecords } from './records/routes.js';
 import { registerAnalysis } from './analysis/routes.js';
+import { registerCommunity } from './community/routes.js';
+import type { CommunityOptions } from './community/service.js';
 
 interface AppOptions {
-  logger?: boolean;
+  logger?: FastifyServerOptions['logger'];
   serveWeb?: boolean;
   webRoot?: string;
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
+  community?: CommunityOptions;
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
 
 export async function buildApp(options: AppOptions = {}) {
   const app = Fastify({
-    logger: options.logger ? { serializers: { req: (request) => ({ method: request.method, url: request.url.split('?')[0] ?? '/', remoteAddress: request.ip }) },
+    logger: options.logger ? { ...(typeof options.logger === 'object' ? options.logger : {}), serializers: { req: (request) => ({ method: request.method, url: request.url.split('?')[0] ?? '/', remoteAddress: request.ip }) },
       redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'] } : false,
     ajv: { customOptions: { removeAdditional: false, coerceTypes: false } },
   });
@@ -43,6 +46,7 @@ export async function buildApp(options: AppOptions = {}) {
     registerUigf(app, options.auth);
     registerRecords(app, options.auth);
     registerAnalysis(app, options.auth);
+    registerCommunity(app, options.auth, options.community);
   }
 
   app.get<{ Reply: HealthResponse }>('/api/health', async () => ({

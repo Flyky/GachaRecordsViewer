@@ -5,3 +5,5 @@ export { PersistenceError } from './types.js';
 export type { DatabaseConfig, DatabaseConnection, InstallationState, SqlExecutor } from './types.js';
 export { uigfRepository, ImportError } from './imports.js';
 export type { PreviewState } from './imports.js';
+export { communityRepository, CommunityError } from './community.js';
+export type { StoredCommunity } from './community.js';

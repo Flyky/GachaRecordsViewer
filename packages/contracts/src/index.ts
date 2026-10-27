@@ -75,3 +75,21 @@ export interface DailyAnalysisResponse extends AnalysisContext {
   year: number; pool: RecordPool | null; calendarTimeZone: 'Asia/Shanghai'; availableYears: number[];
   days: { date: string; count: number }[]; total: number; maxDailyCount: number; hasRecords: boolean;
 }
+
+export type CredentialKind = 'stoken' | 'ltoken' | 'cookieToken';
+export interface CapabilityResult {
+  status: 'verified' | 'unverified' | 'missing' | 'invalid' | 'verification_required' | 'error' | 'authkey_verified';
+  checkedAt: string | null; code?: string;
+}
+export interface CommunityCapabilities {
+  identity: CapabilityResult; roles: CapabilityResult; wish: CapabilityResult & { profileId?: string };
+  tokens: Record<CredentialKind, CapabilityResult>;
+  lastValidation: CapabilityResult;
+}
+export interface CommunityAccount {
+  id: string; provider: 'cn'; accountId: string; capabilities: CommunityCapabilities;
+  credentials: { type: CredentialKind; present: boolean; maskedValue: string | null }[];
+  profiles: { id: string; uid: string; region: string; timezone: number }[];
+}
+export interface CommunityAccountsResponse { accounts: CommunityAccount[] }
+export interface CredentialRevealResponse { accountId: string; mid: string | null; type: CredentialKind; value: string }
