@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R09 完整记录查询 API 与页面已完成，两库查询与核心浏览器流程通过定向验证。
+当前阶段：R10 分析计算与接口已完成，两库分析结果通过定向验证。
 
-下一轮：R10 分析计算与接口。
+下一轮：R11 三组统计分析页面。
 
 ## 1. 执行方式
 
@@ -61,7 +61,7 @@
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 已完成 |
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 已完成 |
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
-| R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 未开始 |
+| R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 未开始 |
 | R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 未开始 |
 | R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 未开始 |
@@ -324,3 +324,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：21 项测试通过，包含 SQLite／真实 PostgreSQL 各三组查询 API 契约，以及本轮影响的领域／UIGF 测试；受影响类型、零警告 lint、后端及依赖构建、前端构建通过。Edge 合成数据流程验证筛选／分页／两项列／字色／UID 与账号隔离／迟到响应／390px 布局，无页面脚本异常。
 - 临时服务与 PostgreSQL 验证后关闭；没有读取真实 JSON、重跑其他后端全量或提前制作统计页面。
 - 下一轮：R10；本地 commit，不自动推送。
+
+### R10：分析计算与接口，2026-10-27
+
+- 按本轮用户要求先 push 一次，远端 `main` 从 R04 更新至 R09 的 `1438ff9`；R10 新代码随后独立本地提交，不再次推送。
+- 新增物品、月度、Daily 三个分析 API 和共享 DTO；按 ID 聚合物品，保留角色两栏／武器三栏、数量排序；元数据不确定或矛盾的物品单独提示，不塞入错误星级栏目。
+- 月度保留总抽数、五星数、常驻、角色活动、武器活动五条系列，跨年按月补零，新手／集录计入总数；未知星级保留总抽数并提示五星统计不完整。
+- Daily 返回全年 365／366 天，空日补零，默认全部池与 Asia/Shanghai 当前年，记录日期仍按游戏档案时区归属。年份列表覆盖历史、当前和请求年份。
+- 查询与分析复用领域适配器；同一事务快照读取记录及数据版本，响应带版本供 R11 检查一致性。无数据库 Schema 变更，无新的欧非或 UP 分析。接口和细节见 [analysis-api.md](analysis-api.md)。
+- 精简验证：20 项测试通过，包含纯计算、两库新分析契约与共享读取影响的查询／UIGF 仓储回归；受影响类型、零警告 lint、后端及依赖构建通过。独立 PostgreSQL 验证后停止，没有读取真实 JSON 或重跑前端／浏览器及无关全量。
+- 下一轮：R11；本地 commit，等待用户安排后续 push。

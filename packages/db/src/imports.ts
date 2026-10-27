@@ -86,6 +86,12 @@ export function uigfRepository(connection: DatabaseConnection) {
       return work(tx);
     });
   }
+  const snapshot = (owner: string, profileId: string) => transaction(owner, async (tx) => {
+    const profile = (await tx.query<ProfileRow>(sql`SELECT * FROM game_profiles WHERE owner_id=${owner} AND id=${profileId} AND game='hk4e'`))[0];
+    if (!profile) throw new ImportError('PROFILE_NOT_FOUND');
+    return { profileId: profile.id, dataVersion: profile.data_version, uid: profile.uid, timezone: profile.timezone, lang: profile.lang,
+      records: await records(tx, owner, profile.id) };
+  });
   return {
     preview: (owner: string, input: DecodedUigf) => transaction(owner, async (tx) => {
       const result: ImportProfileReport[] = [];
@@ -122,11 +128,11 @@ export function uigfRepository(connection: DatabaseConnection) {
         VALUES (${result.batchId}, ${owner}, ${fileHash}, 'completed', ${JSON.stringify(result)}, ${new Date().toISOString()})`);
       return result;
     }),
-    export: (owner: string, profileId: string): Promise<ExportProfile> => transaction(owner, async (tx) => {
-      const profile = (await tx.query<ProfileRow>(sql`SELECT * FROM game_profiles WHERE owner_id=${owner} AND id=${profileId} AND game='hk4e'`))[0];
-      if (!profile) throw new ImportError('PROFILE_NOT_FOUND');
-      return { uid: profile.uid, timezone: profile.timezone, lang: profile.lang, records: await records(tx, owner, profile.id) };
-    }),
+    snapshot,
+    export: async (owner: string, profileId: string): Promise<ExportProfile> => {
+      const { uid, timezone, lang, records } = await snapshot(owner, profileId);
+      return { uid, timezone, lang, records };
+    },
     list: (owner: string): Promise<GameProfileSummary[]> => transaction(owner, async (tx) => {
       const rows = await tx.query<ProfileRow & { record_count: string | number; first_time: string | null; last_time: string | null; incomplete: string | number }>(sql`
         SELECT p.*, (SELECT count(*) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS record_count,

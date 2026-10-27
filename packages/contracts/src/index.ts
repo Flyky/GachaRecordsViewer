@@ -58,3 +58,20 @@ export interface RecordPageResponse {
   page: number; pageSize: number; pageCount: number; records: RecordListItem[];
   totalsByPool: Partial<Record<RecordPool, number>>; metadataIncomplete: boolean;
 }
+
+export interface AnalysisMetadata { incompleteRecords: number; conflictRecords: number; unknownRankRecords: number }
+export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; historyCount: number; metadataIssues: AnalysisMetadata }
+export interface ItemStatistic { itemId: string; name: string | null; quantity: number }
+export interface ItemAnalysisResponse extends AnalysisContext {
+  itemType: 'character' | 'weapon'; order: 'asc' | 'desc'; selectedTypeCount: number; otherTypeCount: number;
+  groups: { rank: 3 | 4 | 5; total: number; items: ItemStatistic[] }[];
+  unclassified: { total: number; items: (ItemStatistic & { reasons: ('unknown-type' | 'unknown-rank' | 'conflicting-metadata' | 'unsupported-combination')[] })[] };
+}
+export interface MonthlyCounts { total: number; fiveStars: number; standard: number; characterEvent: number; weaponEvent: number }
+export interface MonthlyAnalysisResponse extends AnalysisContext {
+  months: (MonthlyCounts & { month: string })[]; totals: MonthlyCounts; fiveStarCountsIncomplete: boolean;
+}
+export interface DailyAnalysisResponse extends AnalysisContext {
+  year: number; pool: RecordPool | null; calendarTimeZone: 'Asia/Shanghai'; availableYears: number[];
+  days: { date: string; count: number }[]; total: number; maxDailyCount: number; hasRecords: boolean;
+}
