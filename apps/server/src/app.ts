@@ -13,6 +13,7 @@ import { registerAnalysis } from './analysis/routes.js';
 import { registerCommunity } from './community/routes.js';
 import type { CommunityOptions } from './community/service.js';
 import type { QrOptions } from './community/qr.js';
+import type { SyncOptions } from './community/sync.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -20,7 +21,7 @@ interface AppOptions {
   webRoot?: string;
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
-  community?: CommunityOptions & { qr?: QrOptions };
+  community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions };
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
@@ -42,12 +43,14 @@ export async function buildApp(options: AppOptions = {}) {
     app.log.error({ requestId: request.id }, 'Request failed');
     return reply.code(500).send({ error: { code: 'INTERNAL_ERROR' } });
   });
+  // Fastify runs close hooks in reverse order: stop workers before closing their database.
+  if (options.database) app.addHook('onClose', async () => { await options.database!.close(); });
   if (options.auth) {
     await registerAuth(app, options.auth);
     registerUigf(app, options.auth);
     registerRecords(app, options.auth);
     registerAnalysis(app, options.auth);
-    registerCommunity(app, options.auth, options.community);
+    await registerCommunity(app, options.auth, options.community);
   }
 
   app.get<{ Reply: HealthResponse }>('/api/health', async () => ({
@@ -55,7 +58,6 @@ export async function buildApp(options: AppOptions = {}) {
     service: APP_NAME,
   }));
 
-  if (options.database) app.addHook('onClose', async () => { await options.database!.close(); });
   app.get('/api/ready', async (_request, reply) => {
     try {
       if (!options.database) return reply.code(503).send({ status: 'unavailable', service: APP_NAME });

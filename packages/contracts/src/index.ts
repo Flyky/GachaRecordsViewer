@@ -101,3 +101,17 @@ export interface MiyousheQrSession {
 }
 export interface MiyousheQrResponse { session: MiyousheQrSession }
 export interface MiyousheQrCreateResponse extends MiyousheQrResponse { qrUrl: string }
+
+export type SyncPool = '100' | '200' | '301' | '302' | '500';
+export interface SyncPoolProgress {
+  pool: SyncPool; status: 'queued' | 'running' | 'retrying' | 'completed' | 'failed';
+  pages: number; fetched: number; inserted: number; duplicates: number; enriched: number; retries: number; authKeyRenewals: number;
+  code: string | null; stopReason: 'upstream_end' | 'checkpoint' | null;
+}
+export interface SyncJob {
+  id: string; profileId: string; status: 'queued' | 'running' | 'retrying' | 'completed' | 'partial' | 'failed' | 'cancelled' | 'interrupted';
+  mode: 'incremental' | 'full'; createdAt: string; updatedAt: string; finishedAt: string | null; retryOf: string | null;
+  failureCode: string | null; pools: SyncPoolProgress[];
+}
+export interface SyncJobResponse { job: SyncJob }
+export interface SyncJobsResponse { jobs: SyncJob[] }

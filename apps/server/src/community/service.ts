@@ -80,6 +80,15 @@ export function communityService(connection: DatabaseConnection, masterKey: Buff
   return {
     close: () => vault.destroy(),
     get: publicAccount,
+    wishCredentials: async (owner: string, profileId: string) => {
+      const profile = await repositories(connection).profiles.get(owner, profileId);
+      if (!profile || profile.game !== 'hk4e') throw new ApiError(404, 'PROFILE_NOT_FOUND');
+      if (!profile.community_account_id || !['cn_gf01', 'cn_qd01'].includes(profile.region) || profile.timezone !== 8) throw new ApiError(422, 'PROFILE_NOT_BOUND');
+      const row = await repo.get(owner, profile.community_account_id), bundle = unpack(owner, row);
+      if (!bundle.stoken || !bundle.mid) throw new ApiError(422, 'STOKEN_REQUIRED');
+      return { profile, communityAccountId: row.id, credentialId: row.credential_id!, device: bundle.device,
+        credentials: { accountId: bundle.accountId, mid: bundle.mid, stoken: bundle.stoken } };
+    },
     target: async (owner: string, id: string): Promise<CommunityTarget> => {
       const row = await repo.get(owner, id);
       if (!row.credential_id) throw new CommunityError('CREDENTIALS_CHANGED');

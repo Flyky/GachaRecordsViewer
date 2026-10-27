@@ -41,10 +41,14 @@ function mergeMetadata(existing: ImportRecord, incoming: ImportRecord) {
   const effective = resolveRawMetadata(existing.itemId, metadata);
   return { record: { ...existing, metadata, name: effective.name, itemType: effective.itemType, rank: effective.rank }, changed, warning };
 }
-async function plan(tx: SqlExecutor, owner: string, input: ImportProfile) {
-  const matches = await tx.query<ProfileRow>(sql`SELECT * FROM game_profiles WHERE owner_id=${owner} AND game='hk4e' AND uid=${input.uid} ORDER BY id`);
+async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profileId?: string) {
+  const target = profileId ? sql` AND id=${profileId}` : sql``;
+  const matches = await tx.query<ProfileRow>(sql`SELECT * FROM game_profiles WHERE owner_id=${owner} AND game='hk4e' AND uid=${input.uid} ${target} ORDER BY id`);
   const profile = matches[0];
-  const stored = profile ? await records(tx, owner, profile.id) : [];
+  const keys = input.records.map((record) => sql`${decimalId(record.id)}`);
+  const stored = !profile ? [] : !profileId ? await records(tx, owner, profile.id) : !keys.length ? []
+    : (await tx.query<RecordRow>(sql`SELECT * FROM gacha_records WHERE owner_id=${owner} AND profile_id=${profile.id}
+      AND ltrim(record_id, '0') IN (${sql.join(keys, sql`, `)})`)).map(recordFromRow);
   const originalIds = new Set(stored.map((row) => decimalId(row.id)));
   const combined = new Map(stored.map((row) => [decimalId(row.id), row]));
   const updates = new Set<string>(), inserts = new Set<string>();
@@ -76,6 +80,21 @@ async function plan(tx: SqlExecutor, owner: string, input: ImportProfile) {
   }
   report.inserted = inserts.size; report.enriched = updates.size;
   return { report, input, inserts: [...inserts].map((key) => combined.get(key)!), updates: [...updates].map((key) => combined.get(key)!) };
+}
+
+/** Called inside the sync transaction, reusing UIGF's critical-field and metadata merge rules. */
+export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile: ProfileRow, incoming: ImportRecord[]) {
+  const entry = await plan(tx, owner, { index: 0, uid: profile.uid, timezone: profile.timezone, lang: 'zh-cn', records: incoming,
+    metadataIncomplete: 0, metadataConflicts: 0 }, profile.id);
+  if (entry.report.conflicts || entry.report.blockers.length) throw new ImportError('RECORD_CONFLICT');
+  for (const record of entry.inserts) await tx.execute(sql`INSERT INTO gacha_records
+    (owner_id, profile_id, record_id, item_id, gacha_type, pity_group, time_local, time_utc, name, item_type, rank, source, metadata_json)
+    VALUES (${owner}, ${profile.id}, ${record.id}, ${record.itemId}, ${record.gachaType}, ${record.pityGroup}, ${record.timeLocal}, ${record.timeUtc},
+      ${record.name}, ${record.itemType}, ${record.rank}, 'miyoushe', ${JSON.stringify(record.metadata)})`);
+  for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
+    WHERE owner_id=${owner} AND profile_id=${profile.id} AND record_id=${record.id}`);
+  if (entry.inserts.length || entry.updates.length) await tx.execute(sql`UPDATE game_profiles SET data_version=data_version+1 WHERE owner_id=${owner} AND id=${profile.id}`);
+  return { inserted: entry.report.inserted, duplicates: entry.report.duplicates, enriched: entry.report.enriched };
 }
 
 /** One owner lock serializes preview/merge/export; every read and write also scopes its SQL by owner. */

@@ -75,6 +75,14 @@ describe('saved-history counters', () => {
 });
 
 describe('local metadata boundary', () => {
+  it('resolves absent upstream IDs only from an exact, unique name, language, type and rarity', () => {
+    expect(catalog.find('测试五星', 'zh-cn', 'character', 5)?.id).toBe('10');
+    expect(catalog.find('测试五星', 'en-us', 'character', 5)).toBeUndefined();
+    expect(catalog.find('测试五星', 'zh-cn', 'character', 4)).toBeUndefined();
+    expect(catalog.find('测试', 'zh-cn', 'character', 5)).toBeUndefined();
+    const ambiguous = createMetadataCatalog({ ...snapshot, items: [...snapshot.items, { ...snapshot.items[0], id: '11' }] });
+    expect(ambiguous.find('测试五星', 'zh-cn', 'character', 5)).toBeUndefined();
+  });
   it('fills missing fields, retains original-language names and leaves unknown IDs unknown', () => {
     expect(resolveMetadata('10', {}, catalog)).toMatchObject({ name: '测试五星', rank: 5, itemType: 'character', status: 'complete', provenance: { rank: 'dictionary' } });
     expect(resolveMetadata('10', { name: 'Test Five', lang: 'en-us' }, catalog)).toMatchObject({ name: '测试五星', nameLanguage: 'zh-cn' });

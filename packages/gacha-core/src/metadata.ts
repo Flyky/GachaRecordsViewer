@@ -6,6 +6,7 @@ export interface MetadataCatalog {
   source: Readonly<MetadataSource>;
   size: number;
   get(itemId: string): Readonly<ItemMetadata> | undefined;
+  find(name: string, language: string, itemType: ItemType, rank: Rank): Readonly<ItemMetadata> | undefined;
 }
 export interface MetadataHints {
   name?: string | null; lang?: string | null; itemType?: ItemType | null; rank?: Rank | null;
@@ -55,7 +56,12 @@ export function createMetadataCatalog(input: unknown): MetadataCatalog {
     if (!Object.keys(names).length) throw new GachaError('INVALID_METADATA');
     items.set(id, Object.freeze({ id, itemType: row.itemType, rank: row.rank, names: Object.freeze(names) }));
   }
-  return Object.freeze({ source: Object.freeze(origin), size: items.size, get: (itemId: string) => items.get(decimalId(itemId)) });
+  return Object.freeze({ source: Object.freeze(origin), size: items.size, get: (itemId: string) => items.get(decimalId(itemId)),
+    find: (name: string, language: string, itemType: ItemType, rank: Rank) => {
+      const matches = [...items.values()].filter((item) => item.names[language.toLowerCase()] === name && item.itemType === itemType && item.rank === rank);
+      return matches.length === 1 ? matches[0] : undefined;
+    },
+  });
 }
 
 /** Names can differ by language; conflicting rank/type are not silently trusted. */

@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R13 内置 App 扫码授权后端已完成，两库契约与本机真实扫码／重新授权／加密保存后重启复用均通过。
+当前阶段：R14 在线刷新任务后端已完成，两库定向契约与官服当前窗口完整遍历、重启保留、增量新增 0 条均通过。
 
-下一轮：R14 原神在线刷新任务后端，优先复用已加密保存的本机验证授权。
+下一轮：R15 米游社页面、Token 与刷新交互。
 
 ## 1. 执行方式
 
@@ -66,7 +66,7 @@
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
 | R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成；SToken 派生与复用随 R13 实测，独立 L/C 手动输入待实测 |
 | R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 已完成：本机正式扫码、重新授权与重启复用实测通过 |
-| R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 未开始 |
+| R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 已完成：官服当前窗口 1,373 条、重启与重复增量实测通过 |
 | R15 | 米游社页面、Token 与刷新交互 | R05、R12、R13、R14 | `feat: add Miyoushe account token and sync screens` | 未开始 |
 | R16 | 部署交付与第一版联合验收 | R01–R15 | `chore: package deployment and verify v1 acceptance` | 未开始 |
 
@@ -372,3 +372,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - Token 与设备上下文加密保留在忽略目录 `test-results/r13-live/` 的独立 SQLite 验证部署，后续测试优先复用；真实凭证和主密钥未提交，二维码图片已删除。
 - 没有请求 AuthKey／抽卡历史，渠道服／全池刷新和最终部署网络不继承本次授权验收结果；独立 LToken-only／Cookie Token-only 真实手动导入仍待验证。
 - 无代码修复，不重跑已通过测试；补充文档 commit 记录真人参与后才产生的验收结果，不改写既有代码提交、不自动 push。R13 已完成，下一轮 R14。
+
+### R14：原神在线刷新任务后端，2026-10-27
+
+- 实现本人档案创建刷新任务、最近任务列表、详情、取消、失败池重试 API；每档案一个活动任务，全局单 worker 和有界队列，按池持久化状态／页数／新增／重复／补全／重试结果。
+- 校验 SToken 身份和最新角色归属，按池生成内存 AuthKey，20 条 end_id 分页；请求至少间隔 1 秒，网络退避最多两次，过期 AuthKey 每池更新最多一次。首次遍历上游当前窗口，后续可信检查点增量；显式 full 可重扫。
+- 分页落库与任务进度同事务，复用 UIGF 冲突／元数据合并；保留上游不返回的本地记录。取消、解绑、角色变化与凭证替换后的迟到结果不能写入；重启将活动任务标记 interrupted，用户可重试未完成池。修正关闭顺序为先 worker 后数据库。
+- 实测发现上游 item_id 为空，补充本地字典的名称／语言／类型／星级精确唯一反查；未知／歧义返回 ITEM_ID_UNRESOLVED，拒绝猜 ID 和写入该页。默认响应与日志不含 Token、AuthKey、设备或原始上游数据。
+- 精简验证分阶段累计 59 个不同用例通过，涵盖 provider／领域新分支、两库刷新／UIGF 仓储及扫码回归；受影响类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止，未重跑前端／浏览器或无关全量。
+- 复用 R13 加密授权，未扫码；官服 `10***44` 五池 full 遍历共 1,373 条（常驻 154、角色 1,105、武器 114，新手／集录为空），重启后保留；再次增量校验 60 条重复，新增／补全均为 0。1,373 条 UIGF v4.0 导出校验通过。当前窗口不代表账号全部历史，不外推渠道服、国际服和最终部署网络。
+- 真实授权与记录保留于忽略的独立本机验证库，未读取参考 JSON、未做旧 JSON 迁移，无 Schema 迁移。接口见 [sync-api.md](sync-api.md)；下一轮 R15 页面，本地 commit，不自动 push。

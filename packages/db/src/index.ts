@@ -7,3 +7,5 @@ export { uigfRepository, ImportError } from './imports.js';
 export type { PreviewState } from './imports.js';
 export { communityRepository, CommunityError } from './community.js';
 export type { StoredCommunity, CredentialAuthorization } from './community.js';
+export { syncRepository, SyncError, syncState, publicJob } from './sync.js';
+export type { StoredJob, SyncState, PoolState } from './sync.js';
