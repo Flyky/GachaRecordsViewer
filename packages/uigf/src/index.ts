@@ -1,5 +1,5 @@
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { compareIds, decimalId, gameTime, genshinMetadata, pityGroup, resolveMetadata, type ItemType, type Rank } from '@gacha/gacha-core';
+import { compareIds, decimalId, gameTime, genshinMetadata, pityGroup, resolveMetadata, type ItemType, type Rank, type MetadataHints } from '@gacha/gacha-core';
 import v40 from './schemas/v4.0.json' with { type: 'json' };
 import v41 from './schemas/v4.1.json' with { type: 'json' };
 import v42 from './schemas/v4.2.json' with { type: 'json' };
@@ -51,14 +51,17 @@ function itemType(value: string | undefined): ItemType | undefined {
   if (value && ['武器', 'weapon'].includes(value.toLowerCase())) return 'weapon';
   return undefined;
 }
-export function resolveRawMetadata(itemId: string, metadata: RawMetadata) {
+export function rawMetadataHints(metadata: RawMetadata): MetadataHints {
   const rank = ['3', '4', '5'].includes(metadata.rank_type ?? '') ? Number(metadata.rank_type) as Rank : undefined;
   const type = itemType(metadata.item_type);
-  const resolved = resolveMetadata(itemId, { ...(metadata.name ? { name: metadata.name } : {}),
-    ...(metadata.lang ? { lang: metadata.lang } : {}), ...(rank ? { rank } : {}), ...(type ? { itemType: type } : {}) }, genshinMetadata, metadata.lang ?? 'zh-cn');
-  const unknownRank = !!metadata.rank_type && rank === undefined;
-  return { name: resolved.name, itemType: resolved.itemType, rank: unknownRank ? null : resolved.rank,
-    incomplete: resolved.status !== 'complete' || unknownRank, conflict: !!resolved.conflicts.length || unknownRank };
+  return { ...(metadata.name ? { name: metadata.name } : {}), ...(metadata.lang ? { lang: metadata.lang } : {}),
+    ...(rank ? { rank } : {}), ...(type ? { itemType: type } : {}),
+    ...(metadata.rank_type && rank === undefined ? { untrustedFields: ['rank'] } : {}) };
+}
+export function resolveRawMetadata(itemId: string, metadata: RawMetadata) {
+  const resolved = resolveMetadata(itemId, rawMetadataHints(metadata), genshinMetadata, metadata.lang ?? 'zh-cn');
+  return { name: resolved.name, itemType: resolved.itemType, rank: resolved.rank,
+    incomplete: resolved.status !== 'complete', conflict: !!resolved.conflicts.length };
 }
 export function decodeUigf(input: unknown): DecodedUigf {
   const document = object(input);

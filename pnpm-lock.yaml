@@ -53,6 +53,9 @@ importers:
       '@gacha/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@gacha/gacha-core':
+        specifier: workspace:*
+        version: link:../../packages/gacha-core
       '@gacha/uigf':
         specifier: workspace:*
         version: link:../../packages/uigf

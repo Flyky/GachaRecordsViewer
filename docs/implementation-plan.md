@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R08 数据管理与多 UID 页面已完成，核心浏览器流程通过定向验证。
+当前阶段：R09 完整记录查询 API 与页面已完成，两库查询与核心浏览器流程通过定向验证。
 
-下一轮：R09 完整记录查询 API 与页面。
+下一轮：R10 分析计算与接口。
 
 ## 1. 执行方式
 
@@ -60,7 +60,7 @@
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 已完成 |
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 已完成 |
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 已完成 |
-| R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 未开始 |
+| R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 未开始 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 未开始 |
 | R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 未开始 |
@@ -314,3 +314,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：前端类型、零警告 lint、前端生产构建通过；Edge 隔离浏览器流程覆盖上传／选择／重复、切换和恢复、下载记录核对、冲突／空档案／失效预览、A/B 同 UID 隔离与延迟响应，以及 390px 无横向溢出、无页面脚本异常。
 - 内置浏览器工具启动失败后使用本机 Edge；合成账号和临时 SQLite 未涉及真实 JSON，临时服务验证后关闭。未重跑后端全量或双数据库验证，Schema 与后端没有改动。使用说明见 [data-management.md](data-management.md)。
 - 下一轮：R09；本地 commit，不自动推送。
+
+### R09：完整记录查询 API 与页面，2026-10-27
+
+- 新增当前用户和档案限定的查询 API 与 `/records` 页面：时间段、五类卡池多选、角色／武器多选、3–5 星多选、字面名称子串、时间正倒序，最近一周／一月／三月快捷项和 20/50/100/200 服务端分页、跳页与总量。
+- 先从完整历史计算组内累计和五星间隔，再筛选、排序和分页；`301/400` 共享计数，保留原始池名称。次数列独立开关，名称按星级着色；首段显示可能不完整，未知或冲突星级不提供确定保底值。
+- 提取原始元数据提示适配，领域层支持显式不可信字段，避免合法缺省字段与明确无效星级都被当成可用字典补全的缺省。没有增加永久计数缓存或更改数据库 Schema。
+- 切换 UID 清空筛选并重新读取，迟到请求不覆盖新档案；筛选应用后回第一页，分页边界、空结果、无档案、网络和非法日期均有处理。接口与规则见 [record-query.md](record-query.md)。
+- 精简验证：21 项测试通过，包含 SQLite／真实 PostgreSQL 各三组查询 API 契约，以及本轮影响的领域／UIGF 测试；受影响类型、零警告 lint、后端及依赖构建、前端构建通过。Edge 合成数据流程验证筛选／分页／两项列／字色／UID 与账号隔离／迟到响应／390px 布局，无页面脚本异常。
+- 临时服务与 PostgreSQL 验证后关闭；没有读取真实 JSON、重跑其他后端全量或提前制作统计页面。
+- 下一轮：R10；本地 commit，不自动推送。

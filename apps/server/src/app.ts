@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import { registerAuth, type AuthOptions } from './auth/routes.js';
 import { ApiError } from './auth/security.js';
 import { registerUigf } from './uigf.js';
+import { registerRecords } from './records/routes.js';
 
 interface AppOptions {
   logger?: boolean;
@@ -39,6 +40,7 @@ export async function buildApp(options: AppOptions = {}) {
   if (options.auth) {
     await registerAuth(app, options.auth);
     registerUigf(app, options.auth);
+    registerRecords(app, options.auth);
   }
 
   app.get<{ Reply: HealthResponse }>('/api/health', async () => ({

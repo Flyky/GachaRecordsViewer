@@ -7,7 +7,11 @@ export interface MetadataCatalog {
   size: number;
   get(itemId: string): Readonly<ItemMetadata> | undefined;
 }
-export interface MetadataHints { name?: string | null; lang?: string | null; itemType?: ItemType | null; rank?: Rank | null }
+export interface MetadataHints {
+  name?: string | null; lang?: string | null; itemType?: ItemType | null; rank?: Rank | null;
+  /** An explicitly invalid source value must not silently fall back to the dictionary. */
+  untrustedFields?: readonly ('rank' | 'itemType')[];
+}
 export type MetadataField = 'name' | 'itemType' | 'rank';
 export interface ResolvedMetadata {
   name: string | null;
@@ -70,8 +74,8 @@ export function resolveMetadata(itemId: string, hints: MetadataHints, catalog: M
     name = item.names[fallback]!; nameLanguage = fallback; nameSource = 'dictionary';
   }
   const conflicts: MetadataField[] = [];
-  const rankConflict = hints.rank != null && item && hints.rank !== item.rank;
-  const typeConflict = hints.itemType != null && item && hints.itemType !== item.itemType;
+  const rankConflict = hints.untrustedFields?.includes('rank') || hints.rank != null && item && hints.rank !== item.rank;
+  const typeConflict = hints.untrustedFields?.includes('itemType') || hints.itemType != null && item && hints.itemType !== item.itemType;
   if (rankConflict) conflicts.push('rank');
   if (typeConflict) conflicts.push('itemType');
   const rank = rankConflict ? null : hints.rank ?? item?.rank ?? null;

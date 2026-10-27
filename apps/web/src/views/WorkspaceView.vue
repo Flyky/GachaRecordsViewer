@@ -49,10 +49,12 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
         <div class="nav-label">
           祈愿记录
         </div>
-        <span
-          class="nav-pending"
-          aria-disabled="true"
-        ><span aria-hidden="true">☷</span>查询记录<small>即将开放</small></span>
+        <RouterLink
+          to="/records"
+          active-class="active"
+        >
+          <span aria-hidden="true">☷</span>查询记录
+        </RouterLink>
         <span
           class="nav-pending"
           aria-disabled="true"
@@ -79,7 +81,7 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
     </aside>
     <div class="workspace-body">
       <header class="workspace-header">
-        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : '概览' }}</span>
+        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : route.path === '/records' ? '查询记录' : '概览' }}</span>
         <div class="user-actions">
           <span
             class="avatar"

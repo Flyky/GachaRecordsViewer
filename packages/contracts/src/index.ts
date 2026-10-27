@@ -38,3 +38,23 @@ export interface GameProfileSummary {
   firstTime: string | null; lastTime: string | null; metadataIncomplete: number;
 }
 export interface ProfilesResponse { profiles: GameProfileSummary[] }
+
+export const RECORD_POOLS = ['100', '200', '301', '302', '500'] as const;
+export type RecordPool = typeof RECORD_POOLS[number];
+export const RECORD_PAGE_SIZES = [20, 50, 100, 200] as const;
+export interface RecordFilters {
+  from?: string; to?: string; pools?: RecordPool[]; itemTypes?: ('character' | 'weapon')[];
+  ranks?: (3 | 4 | 5)[]; name?: string; order?: 'asc' | 'desc';
+}
+export interface RecordPageRequest extends RecordFilters { page?: number; pageSize?: typeof RECORD_PAGE_SIZES[number] }
+export interface RecordListItem {
+  id: string; itemId: string; time: string; name: string | null; itemType: 'character' | 'weapon' | null;
+  rank: 3 | 4 | 5 | null; gachaType: string; pool: RecordPool; groupOrdinal: number;
+  metadataStatus: 'complete' | 'incomplete' | 'conflict';
+  pity: { count: number | null; status: 'exact' | 'partial-history' | 'unknown-rarity'; reasons: ('unknown-start' | 'known-gap' | 'unknown-rarity')[] };
+}
+export interface RecordPageResponse {
+  profileId: string; uid: string; timezone: number; historyCount: number; total: number;
+  page: number; pageSize: number; pageCount: number; records: RecordListItem[];
+  totalsByPool: Partial<Record<RecordPool, number>>; metadataIncomplete: boolean;
+}
