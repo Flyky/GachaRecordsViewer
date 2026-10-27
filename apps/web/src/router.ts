@@ -10,12 +10,13 @@ export const router = createRouter({
     { path: '/', component: WorkspaceView, meta: { requiresUser: true }, children: [
       { path: '', component: () => import('./views/OverviewView.vue') },
       { path: 'settings', component: () => import('./views/SettingsView.vue') },
+      { path: 'data', component: () => import('./views/DataView.vue') },
     ] },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
 
-export function loginDestination(value: unknown) { return value === '/settings' ? '/settings' : '/'; }
+export function loginDestination(value: unknown) { return value === '/settings' || value === '/data' ? value : '/'; }
 router.beforeEach(async (to) => {
   if (to.meta.requiresUser || to.path === '/login') {
     try { await refreshUser(); }

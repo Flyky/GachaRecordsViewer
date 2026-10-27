@@ -3,7 +3,7 @@ import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse,
 
 type Role = 'user' | 'admin';
 export class ApiError extends Error {
-  constructor(readonly code: string, readonly status = 0, readonly retryAfter = 0) { super(code); }
+  constructor(readonly code: string, readonly status = 0, readonly retryAfter = 0, readonly details?: unknown) { super(code); }
 }
 export const userSession = shallowRef<UserSessionResponse | null>(null);
 export const adminSession = shallowRef<AdminSessionResponse | null>(null);
@@ -34,14 +34,14 @@ async function acceptUser(session: UserSessionResponse, epoch: number) {
   reminderTag = `${session.user.id}:${Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('')}`;
   dismissed.value = storageGet() === reminderTag; userSession.value = session;
 }
-async function request<T>(path: string, role: Role, body?: Record<string, unknown>): Promise<T> {
+async function request<T>(path: string, role: Role, body?: Record<string, unknown>, timeout = 15000): Promise<T> {
   const csrf = role === 'user' ? userSession.value?.csrfToken : adminSession.value?.csrfToken;
   const epoch = role === 'user' ? userEpoch : adminEpoch;
   let response: Response;
   try {
     response = await fetch(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
       headers: body ? { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) } : {},
-      ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000) });
+      ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(timeout) });
   } catch { throw new ApiError('NETWORK_ERROR'); }
   if (response.status === 204) return undefined as T;
   const payload = await response.json().catch(() => null);
@@ -50,10 +50,23 @@ async function request<T>(path: string, role: Role, body?: Record<string, unknow
     if ((code === 'UNAUTHENTICATED' || code === 'SESSION_CHANGED') && epoch === (role === 'user' ? userEpoch : adminEpoch)) {
       if (role === 'user') forgetUser(); else forgetAdmin();
     }
-    throw new ApiError(code, response.status, Number(response.headers.get('retry-after')) || 0);
+    throw new ApiError(code, response.status, Number(response.headers.get('retry-after')) || 0, payload?.error?.details);
   }
   if (!payload) throw new ApiError('REQUEST_FAILED');
   return payload as T;
+}
+/** Discard a response from an account or session that has since been replaced. */
+export async function userRequest<T>(path: string, body?: Record<string, unknown>, timeout = 15000): Promise<T> {
+  const session = userSession.value;
+  if (!session) throw new ApiError('UNAUTHENTICATED', 401);
+  try {
+    const result = await request<T>(path, 'user', body, timeout);
+    if (userSession.value?.user.id !== session.user.id || userSession.value.csrfToken !== session.csrfToken) throw new ApiError('SESSION_CHANGED');
+    return result;
+  } catch (error) {
+    if (userSession.value?.user.id !== session.user.id || userSession.value.csrfToken !== session.csrfToken) throw new ApiError('SESSION_CHANGED');
+    throw error;
+  }
 }
 export async function refreshUser() {
   const epoch = ++userEpoch;

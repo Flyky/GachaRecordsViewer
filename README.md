@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R07：账号页面已可用，UIGF 多 UID 预览、事务导入、标准导出和档案列表 API 已完成。导入、查询和分析页面按后续轮次实现。
+当前完成到 R08：可在数据管理页上传 UIGF、预览并选择多个 UID 导入、下载完整档案；概览和当前 UID 切换已接通。查询和分析页面按后续轮次实现。
 
 ## 本地运行
 
@@ -27,6 +27,8 @@ pnpm start
 首次启动默认使用 SQLite，在 `data/` 下生成配置、数据库、管理员随机密码和凭证主密钥；重启保留。管理员密码在本机 `data/config.toml` 的 `[admin].password` 中读取。接口用法见[认证与管理员 API](docs/auth-api.md)，数据库选择和恢复说明见[部署配置文档](docs/deployment.md)。开发代理固定使用 API 的 3000 端口，开发时请保持默认值。
 
 普通用户从 `/login` 登录，在 `/settings` 修改密码。管理员直接输入 `/admin` 访问；普通页面不提供管理入口。管理员创建账号后，普通用户使用 `12345678` 首次登录，密码提醒可以暂时忽略。页面使用说明见 [R05 账号页面](docs/account-pages.md)。
+
+登录后从「数据管理」或 `/data` 导入 UIGF 文件，预览后勾选 UID 再确认；通过档案选择器切换概览与导出目标。支持 UIGF v4.0/v4.1/v4.2，重复记录自动去重。具体步骤与提示见 [R08 数据管理](docs/data-management.md)。
 
 ## 工程命令
 

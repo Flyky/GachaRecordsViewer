@@ -673,6 +673,55 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.data-stack { display: grid; gap: 24px; }
+.data-section, .archive-summary { padding: 28px 30px; min-width: 0; }
+.data-section h3 { font-size: 16px; margin: 0; font-weight: 600; }
+.data-section h3 small { color: #86958b; font-size: 12px; margin-left: 8px; font-weight: 400; }
+.data-section > .feedback, .import-preview > .feedback, .import-result > .feedback { margin-top: 18px; }
+.import-steps { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 25px 0; padding: 0; list-style: none; counter-reset: step; font-size: 12px; color: #8b978e; }
+.import-steps li { display: flex; align-items: center; gap: 8px; }
+.import-steps li::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: #eef1ec; }
+.import-steps .complete { color: #326963; }
+.import-steps .complete::before { color: #fff; background: #527b6d; }
+.upload-area { border: 1px dashed #b9cbbb; border-radius: 10px; padding: 26px 20px; background: #f8faf6; text-align: center; }
+.upload-icon { color: #739487; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+.file-label { display: block; font-size: 14px; margin-bottom: 15px; font-weight: 550; }
+.upload-area input { max-width: 100%; font-size: 12px; color: #687c70; }
+.upload-area input::file-selector-button { background: #fff; border: 1px solid #c7d5c8; border-radius: 6px; padding: 8px 14px; color: #326963; margin-right: 12px; font: inherit; cursor: pointer; }
+.upload-area input:focus-visible { outline: 2px solid #326963; outline-offset: 4px; }
+.file-summary, .export-profile { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; font-size: 13px; }
+.file-summary > span { min-width: 0; overflow-wrap: anywhere; }
+.file-summary small { color: #8b978e; margin-left: 8px; white-space: nowrap; }
+.import-preview, .import-result { margin-top: 28px; }
+.import-profile-list { display: grid; gap: 14px; margin-top: 16px; }
+.import-profile { padding: 20px; border: 1px solid #e0e7df; border-radius: 9px; min-width: 0; }
+.import-profile.selected { border-color: #acc5b4; background: #fafcf9; }
+.import-profile.has-conflict { border-color: #e6c7be; background: #fffbf9; }
+.import-profile-title { display: flex; align-items: center; gap: 10px; font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.import-profile-title input { margin: 0; width: 16px; height: 16px; flex-shrink: 0; accent-color: #326963; }
+.status-badge { display: inline-block; font-size: 11px; border: 1px solid #dfe7db; background: #f0f4ed; color: #657b64; border-radius: 5px; padding: 3px 8px; white-space: nowrap; }
+.has-conflict .status-badge { background: #fff0e9; border-color: #efd4c7; color: #9d624b; }
+.profile-caption { color: #879488; font-size: 12px; margin-top: 7px; }
+.import-counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 14px; }
+.import-counts dt, .summary-grid dt { font-size: 11px; color: #8b988d; }
+.import-counts dd { margin: 5px 0 0; font-size: 23px; color: #3e6655; font-variant-numeric: tabular-nums; }
+.record-range { color: #7b897d; font-size: 11px; overflow-wrap: anywhere; }
+.metadata-notice { padding-top: 12px; font-size: 12px; color: #9c8248; line-height: 1.9; }
+.conflict-notice, .conflict-details { font-size: 12px; color: #a05b48; margin-top: 14px; }
+.conflict-details summary { cursor: pointer; }
+.conflict-details ul { padding-left: 18px; margin: 8px 0 0; overflow-wrap: anywhere; }
+.import-confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 0 14px; font-size: 13px; }
+.repreview-button { margin-top: 20px; }
+.export-profile { padding: 17px 20px; background: #f6f8f3; border-radius: 8px; }
+.export-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px; margin-top: 23px; }
+.export-actions .field { width: 160px; }
+.data-footnote { font-size: 11px; color: #94a08f; text-align: center; }
+.summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; margin: 30px 0; }
+.summary-grid dd { margin: 9px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.summary-grid .large-number { font-size: 30px; color: #326963; line-height: 1.3; }
+.large-number small { font-size: 12px; color: #83927f; }
+.profile-load-error { display: flex; gap: 14px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+
 @media (max-width: 1000px) {
   .login-story, .login-panel {
     padding: 38px;
@@ -696,6 +745,11 @@ h2 {
 }
 
 @media (max-width: 760px) {
+  .data-section, .archive-summary { padding: 22px 18px; }
+  .import-profile { padding: 16px; }
+  .import-profile .list-heading { flex-wrap: wrap; }
+  .summary-grid { gap: 24px 18px; }
+  .main-nav { flex-wrap: wrap; }
   .login-page {
     display: block;
   }

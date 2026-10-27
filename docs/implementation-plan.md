@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R07 UIGF 导入导出后端已完成，两种数据库通过定向验证。
+当前阶段：R08 数据管理与多 UID 页面已完成，核心浏览器流程通过定向验证。
 
-下一轮：R08 数据管理与多 UID 页面。
+下一轮：R09 完整记录查询 API 与页面。
 
 ## 1. 执行方式
 
@@ -59,7 +59,7 @@
 | R05 | 登录、密码与管理页面 | R04 | `feat: add login password and admin screens` | 已完成 |
 | R06 | 抽卡领域逻辑与元数据 | R01 | `feat: implement gacha ordering pity and metadata rules` | 已完成 |
 | R07 | UIGF 导入导出后端 | R03、R04、R06 | `feat: implement versioned UIGF import and export` | 已完成 |
-| R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 未开始 |
+| R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 已完成 |
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 未开始 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 未开始 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 未开始 |
@@ -305,3 +305,12 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：11 项测试通过，包含 SQLite 与真实 PostgreSQL 18.4 的相同导入／导出契约及认证 API 边界；受影响范围类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止。
 - 未重跑全量／浏览器验证，未读取或导入真实用户 JSON；本轮只提供后端。接口、冲突、元数据、限制与测试边界见 [uigf-import-export.md](uigf-import-export.md)。
 - 下一轮：R08；本地 commit，不自动推送。
+
+### R08：数据管理与多 UID 页面，2026-10-27
+
+- 新增 `/data`，提供 UIGF 文件选择、自动预览、逐 UID 选择、事务导入结果和完整档案下载。明确展示新增／重复／补全、时间范围、元数据问题、跳过游戏块、空档案和冲突详情；关键冲突档案不可选。
+- 接入当前用户档案选择器、记录总量和时间范围概览；按用户在当前标签页保存所选档案 ID。切换账号立即清空档案状态，页面文件／预览随退出或离开清空；旧账号迟到响应不会写回新账号页面。
+- 补充中文格式／网络／预览失效／版本不兼容提示。导入结果不确定时要求更新列表并重新预览，避免把可能已写入的请求表述为未写入；过期或变化的预览不能直接重试。
+- 精简验证：前端类型、零警告 lint、前端生产构建通过；Edge 隔离浏览器流程覆盖上传／选择／重复、切换和恢复、下载记录核对、冲突／空档案／失效预览、A/B 同 UID 隔离与延迟响应，以及 390px 无横向溢出、无页面脚本异常。
+- 内置浏览器工具启动失败后使用本机 Edge；合成账号和临时 SQLite 未涉及真实 JSON，临时服务验证后关闭。未重跑后端全量或双数据库验证，Schema 与后端没有改动。使用说明见 [data-management.md](data-management.md)。
+- 下一轮：R09；本地 commit，不自动推送。

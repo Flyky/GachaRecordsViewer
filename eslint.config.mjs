@@ -31,6 +31,14 @@ export default defineConfig([
     },
   },
   {
+    files: ['apps/web/src/**/*.{ts,vue}'],
+    languageOptions: {
+      globals: {
+        HTMLInputElement: 'readonly', Event: 'readonly', URL: 'readonly', Blob: 'readonly', setTimeout: 'readonly',
+      },
+    },
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parserOptions: {

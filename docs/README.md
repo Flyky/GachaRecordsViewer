@@ -2,7 +2,7 @@
 
 日期：2026-10-27（Asia/Shanghai）
 
-状态：R07 UIGF 导入导出后端已完成；账号页面已可使用，数据管理页面下一轮接入。R02 官服角色池样本链路已实测通过。
+状态：R08 数据管理与多 UID 页面已完成，可上传、选择导入、切换档案和下载 UIGF。R02 官服角色池样本链路已实测通过。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
@@ -19,6 +19,8 @@
 领域规则：[R06 排序、次数与本地元数据](gacha-core.md)。
 
 数据接口：[R07 UIGF 预览、事务导入与标准导出](uigf-import-export.md)。
+
+数据使用：[R08 数据管理与多 UID 页面](data-management.md)。
 
 1. [需求规格与验收标准](requirements.md)：逐项对应用户的 12 条需求，区分确定需求、建议默认值与未来扩展。
 2. [UIGF 与米游社调研](research-uigf-miyoushe.md)：规范版本、授权路径、接口依据、已失效方案及待实测项目。
