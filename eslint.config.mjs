@@ -34,7 +34,7 @@ export default defineConfig([
     files: ['apps/web/src/**/*.{ts,vue}'],
     languageOptions: {
       globals: {
-        HTMLInputElement: 'readonly', Event: 'readonly', URL: 'readonly', Blob: 'readonly', setTimeout: 'readonly',
+        HTMLInputElement: 'readonly', HTMLElement: 'readonly', HTMLButtonElement: 'readonly', HTMLDetailsElement: 'readonly', KeyboardEvent: 'readonly', Event: 'readonly', URL: 'readonly', Blob: 'readonly', setTimeout: 'readonly',
       },
     },
   },

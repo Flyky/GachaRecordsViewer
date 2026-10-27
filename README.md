@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R10：UIGF 数据管理和完整记录查询已可使用，物品分组、月度五系列及年度日历统计 API 已完成。统计页面和图表下一轮接入。
+当前完成到 R11：UIGF 数据管理、完整记录查询和三组统计分析页面已可使用。米游社凭证与账号功能按后续轮次实现。
 
 ## 本地运行
 
@@ -32,7 +32,7 @@ pnpm start
 
 从「查询记录」或 `/records` 筛选当前 UID 的时间、卡池、物品类型、星级和名称，查看完整历史计算的累计与五星间隔。接口与计数含义见 [R09 记录查询](docs/record-query.md)。
 
-统计接口与元数据、时区和数量规则见 [R10 分析 API](docs/analysis-api.md)，对应页面由 R11 实现。
+从「统计分析」或 `/analysis` 查看物品分栏、月度折线和全年 Daily 热力图，支持图例切换、缩放、年份／卡池筛选及 0 抽日期提示。页面说明见 [R11 统计分析](docs/analysis-pages.md)，数量与时区规则见 [R10 分析 API](docs/analysis-api.md)。
 
 ## 工程命令
 

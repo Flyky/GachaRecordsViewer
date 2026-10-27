@@ -2,7 +2,7 @@
 
 日期：2026-10-27（Asia/Shanghai）
 
-状态：R10 分析计算与接口已完成，统计页面待 R11 接入；UIGF 数据管理、多 UID 和完整记录查询页面已可使用。R02 官服角色池样本链路已实测通过。
+状态：R11 三组统计分析页面已完成，UIGF 数据管理、多 UID 和完整记录查询页面已可使用；下一轮开始米游社凭证后端。R02 官服角色池样本链路已实测通过。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
@@ -25,6 +25,8 @@
 记录查询：[R09 筛选、分页与历史次数](record-query.md)。
 
 分析接口：[R10 物品分组、月度和 Daily 日历](analysis-api.md)。
+
+统计使用：[R11 物品分栏、折线与日历页面](analysis-pages.md)。
 
 1. [需求规格与验收标准](requirements.md)：逐项对应用户的 12 条需求，区分确定需求、建议默认值与未来扩展。
 2. [UIGF 与米游社调研](research-uigf-miyoushe.md)：规范版本、授权路径、接口依据、已失效方案及待实测项目。

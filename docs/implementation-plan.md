@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R10 分析计算与接口已完成，两库分析结果通过定向验证。
+当前阶段：R11 三组统计分析页面已完成，核心交互与跨档案隔离通过浏览器验证。
 
-下一轮：R11 三组统计分析页面。
+下一轮：R12 米游社凭证与账号管理后端。
 
 ## 1. 执行方式
 
@@ -62,7 +62,7 @@
 | R08 | 数据管理与多 UID 页面 | R05、R07 | `feat: add UIGF data management and profile switching` | 已完成 |
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
-| R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 未开始 |
+| R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
 | R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 未开始 |
 | R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 未开始 |
 | R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 未开始 |
@@ -334,3 +334,13 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 查询与分析复用领域适配器；同一事务快照读取记录及数据版本，响应带版本供 R11 检查一致性。无数据库 Schema 变更，无新的欧非或 UP 分析。接口和细节见 [analysis-api.md](analysis-api.md)。
 - 精简验证：20 项测试通过，包含纯计算、两库新分析契约与共享读取影响的查询／UIGF 仓储回归；受影响类型、零警告 lint、后端及依赖构建通过。独立 PostgreSQL 验证后停止，没有读取真实 JSON 或重跑前端／浏览器及无关全量。
 - 下一轮：R11；本地 commit，等待用户安排后续 push。
+
+### R11：三组统计分析页面，2026-10-27
+
+- 新增 `/analysis`：物品角色／武器切换、星级分栏与数量排序；月度五条 ECharts 折线、图例、缩放、重置与明细；全年 Daily 热力图、年份／卡池选择和单日 tooltip，包含闰日及 0 抽日。
+- 默认当前年、全部池；日期按游戏时区归属。元数据问题单独提示，空档案仍有全 0 日历；查询页筛选与三组统计各自独立。
+- 结果核对档案与版本后整体接纳，版本变化时有界重取；切换 UID 重置筛选，旧请求不会覆盖新档案。图表响应容器 resize 并在离开时释放，日历支持键盘和触屏。
+- 锁定 ECharts 6.1.0，按路由／模块加载；补齐 ECharts 和 ZRender 许可随静态产物分发。本轮构建图表分包约 571 kB / gzip 195 kB，保留 Vite 体积提示。
+- 精简验证：前端类型、零警告 lint、构建通过；Edge 合成数据流程覆盖数量与月度对账、图例／实际缩放、默认筛选／闰日／0 抽 hover、池清除、版本重取、迟到响应、空档案、账号隔离、resize 和 390px 布局，无页面脚本异常。修复检查发现的图例与 tooltip 定位问题。
+- 临时服务验证后关闭，未读取真实 JSON；后端／Schema 未变，未重跑无关全量或双库验证。详情见 [analysis-pages.md](analysis-pages.md)。
+- 下一轮：R12；本地 commit，不自动 push。

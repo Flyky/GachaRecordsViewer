@@ -13,6 +13,17 @@ Copyright (c) 2020 theBowja. The complete MIT notice is distributed in
 Genshin Impact and its game content belong to their respective owners. This
 project is not affiliated with miHoYo.
 
+## Apache ECharts and ZRender
+
+The statistics page uses [Apache ECharts 6.1.0](https://echarts.apache.org/)
+(Apache-2.0) and its ZRender 6.1.0 dependency (BSD-3-Clause).
+The npm packages' license and notice texts are retained in
+`apps/web/public/licenses/` and copied into the built web distribution:
+
+- [ECharts license](apps/web/public/licenses/echarts-LICENSE.txt)
+- [ECharts notice](apps/web/public/licenses/echarts-NOTICE.txt)
+- [ZRender license](apps/web/public/licenses/zrender-LICENSE.txt)
+
 ## UIGF JSON Schemas
 
 The versioned JSON Schemas in `packages/uigf/src/schemas/` were extracted from

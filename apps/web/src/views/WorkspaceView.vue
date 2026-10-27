@@ -55,10 +55,12 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
         >
           <span aria-hidden="true">☷</span>查询记录
         </RouterLink>
-        <span
-          class="nav-pending"
-          aria-disabled="true"
-        ><span aria-hidden="true">▥</span>统计分析<small>即将开放</small></span>
+        <RouterLink
+          to="/analysis"
+          active-class="active"
+        >
+          <span aria-hidden="true">▥</span>统计分析
+        </RouterLink>
         <RouterLink
           to="/data"
           active-class="active"
@@ -81,7 +83,7 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
     </aside>
     <div class="workspace-body">
       <header class="workspace-header">
-        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : route.path === '/records' ? '查询记录' : '概览' }}</span>
+        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : route.path === '/records' ? '查询记录' : route.path === '/analysis' ? '统计分析' : '概览' }}</span>
         <div class="user-actions">
           <span
             class="avatar"
