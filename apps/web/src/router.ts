@@ -15,13 +15,14 @@ export const router = createRouter({
       { path: 'records', component: () => import('./views/RecordsView.vue') },
       { path: 'analysis', component: () => import('./views/AnalysisView.vue') },
       { path: 'accounts', component: () => import('./views/AccountsView.vue') },
+      { path: 'miyoushe', component: () => import('./views/MiyousheFunctionsView.vue') },
       { path: 'help/miyoushe', component: () => import('./views/MiyousheHelpView.vue') },
     ] },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
 
-export function loginDestination(value: unknown) { return typeof value === 'string' && ['/settings', '/data', '/records', '/analysis', '/accounts', '/help/miyoushe'].includes(value) ? value : '/'; }
+export function loginDestination(value: unknown) { return typeof value === 'string' && ['/settings', '/data', '/records', '/analysis', '/accounts', '/miyoushe', '/help/miyoushe'].includes(value) ? value : '/'; }
 router.beforeEach(async (to) => {
   if (to.meta.requiresUser || to.path === '/login') {
     try { await refreshUser(); }

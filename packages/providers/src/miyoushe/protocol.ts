@@ -5,6 +5,7 @@ export const protocol = {
   appVersion: '2.115.0',
   appId: 'bll8iq97cem8',
   x4Salt: 'xV8v4Qu54lUKrEYFZkJhB8cuOh9Asafs',
+  x6Salt: 't0qEgfub6cvueAPgR5m9aQWWVciEer7v',
   lk2Salt: 'b99b74d9023a6511231be2c7209b6fdb',
 };
 

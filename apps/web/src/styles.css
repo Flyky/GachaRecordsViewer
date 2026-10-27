@@ -31,6 +31,12 @@
 .bound-profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
 .credential-panel { margin-top: 22px; border-top: 1px solid #e5ebe4; padding-top: 14px; }
 .credential-panel h3 { margin: 0; }
+.wish-link-import { margin: 0; }
+.wish-link-guide { margin: 18px 0; padding: 14px; background: #f5f7f3; border-radius: 8px; font-size: 13px; }
+.wish-link-guide summary { cursor: pointer; font-weight: 600; }
+.wish-link-guide ol { padding-left: 22px; }
+.wish-link-guide li { margin: 12px 0; }
+.wish-link-guide pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; background: #eaf0e8; border-radius: 5px; }
 .credential-panel > .list-heading { flex-wrap: wrap; gap: 10px; }
 .credential-export { margin-top: 15px; }
 .credential-export label { display: block; margin-bottom: 8px; font-size: 12px; }

@@ -121,3 +121,26 @@ export interface SyncJob {
 }
 export interface SyncJobResponse { job: SyncJob }
 export interface SyncJobsResponse { jobs: SyncJob[] }
+export type OperationStatus = 'queued' | 'running' | 'completed' | 'partial' | 'failed' | 'cancelled';
+export interface OperationJob { id: string; status: OperationStatus; createdAt: string; updatedAt: string; finishedAt: string | null; code: string | null }
+export type CheckinGame = 'hk4e_cn' | 'hkrpg_cn' | 'nap_cn';
+export interface CheckinResult {
+  communityAccountId: string; accountId: string; game: CheckinGame | null; uid: string | null; region: string | null; nickname: string | null;
+  status: 'pending' | 'signed' | 'already_signed' | 'no_roles' | 'failed' | 'verification_required'; code: string | null;
+}
+export interface CheckinJob extends OperationJob { results: CheckinResult[]; accountsCompleted: number; accountsTotal: number }
+export interface CheckinJobResponse { job: CheckinJob | null }
+export const WISH_LINK_REGIONS = [
+  { value: 'cn_gf01', label: '国服官服', timezone: 8, overseas: false },
+  { value: 'cn_qd01', label: '国服渠道服', timezone: 8, overseas: false },
+  { value: 'os_usa', label: '美服', timezone: -5, overseas: true },
+  { value: 'os_euro', label: '欧服', timezone: 1, overseas: true },
+  { value: 'os_asia', label: '亚服', timezone: 8, overseas: true },
+  { value: 'os_cht', label: '台港澳服', timezone: 8, overseas: true },
+] as const;
+export type WishLinkRegion = typeof WISH_LINK_REGIONS[number]['value'];
+export interface WishLinkJob extends OperationJob {
+  uid: string | null; profileId: string | null; region: WishLinkRegion;
+  pools: { pool: SyncPool; status: 'queued' | 'running' | 'completed' | 'failed'; pages: number; fetched: number; inserted: number; duplicates: number; enriched: number; code: string | null }[];
+}
+export interface WishLinkJobResponse { job: WishLinkJob | null }

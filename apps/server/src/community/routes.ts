@@ -7,16 +7,18 @@ import { AuthLimiter } from '../auth/security.js';
 import { communityService, type CommunityOptions } from './service.js';
 import { qrService, type QrOptions } from './qr.js';
 import { syncService, SYNC_POOLS, type SyncOptions } from './sync.js';
+import { checkinService, type CheckinOptions } from './checkin.js';
 
 const identifier = { type: 'string', minLength: 1, maxLength: 128 };
 const params = { type: 'object', required: ['accountId'], additionalProperties: false, properties: { accountId: identifier } };
 const input = { type: 'object', required: ['input'], additionalProperties: false, properties: { input: { type: 'string', minLength: 1, maxLength: 24000 } } };
 const noBody = { type: 'object', additionalProperties: false, properties: {} };
-export async function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions } = {}) {
+export async function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions } = {}) {
   const service = communityService(auth.connection, auth.credentialKey, options, auth.now), limiter = new AuthLimiter(auth.now ?? Date.now);
   const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
   const sync = await syncService(auth.connection, service, options.sync, auth.now, auth.metadataCatalog), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
-  app.addHook('onClose', async () => { await sync.close(); qr.close(); service.close(); });
+  const checkin = checkinService(service, options.checkin, auth.now);
+  app.addHook('onClose', async () => { await checkin.close(); await sync.close(); qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };
   async function respond<T>(reply: FastifyReply, action: () => Promise<T>) {
@@ -33,6 +35,11 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
     }
   }
   const jobParams = { type: 'object', required: ['jobId'], additionalProperties: false, properties: { jobId: identifier } };
+  app.get('/api/community/checkin/job', { onRequest: app.authenticateUser }, async (request) => ({ job: checkin.get(owner(request)) }));
+  app.post('/api/community/checkin/jobs', { onRequest: app.authenticateUser, schema: { body: noBody } },
+    async (request, reply) => reply.code(202).send({ job: checkin.create(owner(request)) }));
+  app.post('/api/community/checkin/job/cancel', { onRequest: app.authenticateUser, schema: { body: noBody } },
+    async (request) => ({ job: checkin.cancel(owner(request)) }));
   const syncLimit = async (request: FastifyRequest) => { syncLimiter.consume(request.ip, `sync:${owner(request)}`); };
   app.post<{ Params: { profileId: string }; Body: { pools?: SyncPool[]; mode?: 'incremental' | 'full' } }>('/api/profiles/:profileId/sync', {
     onRequest: app.authenticateUser, preHandler: syncLimit, schema: {

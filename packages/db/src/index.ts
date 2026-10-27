@@ -10,3 +10,4 @@ export type { StoredCommunity, CredentialAuthorization } from './community.js';
 export { syncRepository, SyncError, syncState, publicJob } from './sync.js';
 export type { StoredJob, SyncState, PoolState } from './sync.js';
 export { metadataRepository } from './metadata.js';
+export { wishLinkRepository } from './wish-link.js';

@@ -1,5 +1,6 @@
 import { ProbeError, upstreamError } from './errors.js';
 import { cookieHeader, createDevice, protocol, signDs, sortedQuery, type DeviceContext } from './protocol.js';
+import type { ParsedWishLink } from './wish-link.js';
 
 const passport = 'https://passport-api.mihoyo.com';
 const endpoints = {
@@ -11,6 +12,7 @@ const endpoints = {
   roles: 'https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookie',
   authkey: 'https://api-takumi.mihoyo.com/binding/api/genAuthKey',
   history: 'https://public-operation-hk4e.mihoyo.com/gacha_info/api/getGachaLog',
+  historyGlobal: 'https://public-operation-hk4e-sg.hoyoverse.com/gacha_info/api/getGachaLog',
 } as const;
 
 type Endpoint = keyof typeof endpoints;
@@ -47,6 +49,7 @@ export interface WishRecord {
   name?: string; itemType?: string; rankType?: string; count?: string;
 }
 export interface WishPage { records: WishRecord[]; nextId: string | null }
+export interface LinkedWishPage extends WishPage { uid: string | null }
 
 export function object(value: unknown, stage: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -131,7 +134,7 @@ export class MiyousheClient {
     const query = options.query ?? {};
     for (const key of Object.keys(query).sort()) url.searchParams.set(key, query[key]!);
     const body = options.body === undefined ? '' : JSON.stringify(options.body);
-    const headers = endpoint === 'history'
+    const headers = endpoint === 'history' || endpoint === 'historyGlobal'
       ? { 'user-agent': `GachaRecordsViewer R02` } as Record<string, string>
       : this.headers(endpoint === 'verifyLtoken' && options.body ? sortedQuery(options.body as Record<string, string>) : body, sortedQuery(query), options.mode ?? 'normal');
     if (options.cookie) headers.cookie = cookieHeader(options.cookie);
@@ -269,27 +272,17 @@ export class MiyousheClient {
       lang: 'zh-cn', auth_appid: 'webview_gacha', authkey, authkey_ver: '1', sign_type: '2',
       gacha_type: pool, size: '20', end_id: endId,
     } });
-    if (!Array.isArray(data.list) || data.list.length > 20) throw new ProbeError('protocol', 'history');
-    let previous = endId;
-    const records = data.list.map((value: unknown): WishRecord => {
-      const row = object(value, 'history');
-      if (identifier(row.uid, 'history') !== role.uid) throw new ProbeError('role_mismatch', 'history');
-      const id = identifier(row.id, 'history'), itemId = row.item_id === '' || row.item_id === undefined ? null : identifier(row.item_id, 'history'), gachaType = text(row.gacha_type, 'history');
-      if (id.length > 128 || itemId !== null && (itemId.length > 64 || BigInt(itemId) <= 0n) || BigInt(id) <= 0n || (previous !== '0' && BigInt(id) >= BigInt(previous))) throw new ProbeError('protocol', 'history');
-      if (pool === '301' ? !['301', '400'].includes(gachaType) : gachaType !== pool) throw new ProbeError('role_mismatch', 'history');
-      const time = text(row.time, 'history');
-      if (!/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(time)) throw new ProbeError('protocol', 'history');
-      const record: WishRecord = { id, itemId, time, gachaType };
-      for (const [raw, field, limit] of [['name', 'name', 512], ['item_type', 'itemType', 64], ['rank_type', 'rankType', 1], ['count', 'count', 1]] as const) {
-        if (row[raw] !== undefined && row[raw] !== '') {
-          const value = text(row[raw], 'history');
-          if (value.length > limit || raw === 'rank_type' && !['3', '4', '5'].includes(value) || raw === 'count' && value !== '1') throw new ProbeError('protocol', 'history');
-          record[field] = value;
-        }
-      }
-      previous = id; return record;
-    });
-    return { records, nextId: records.length ? previous : null };
+    const { records, nextId } = parseWishPage(data, pool, endId, role.uid);
+    return { records, nextId };
+  }
+
+  async getLinkedWishPage(link: ParsedWishLink, pool: string, endId = '0', expectedUid?: string): Promise<LinkedWishPage> {
+    if (!['100', '200', '301', '302', '500'].includes(pool) || !/^\d{1,128}$/.test(endId)) throw new ProbeError('protocol', 'history');
+    const data = await this.request(link.overseas ? 'historyGlobal' : 'history', { query: {
+      lang: 'zh-cn', auth_appid: 'webview_gacha', authkey: link.authkey, authkey_ver: '1', sign_type: '2',
+      gacha_type: pool, size: '20', end_id: endId,
+    } });
+    return parseWishPage(data, pool, endId, expectedUid);
   }
 
   async getHistoryPage(authkey: string, role: GameRole, pool: string, endId = '0'): Promise<HistoryPage> {
@@ -306,13 +299,39 @@ export class MiyousheClient {
       const id = identifier(row.id, 'history');
       if (previous !== '0' && BigInt(id) >= BigInt(previous)) throw new ProbeError('protocol', 'history');
       const rawPool = text(row.gacha_type, 'history');
-      if ((pool === '301' ? rawPool !== '301' && rawPool !== '400' : rawPool !== pool)) {
-        throw new ProbeError('role_mismatch', 'history');
-      }
+      if ((pool === '301' ? rawPool !== '301' && rawPool !== '400' : rawPool !== pool)) throw new ProbeError('role_mismatch', 'history');
       previous = id;
     }
     return { count: data.list.length, nextId: data.list.length === 0 ? null : previous };
   }
+}
+
+function parseWishPage(data: Record<string, unknown>, pool: string, endId: string, expectedUid?: string): LinkedWishPage {
+    if (!Array.isArray(data.list) || data.list.length > 20) throw new ProbeError('protocol', 'history');
+    let uid: string | null = expectedUid ?? null;
+    let previous = endId;
+    const records = data.list.map((value: unknown): WishRecord => {
+      const row = object(value, 'history');
+      const rowUid = identifier(row.uid, 'history');
+      if (!/^[1-9]\d{0,19}$/.test(rowUid)) throw new ProbeError('protocol', 'history');
+      uid ??= rowUid;
+      if (rowUid !== uid) throw new ProbeError('role_mismatch', 'history');
+      const id = identifier(row.id, 'history'), itemId = row.item_id === '' || row.item_id === undefined ? null : identifier(row.item_id, 'history'), gachaType = text(row.gacha_type, 'history');
+      if (id.length > 128 || itemId !== null && (itemId.length > 64 || BigInt(itemId) <= 0n) || BigInt(id) <= 0n || (previous !== '0' && BigInt(id) >= BigInt(previous))) throw new ProbeError('protocol', 'history');
+      if (pool === '301' ? !['301', '400'].includes(gachaType) : gachaType !== pool) throw new ProbeError('role_mismatch', 'history');
+      const time = text(row.time, 'history');
+      if (!/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(time)) throw new ProbeError('protocol', 'history');
+      const record: WishRecord = { id, itemId, time, gachaType };
+      for (const [raw, field, limit] of [['name', 'name', 512], ['item_type', 'itemType', 64], ['rank_type', 'rankType', 1], ['count', 'count', 1]] as const) {
+        if (row[raw] !== undefined && row[raw] !== '') {
+          const value = text(row[raw], 'history');
+          if (value.length > limit || raw === 'rank_type' && !['3', '4', '5'].includes(value) || raw === 'count' && value !== '1') throw new ProbeError('protocol', 'history');
+          record[field] = value;
+        }
+      }
+      previous = id; return record;
+    });
+    return { uid, records, nextId: records.length ? previous : null };
 }
 
 function objectOrNull(value: unknown) {

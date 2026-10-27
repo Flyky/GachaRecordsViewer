@@ -56,6 +56,7 @@ The Miyoushe provider implements protocol behavior and parameters researched fro
 - `src/request/passportReq.ts`
 - `src/request/takumiReq.ts`
 - `src/request/hk4eReq.ts`
+- `src/request/lunaReq.ts` (R18 game check-in activities and protocol behavior)
 - `src/utils/network/getRequestHeader.ts`
 - `src/utils/bbs/TGBbs.ts`
 

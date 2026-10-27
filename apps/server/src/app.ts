@@ -15,6 +15,8 @@ import type { CommunityOptions } from './community/service.js';
 import type { QrOptions } from './community/qr.js';
 import type { SyncOptions } from './community/sync.js';
 import { metadataService, registerMetadata, type MetadataOptions } from './metadata.js';
+import type { CheckinOptions } from './community/checkin.js';
+import { registerWishLink, type WishLinkOptions } from './wish-link.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -23,8 +25,9 @@ interface AppOptions {
   basePath?: string;
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
-  community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions };
+  community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions };
   metadata?: MetadataOptions;
+  wishLink?: WishLinkOptions;
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));
@@ -90,6 +93,7 @@ export async function buildApp(options: AppOptions = {}) {
       registerUigf(site, auth);
       registerRecords(site, auth);
       registerAnalysis(site, auth);
+      registerWishLink(site, auth, options.wishLink);
       await registerCommunity(site, auth, options.community);
     }
     registerHealth(site);

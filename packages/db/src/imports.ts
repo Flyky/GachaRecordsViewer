@@ -83,17 +83,20 @@ async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profil
 }
 
 /** Called inside the sync transaction, reusing UIGF's critical-field and metadata merge rules. */
-export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile: ProfileRow, incoming: ImportRecord[], catalog?: MetadataCatalog) {
+export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile: ProfileRow, incoming: ImportRecord[], catalog?: MetadataCatalog, source: 'miyoushe' | 'wish-link' = 'miyoushe', assertActive?: () => void) {
+  assertActive?.();
   const entry = await plan(tx, owner, { index: 0, uid: profile.uid, timezone: profile.timezone, lang: 'zh-cn', records: incoming,
     metadataIncomplete: 0, metadataConflicts: 0 }, profile.id, catalog);
   if (entry.report.conflicts || entry.report.blockers.length) throw new ImportError('RECORD_CONFLICT');
+  assertActive?.();
   for (const record of entry.inserts) await tx.execute(sql`INSERT INTO gacha_records
     (owner_id, profile_id, record_id, item_id, gacha_type, pity_group, time_local, time_utc, name, item_type, rank, source, metadata_json)
     VALUES (${owner}, ${profile.id}, ${record.id}, ${record.itemId}, ${record.gachaType}, ${record.pityGroup}, ${record.timeLocal}, ${record.timeUtc},
-      ${record.name}, ${record.itemType}, ${record.rank}, 'miyoushe', ${JSON.stringify(record.metadata)})`);
+      ${record.name}, ${record.itemType}, ${record.rank}, ${source}, ${JSON.stringify(record.metadata)})`);
   for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
     WHERE owner_id=${owner} AND profile_id=${profile.id} AND record_id=${record.id}`);
   if (entry.inserts.length || entry.updates.length) await tx.execute(sql`UPDATE game_profiles SET data_version=data_version+1 WHERE owner_id=${owner} AND id=${profile.id}`);
+  assertActive?.();
   return { inserted: entry.report.inserted, duplicates: entry.report.duplicates, enriched: entry.report.enriched };
 }
 

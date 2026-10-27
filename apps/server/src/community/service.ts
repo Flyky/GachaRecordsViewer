@@ -80,6 +80,13 @@ export function communityService(connection: DatabaseConnection, masterKey: Buff
   return {
     close: () => vault.destroy(),
     get: publicAccount,
+    storedCredentials: (owner: string, id: string) => operation(owner, async () => {
+      const row = await repo.get(owner, id), bundle = unpack(owner, row);
+      return { revision: row.credential_id!, device: bundle.device, credentials: {
+        accountId: bundle.accountId, ...(bundle.mid ? { mid: bundle.mid } : {}), ...(bundle.stoken ? { stoken: bundle.stoken } : {}),
+        ...(bundle.ltoken ? { ltoken: bundle.ltoken } : {}), ...(bundle.cookieToken ? { cookieToken: bundle.cookieToken } : {}),
+      } };
+    }),
     wishCredentials: async (owner: string, profileId: string) => {
       const profile = await repositories(connection).profiles.get(owner, profileId);
       if (!profile || profile.game !== 'hk4e') throw new ApiError(404, 'PROFILE_NOT_FOUND');

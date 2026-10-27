@@ -3,6 +3,7 @@ import { computed, onUnmounted, ref, shallowRef } from 'vue';
 import { NButton, NSelect } from 'naive-ui';
 import type { ImportPreviewResponse, ImportProfileReport, ImportResultResponse } from '@gacha/contracts';
 import ImportProfileCard from '../components/ImportProfileCard.vue';
+import WishLinkImport from '../components/WishLinkImport.vue';
 import { ApiError, userRequest } from '../auth.js';
 import { currentProfile, profiles, profilesLoading, refreshProfiles, timezoneLabel } from '../profiles.js';
 import { exportVersions, importErrorMessage, MAX_FILE_BYTES, skippedGameLabel } from '../uigf.js';
@@ -108,6 +109,7 @@ async function download() {
     </p>
   </section>
   <div class="data-stack">
+    <WishLinkImport />
     <section
       class="surface data-section"
       aria-labelledby="import-title"

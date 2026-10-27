@@ -77,6 +77,12 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
           <span aria-hidden="true">◎</span>米游社账号
         </RouterLink>
         <RouterLink
+          to="/miyoushe"
+          active-class="active"
+        >
+          <span aria-hidden="true">✓</span>米游社功能
+        </RouterLink>
+        <RouterLink
           to="/settings"
           active-class="active"
         >
@@ -89,7 +95,7 @@ onUnmounted(() => globalThis.removeEventListener('focus', refreshOnFocus));
     </aside>
     <div class="workspace-body">
       <header class="workspace-header">
-        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : route.path === '/records' ? '查询记录' : route.path === '/analysis' ? '统计分析' : route.path === '/accounts' ? '米游社账号' : route.path === '/help/miyoushe' ? '授权获取手册' : '概览' }}</span>
+        <span class="breadcrumb">祈愿档案 <span>/</span> {{ route.path === '/settings' ? '个人设置' : route.path === '/data' ? '数据管理' : route.path === '/records' ? '查询记录' : route.path === '/analysis' ? '统计分析' : route.path === '/accounts' ? '米游社账号' : route.path === '/miyoushe' ? '米游社功能' : route.path === '/help/miyoushe' ? '授权获取手册' : '概览' }}</span>
         <div class="user-actions">
           <span
             class="avatar"
