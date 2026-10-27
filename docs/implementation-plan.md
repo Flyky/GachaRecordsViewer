@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R13 内置 App 扫码授权后端代码完成，两库契约通过，正式扫码／重授权及持久化后的真实上游复用待实测。
+当前阶段：R13 内置 App 扫码授权后端已完成，两库契约与本机真实扫码／重新授权／加密保存后重启复用均通过。
 
-下一轮：R14 原神在线刷新任务后端；R13 真实扫码待用户确认方便后执行。
+下一轮：R14 原神在线刷新任务后端，优先复用已加密保存的本机验证授权。
 
 ## 1. 执行方式
 
@@ -64,8 +64,8 @@
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
-| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成 / 待实测：新增上游校验 |
-| R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 代码完成 / 待实测：正式扫码与重授权 |
+| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成；SToken 派生与复用随 R13 实测，独立 L/C 手动输入待实测 |
+| R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 已完成：本机正式扫码、重新授权与重启复用实测通过 |
 | R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 未开始 |
 | R15 | 米游社页面、Token 与刷新交互 | R05、R12、R13、R14 | `feat: add Miyoushe account token and sync screens` | 未开始 |
 | R16 | 部署交付与第一版联合验收 | R01–R15 | `chore: package deployment and verify v1 acceptance` | 未开始 |
@@ -364,3 +364,11 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：28 项定向测试通过，含 SQLite／真实 PostgreSQL 各 9 组扫码契约及各 5 组 R12 回归；受影响类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止，未重跑前端／浏览器或无关全量。
 - 真实扫码尚未开始；先完成可独立工作，最后询问用户方便后再创建二维码。用户允许加密留存授权供后续测试复用。正式扫码与重授权保持待实测，不沿用 R02 样本结论。
 - 说明见 [miyoushe-qr-api.md](miyoushe-qr-api.md)。无 Schema 迁移，不读取真实 JSON 或抽卡记录；页面留给 R15，下一开发轮 R14；本地 commit，不自动 push。
+
+#### R13 本人扫码验收补充，2026-10-27
+
+- 代码提交后用户明确回复“可以”，随后才创建第一次二维码；官方 App 两次扫码均通过，分别验证首次保存与显式重新授权，同一本地社区账号 ID 保留。
+- 两次授权均取得并验证 SToken／LToken／Cookie Token，读取官服 `10***44` 与渠道服 `50***39` 绑定列表；每次保存后都重建应用与数据库连接，解密值一致，重新登录后 validate 成功。
+- Token 与设备上下文加密保留在忽略目录 `test-results/r13-live/` 的独立 SQLite 验证部署，后续测试优先复用；真实凭证和主密钥未提交，二维码图片已删除。
+- 没有请求 AuthKey／抽卡历史，渠道服／全池刷新和最终部署网络不继承本次授权验收结果；独立 LToken-only／Cookie Token-only 真实手动导入仍待验证。
+- 无代码修复，不重跑已通过测试；补充文档 commit 记录真人参与后才产生的验收结果，不改写既有代码提交、不自动 push。R13 已完成，下一轮 R14。
