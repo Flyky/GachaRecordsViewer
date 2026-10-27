@@ -2,7 +2,7 @@ import { readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse, stringify } from 'smol-toml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { temporaryDirectory, temporaryPostgres } from '../../../packages/db/test/helpers.js';
+import { sql, temporaryDirectory, temporaryPostgres } from '../../../packages/db/test/helpers.js';
 import { initializeDeployment, parseConfiguration } from '../src/deployment.js';
 
 type Deployment = Awaited<ReturnType<typeof initializeDeployment>>;
@@ -81,7 +81,7 @@ describe('simple file-based deployment', () => {
     expect((await start()).credentialKey.equals(first.credentialKey)).toBe(true);
   });
 
-  it('applies defaults to partial config and retains only essential value/key checks', async () => {
+  it('applies defaults to partial config and retains essential value checks', async () => {
     await writeFile(join(directory.directory, 'config.toml'), '[server]\nport = 3101\n[extra]\nvalue = true\n');
     const first = await start();
     expect(first.config.port).toBe(3101);
@@ -92,8 +92,42 @@ describe('simple file-based deployment', () => {
       expect(() => parseConfiguration(source, first.config.configFile, directory.directory, env)).toThrow();
     }
     expect(() => parseConfiguration('invalid = [', first.config.configFile, directory.directory, {})).toThrow('INVALID_TOML');
+  });
+
+  it('adopts a changed key when no credentials exist, preserving accounts and history and invalidating sessions', async () => {
+    const first = await start();
+    const user = await first.repositories.users.create({ username: 'friend', passwordHash: 'fixture-hash' });
+    const profile = await first.repositories.profiles.create(user.id, { game: 'hk4e', uid: '100000001', timezone: 8 });
+    await first.repositories.records.insertBatch(user.id, profile.id, [{ id: '1001', itemId: '10001', gachaType: '301', pityGroup: '301', timeLocal: '2026-10-26 12:00:00', timeUtc: '2026-10-26T04:00:00.000Z', source: 'fixture' }]);
+    await first.repositories.sessions.create({ idHash: 'old-admin', kind: 'admin', authVersion: first.adminSessionVersion, expiresAt: 'fixture' });
+    await first.repositories.sessions.create({ idHash: 'old-user', kind: 'user', ownerId: user.id, authVersion: '1', expiresAt: 'fixture' });
+    await stop(first);
+    await edit(first, (config) => { (config.security as Record<string, unknown>).credential_key = `v1:${'ab'.repeat(32)}`; });
+    const second = await start();
+    expect(second.credentialKey.toString('hex')).toBe('ab'.repeat(32));
+    expect(second.adminSessionVersion).not.toBe(first.adminSessionVersion);
+    expect((await second.repositories.users.findByUsername('friend'))?.id).toBe(user.id);
+    expect(await second.repositories.records.count(user.id, profile.id)).toBe(1);
+    expect(await second.repositories.sessions.get('old-user')).toBeUndefined();
+    expect(await second.repositories.sessions.get('old-admin')).toBeUndefined();
+    await stop(second);
+    expect((await start()).adminSessionVersion).toBe(second.adminSessionVersion);
+  });
+
+  it('preserves encrypted credentials and rejects a different key only when they exist', async () => {
+    const first = await start();
+    const user = await first.repositories.users.create({ username: 'friend', passwordHash: 'fixture-hash' });
+    await first.connection.executor.execute(sql`INSERT INTO community_accounts (id,owner_id,provider,account_id) VALUES ('community',${user.id},'cn','fixture-account')`);
+    await first.connection.executor.execute(sql`INSERT INTO credentials (id,owner_id,community_account_id,type,encrypted_value) VALUES ('credential',${user.id},'community','stoken','fixture-ciphertext')`);
+    const configSource = await readFile(first.config.configFile, 'utf8');
+    const state = (await first.connection.inspect()).state;
+    await stop(first);
     await edit(first, (config) => { (config.security as Record<string, unknown>).credential_key = `v1:${'ab'.repeat(32)}`; });
     await expect(start()).rejects.toMatchObject({ code: 'KEY_MISMATCH' });
+    await writeFile(first.config.configFile, configSource);
+    const second = await start();
+    expect((await second.connection.inspect()).state).toEqual(state);
+    expect(await second.connection.executor.query(sql`SELECT encrypted_value FROM credentials`)).toEqual([{ encrypted_value: 'fixture-ciphertext' }]);
   });
 
   it('changing admin password revokes admin sessions while preserving user sessions', async () => {

@@ -352,7 +352,7 @@ curl -f http://127.0.0.1:3000/api/ready
 | 登录后无会话／Origin 错误 | config.toml 中 server.public_url 是否与实际协议／域名／端口／路径一致，是否仍从 HTTP 地址访问 |
 | 原生服务找不到 node／pnpm | B1 的 /opt/gacha-node 链接与服务 ExecStart／PATH 是否一致 |
 | 旧版本报 DATABASE_STATE_MISSING | 更新到简化配置版本后，修改 config.toml 的 driver 与 url 即可初始化空 PostgreSQL 库 |
-| KEY_MISMATCH | 使用目标已有数据库对应的原加密密钥，避免已保存 Token 无法解密 |
+| KEY_MISMATCH | 目标库存在加密凭证，应使用原密钥；无加密凭证时已允许自动更新密钥绑定并保留账号、记录 |
 | 原生模块加载失败 | 是否使用 Node 24、是否误复制其他平台 node_modules；重新在 Debian 安装并构建 |
 | 数据库不通 | 驱动选择、URL 编码、PostgreSQL 服务／权限／连接规则是否正确 |
 | Docker Hub／npm 下载失败 | 服务器能否访问官方源，Docker 与当前 shell 的代理是否配置正确 |

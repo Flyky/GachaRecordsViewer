@@ -115,6 +115,9 @@ export function repositoryContract(name: string, create: () => Promise<{ connect
       expect(await bindInstallation(connection, { ...input, adminFingerprint: 'fixture-admin-b' })).not.toBe(version);
       expect(await repo.sessions.get(admin)).toBeUndefined();
       expect(await repo.sessions.get(user)).toBeDefined();
+      const communityId = randomUUID();
+      await connection.executor.execute(sql`INSERT INTO community_accounts (id,owner_id,provider,account_id) VALUES (${communityId},${a.id},'cn','fixture-account')`);
+      await connection.executor.execute(sql`INSERT INTO credentials (id,owner_id,community_account_id,type,encrypted_value) VALUES (${randomUUID()},${a.id},${communityId},'stoken','fixture-ciphertext')`);
       await expect(bindInstallation(connection, { ...input, keyFingerprint: 'wrong' })).rejects.toMatchObject({ code: 'KEY_MISMATCH' });
       await expect(bindInstallation(connection, { ...input, installationId: randomUUID() })).rejects.toMatchObject({ code: 'INSTALLATION_MISMATCH' });
     });

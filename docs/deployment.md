@@ -39,7 +39,7 @@ credential_key = "<首次启动自动生成，保留原值>"
 
 管理员用户名固定为 admin。密码修改后重启，旧管理员会话失效，普通用户会话不受影响。配置包含密码、数据库连接和加密密钥，应保持仅服务账号可读，避免公开。
 
-`security.credential_key` 用于解密已保存的米游社 Token，不能随意更换。保留实际加密密钥匹配检查：若连接已有数据库但密钥不同，会报 KEY_MISMATCH，应使用该数据库原来的配置。
+`security.credential_key` 用于解密已保存的米游社 Token，不能随意更换。若目标库没有任何加密凭证（即便已经有账号和抽卡记录），密钥不一致时会自动采用当前配置的密钥，保留用户与记录，使旧会话失效。只有目标库已保存加密凭证且密钥不一致时才报 KEY_MISMATCH，此时应使用该数据库原来的配置。
 
 ## 修改为 PostgreSQL
 
@@ -102,7 +102,7 @@ SQLite 停止应用后复制整个数据目录。PostgreSQL 同时保存 config.
 | INVALID_CONFIG／INVALID_* | 修正端口、URL、时区等实际无效值 |
 | DATABASE_UNAVAILABLE | 检查连接地址、账号、权限和网络 |
 | INITIALIZATION_FAILED | 检查数据库迁移权限、已有表结构或文件写入权限 |
-| KEY_MISMATCH | 使用已有数据库原来的 credential_key |
+| KEY_MISMATCH | 目标库已保存加密凭证，需使用对应原 credential_key；无加密凭证的库会自动重新绑定，无需清库 |
 | FILE_READ_FAILED | 检查配置或旧密钥文件读取权限 |
 
 运行中普通用户认证、Token 加密、数据库迁移和基础参数检查保留。没有重复校验部署 UUID、installation.json 或遗留锁文件，也不要求数据目录必须为空。

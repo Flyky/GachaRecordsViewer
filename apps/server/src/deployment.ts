@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { bindInstallation, openConnection, repositories, type DatabaseConfig, type DatabaseConnection } from '@gacha/db';
+import { bindInstallation, openConnection, PersistenceError, repositories, type DatabaseConfig, type DatabaseConnection } from '@gacha/db';
 import { parse, stringify } from 'smol-toml';
 
 export class StartupError extends Error {
@@ -122,8 +122,8 @@ export async function initializeDeployment(options: DeploymentOptions = {}) {
     if (config.database.driver === 'sqlite') await mkdir(dirname(config.database.filename), { recursive: true, mode: 0o700 });
     try { connection = await openConnection(config.database); } catch { throw new StartupError('DATABASE_UNAVAILABLE'); }
     const before = await connection.inspect();
-    // Empty databases can be initialized; existing encrypted credentials still require their key.
-    if (before.state && before.state.key_fingerprint !== keyFingerprint) throw new StartupError('KEY_MISMATCH');
+    // Binding checks encrypted credentials after migrations; setup-only databases
+    // can safely adopt the configured key without discarding users or records.
     await connection.migrate();
     const adminSessionVersion = await bindInstallation(connection, {
       installationId: before.state?.installation_id ?? randomUUID(), keyFingerprint, adminFingerprint,
@@ -132,6 +132,7 @@ export async function initializeDeployment(options: DeploymentOptions = {}) {
   } catch (error) {
     key.fill(0);
     if (connection) await connection.close().catch(() => undefined);
+    if (error instanceof PersistenceError && error.code === 'KEY_MISMATCH') throw new StartupError('KEY_MISMATCH');
     if (error instanceof StartupError) throw error;
     throw new StartupError('INITIALIZATION_FAILED');
   }

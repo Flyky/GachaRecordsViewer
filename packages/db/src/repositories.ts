@@ -101,11 +101,18 @@ export async function bindInstallation(connection: DatabaseConnection, input: {
     if (connection.kind === 'postgres') await tx.execute(sql`SELECT pg_advisory_xact_lock(72403004)`);
     const existing = (await tx.query<InstallationState>(sql`SELECT * FROM app_state WHERE id='primary'`))[0];
     if (existing && existing.installation_id !== input.installationId) throw new PersistenceError('INSTALLATION_MISMATCH');
-    if (existing && existing.key_fingerprint !== input.keyFingerprint) throw new PersistenceError('KEY_MISMATCH');
-    if (existing?.admin_fingerprint === input.adminFingerprint) return existing.admin_session_version;
+    const keyChanged = existing !== undefined && existing.key_fingerprint !== input.keyFingerprint;
+    if (keyChanged) {
+      // A database initialized during setup has no encrypted values to preserve.
+      // Rebind only in that case; keep all user/profile/history rows intact.
+      const credentials = await tx.query<{ id: string }>(sql`SELECT id FROM credentials LIMIT 1`);
+      if (credentials.length) throw new PersistenceError('KEY_MISMATCH');
+      await tx.execute(sql`DELETE FROM sessions`);
+    }
+    if (!keyChanged && existing?.admin_fingerprint === input.adminFingerprint) return existing.admin_session_version;
     const version = randomUUID();
     if (existing) {
-      await tx.execute(sql`UPDATE app_state SET admin_fingerprint=${input.adminFingerprint}, admin_session_version=${version} WHERE id='primary'`);
+      await tx.execute(sql`UPDATE app_state SET key_fingerprint=${input.keyFingerprint}, admin_fingerprint=${input.adminFingerprint}, admin_session_version=${version} WHERE id='primary'`);
       await tx.execute(sql`DELETE FROM sessions WHERE kind='admin'`);
     } else {
       await tx.execute(sql`INSERT INTO app_state (id, installation_id, key_fingerprint, admin_fingerprint, admin_session_version)
