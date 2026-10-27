@@ -17,6 +17,7 @@ import type { SyncOptions } from './community/sync.js';
 import { metadataService, registerMetadata, type MetadataOptions } from './metadata.js';
 import type { CheckinOptions } from './community/checkin.js';
 import { registerWishLink, type WishLinkOptions } from './wish-link.js';
+import { registerApiMock } from './api-mock.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -91,6 +92,7 @@ export async function buildApp(options: AppOptions = {}) {
       await registerAuth(site, auth);
       registerMetadata(site, metadata);
       registerUigf(site, auth);
+      registerApiMock(site, auth);
       registerRecords(site, auth);
       registerAnalysis(site, auth);
       registerWishLink(site, auth, options.wishLink);

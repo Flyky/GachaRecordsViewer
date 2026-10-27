@@ -747,6 +747,12 @@ h2 {
 }
 
 .data-stack { display: grid; gap: 24px; }
+.api-mock-form { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin-top: 20px; }
+.api-mock-form .field { flex: 1 1 190px; min-width: 0; }
+.api-mock-form label { display: block; font-size: 13px; margin-bottom: 8px; }
+.api-mock-result { margin-top: 20px; border-top: 1px solid #e4eae2; padding-top: 18px; }
+.api-mock-result .list-heading { flex-wrap: wrap; gap: 8px; }
+.api-mock-result .button-row { margin-top: 12px; }
 .data-section, .archive-summary { padding: 28px 30px; min-width: 0; }
 .data-section h3 { font-size: 16px; margin: 0; font-weight: 600; }
 .data-section h3 small { color: #86958b; font-size: 12px; margin-left: 8px; font-weight: 400; }

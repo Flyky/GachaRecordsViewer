@@ -4,6 +4,7 @@ import { NButton, NSelect } from 'naive-ui';
 import type { ImportPreviewResponse, ImportProfileReport, ImportResultResponse } from '@gacha/contracts';
 import ImportProfileCard from '../components/ImportProfileCard.vue';
 import WishLinkImport from '../components/WishLinkImport.vue';
+import ApiMock from '../components/ApiMock.vue';
 import { ApiError, userRequest } from '../auth.js';
 import { currentProfile, profiles, profilesLoading, refreshProfiles, timezoneLabel } from '../profiles.js';
 import { exportVersions, importErrorMessage, MAX_FILE_BYTES, skippedGameLabel } from '../uigf.js';
@@ -335,6 +336,7 @@ async function download() {
         {{ exportError }}
       </p>
     </section>
+    <ApiMock />
     <p class="data-footnote">
       当前账号保存了 {{ profiles.length }} 个原神档案。可在档案概览查看时间范围与记录总量。
     </p>

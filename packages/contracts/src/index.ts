@@ -144,3 +144,11 @@ export interface WishLinkJob extends OperationJob {
   pools: { pool: SyncPool; status: 'queued' | 'running' | 'completed' | 'failed'; pages: number; fetched: number; inserted: number; duplicates: number; enriched: number; code: string | null }[];
 }
 export interface WishLinkJobResponse { job: WishLinkJob | null }
+
+export const API_MOCK_FORMATS = ['wish-link', 'miyoushe', 'uigf'] as const;
+export type ApiMockFormat = typeof API_MOCK_FORMATS[number];
+export interface ApiMockLink {
+  id: string; profileId: string; uid: string; format: ApiMockFormat;
+  recordCount: number; createdAt: number; expiresAt: number; url: string;
+}
+export interface ApiMockResponse { link: ApiMockLink | null; serverTime: number }
