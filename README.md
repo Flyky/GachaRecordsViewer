@@ -2,7 +2,15 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R15：UIGF 数据管理、查询与统计、米游社账号／Token／刷新任务页面已可使用。官服后端授权与当前窗口拉取已实测，部署打包与第一版联合验收留给 R16。
+第一版功能与部署资料已整理。Debian 下的 Docker Compose 和原生 Node.js／systemd 操作见 [Debian 部署指南](docs/debian-deployment.md)；按最新安排，目标环境验证由用户稍后自行进行。
+
+## Debian 部署入口
+
+- [Debian：Docker 与原生 Node.js 完整步骤](docs/debian-deployment.md)
+- [容器备份、恢复与升级](docs/operations.md)
+- [配置字段与初始化规则](docs/deployment.md)
+
+本轮提交默认只保留本地，未自动 push。服务器从 GitHub 克隆前，请确认所选提交已包含 Dockerfile、Compose 和 deploy 目录，或直接上传对应源码。
 
 ## 本地运行
 
@@ -60,7 +68,7 @@ pnpm start
 
 ## 第一版计划
 
-支持本地多账号、管理员创建 / 重置账号、UIGF v4.x 原神导入导出、完整记录查询和既有统计分析，以及米游社授权与手动刷新。数据库默认 SQLite，可配置 PostgreSQL。R02 已验证有限的官服样本链路；其他卡池与最终部署环境仍需分别验证。
+支持本地多账号、管理员创建 / 重置账号、UIGF v4.x 原神导入导出、完整记录查询和既有统计分析，以及米游社授权与手动刷新。数据库默认 SQLite，可配置 PostgreSQL。官服授权、五池当前窗口刷新及本机容器结果见[验收参考](docs/v1-acceptance.md)；Debian 目标环境由用户自行验证。
 
 技术方案为 Node.js 24 LTS + TypeScript + Fastify 5，前端采用 Vue 3 + Vite + Naive UI + ECharts，Drizzle 分别适配两种数据库。
 

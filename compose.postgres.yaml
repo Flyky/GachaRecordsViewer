@@ -1,0 +1,38 @@
+# Standalone alternative to compose.yaml; use a different project name for an independent deployment.
+services:
+  app:
+    build: .
+    image: gacha-records-viewer:local
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 45s
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_DRIVER: postgres
+      DATABASE_URL: "postgresql://gacha:${POSTGRES_PASSWORD:?Set a random URL-safe POSTGRES_PASSWORD in .env.postgres}@postgres:5432/gacha"
+      PUBLIC_URL: "${PUBLIC_URL:-http://127.0.0.1:3000}"
+      USER_TIMEZONE: "${USER_TIMEZONE:-Asia/Shanghai}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - app-data:/app/data
+  postgres:
+    image: postgres:18.4-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gacha
+      POSTGRES_USER: gacha
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set a random URL-safe POSTGRES_PASSWORD in .env.postgres}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+volumes:
+  app-data:
+  postgres-data:

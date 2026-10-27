@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R15 米游社账号、Token 与刷新页面已完成，合成浏览器流程通过；官服后端实测边界沿用 R13／R14，正式部署端到端留待联合验收。
+当前阶段：R16 部署文件及 Debian Docker／原生 Node.js 文档已整理。用户最新要求停止新增验证，目标 Debian 环境由用户稍后自行验收，已有本机结果仅作参考。
 
-下一轮：R16 部署交付与第一版联合验收。
+下一步：用户按 Debian 部署指南自行部署与验证，再处理其反馈；不自动开始新的开发轮次。
 
 ## 1. 执行方式
 
@@ -24,6 +24,7 @@
 - 用户后续说“继续”时，先读取最新状态，再推进下一项未完成任务；如有待本人操作的项，保留其状态并推进不依赖它的下一项。
 - 用户自 R04 起要求减少验证与消耗：优先只检查本轮改动的类型、静态规则和关键行为；已有通过结果不重复扩测。全量构建、浏览器、双数据库验证仅在实际改动需要或联合验收时执行，明确记录未重跑的范围。
 - 用户自 R12 起要求扫码测试放在最后，询问并收到回复后才创建二维码和轮询；允许将授权 Token 本地加密保存以供后续测试复用，失效后再请求重新授权。
+- R16 后续调整：用户明确表示验证稍后自行进行，当前优先整理 Debian 下 Docker 和不使用 Docker 的部署文档；停止新增验证，不把本机参考结果当作目标环境已验收。
 
 ## 2. 第一版范围
 
@@ -64,11 +65,11 @@
 | R09 | 完整记录查询 API 与页面 | R06、R08 | `feat: add record filters pagination and display options` | 已完成 |
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
-| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成；SToken 派生与复用随 R13 实测，独立 L/C 手动输入待实测 |
+| R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 已完成：SToken 随 R13 实测，独立 L/C 能力随 R16 本机参考验证 |
 | R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 已完成：本机正式扫码、重新授权与重启复用实测通过 |
 | R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 已完成：官服当前窗口 1,373 条、重启与重复增量实测通过 |
 | R15 | 米游社页面、Token 与刷新交互 | R05、R12、R13、R14 | `feat: add Miyoushe account token and sync screens` | 已完成：合成浏览器流程通过，真实部署端到端留联合验收 |
-| R16 | 部署交付与第一版联合验收 | R01–R15 | `chore: package deployment and verify v1 acceptance` | 未开始 |
+| R16 | 部署交付与第一版联合验收 | R01–R15 | `chore: package deployment and document Debian setup` | 部署资料完成／待用户 Debian 自验 |
 
 R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12–R15 可先基于已核对协议实现并用模拟传输验证，但涉及实时能力的验收状态始终保留待实测；不能只凭模拟响应宣布线上可用。
 
@@ -178,7 +179,7 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 
 范围：补齐 Dockerfile、SQLite 默认 Compose 与 PostgreSQL 配置示例、非容器运行说明、健康检查、持久化与升级步骤；说明配置、数据库、凭证主密钥的备份与恢复；检查全新部署和升级迁移。对照需求 §11 逐项确认完成状态，修复验收发现的问题。
 
-验收：两种数据库各跑关键路径；重启保留管理员密码、用户、记录和 Token；使用合成数据跑 Playwright 关键流程；真实米游社链路列明测试环境和范围。凭证与个人记录未入库，README 与可运行行为一致。仍有待实测 / 未完成必做项时，文档明确列出，不宣布完整第一版已交付。
+验收：两种数据库各跑关键路径；重启保留管理员密码、用户、记录和 Token；使用合成数据跑 Playwright 关键流程；真实米游社链路列明测试环境和范围。真实凭证与个人记录不提交代码仓库或打入镜像，README 与可运行行为一致。仍有待实测 / 未完成必做项时，文档明确列出，不宣布完整第一版已交付。用户已将目标 Debian 验收调整为自行进行。
 
 完成本轮后可以形成可部署提交，但默认不创建 Release、打远程标签或推送，等待用户安排。
 
@@ -392,3 +393,11 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 新增 `/help/miyoushe` 获取手册并修正旧草案，说明扫码／外部 Cookie／网页 Cookie／能力差异和未来链接入口。锁定并动态加载 qrcode 1.5.4，补齐其与 DijkstraJS 的完整许可。
 - 精简验证：前端类型、零警告 lint、构建通过；独立 SQLite／Edge 合成流程覆盖三类输入能力、模拟扫码创建／扫描／确认／取消／过期、Token 显隐与复制、部分失败重试、取消、UID／本地账号与迟到响应隔离、查询新增 3 条和 UIGF 导出、空角色、解绑，以及 390px 无横向溢出；页面异常 0。原图表分包体积提示保留。
 - 未重新调用真实米游社扫码或刷新，未读取真实 JSON，R13／R14 真实验证库保留。合成临时服务验证后关闭；未重跑后端无关全量／双库。说明见 [community-pages.md](community-pages.md)，下一轮 R16；本地 commit，不自动 push。
+
+### R16：部署资料与 Debian 操作手册，2026-10-27
+
+- 补齐固定版本多阶段 Dockerfile、源码白名单、SQLite／PostgreSQL 独立 Compose、环境样例、健康检查、持久卷与许可；补充备份恢复和版本升级说明。
+- 用户调整安排前已完成本机镜像、两库重启／恢复、2 组结构升级契约和生产容器浏览器参考验证，并通过复用授权的官服容器链路；记录见 [验收参考](v1-acceptance.md)，不外推其他环境。
+- 用户随后明确要求验证稍后自行进行，当前只整理文档；停止新增验证。新增 [Debian 部署指南](debian-deployment.md)，覆盖 Docker 安装／Compose、独立 Node 24／pnpm、专用账号、systemd、SQLite／原生 PostgreSQL、HTTPS、备份恢复、升级与自验清单。
+- 提供原生 systemd 和环境文件模板，分离源码、缓存与数据目录，避免首次初始化被缓存文件干扰；明确本地新提交未自动 push，服务器必须取得包含部署文件的版本。
+- 本轮只建立本地提交，不自动 push、打标签、创建 Release 或发布站点；Debian 目标部署与验收由用户后续执行，第一版最终验收保持待用户确认。

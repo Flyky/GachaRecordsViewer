@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    image: gacha-records-viewer:local
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 45s
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_DRIVER: sqlite
+      PUBLIC_URL: "${PUBLIC_URL:-http://127.0.0.1:3000}"
+      USER_TIMEZONE: "${USER_TIMEZONE:-Asia/Shanghai}"
+    volumes:
+      - app-data:/app/data
+
+volumes:
+  app-data:

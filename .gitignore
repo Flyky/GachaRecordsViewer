@@ -119,6 +119,7 @@ config.toml
 credential-key*
 
 # Local verification output
+backups/
 playwright-report/
 test-results/
 .pnpm-store/

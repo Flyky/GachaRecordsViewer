@@ -1,0 +1,23 @@
+[Unit]
+Description=GachaRecordsViewer
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=gacha
+Group=gacha
+WorkingDirectory=/opt/gacha-viewer
+Environment=PATH=/opt/gacha-node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=/etc/gacha-viewer.env
+ExecStart=/opt/gacha-node/bin/node /opt/gacha-viewer/apps/server/dist/index.js --serve-web
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
