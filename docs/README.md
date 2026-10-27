@@ -4,6 +4,8 @@
 
 状态：功能与 R16 部署资料已整理，最新交付重点为 Debian 部署文档。用户已决定稍后自行验证，后续不再新增验证；已有本机结果作为参考，不代替用户目标服务器验收。
 
+部署反馈紧急修订：启动采用单份 config.toml，移除部署标记／锁文件和空库绑定检查；环境变量只初始化配置。支持 Nginx 域名子路径，无需按路径重新构建。当前用法以[启动配置](deployment.md)和[Debian 指南](debian-deployment.md)为准；本机仅补充受影响范围检查，目标环境仍由用户验收。
+
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
 ## 阅读顺序

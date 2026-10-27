@@ -32,7 +32,9 @@ pnpm start
 
 此时单个服务在 [http://127.0.0.1:3000](http://127.0.0.1:3000) 提供前端和 API。`GET /api/health` 是进程存活检查，`GET /api/ready` 检查数据库是否可查询；两者都不检查米游社。
 
-首次启动默认使用 SQLite，在 `data/` 下生成配置、数据库、管理员随机密码和凭证主密钥；重启保留。管理员密码在本机 `data/config.toml` 的 `[admin].password` 中读取。接口用法见[认证与管理员 API](docs/auth-api.md)，数据库选择和恢复说明见[部署配置文档](docs/deployment.md)。开发代理固定使用 API 的 3000 端口，开发时请保持默认值。
+首次启动默认使用 SQLite，在 `data/` 下生成 `config.toml` 和数据库。管理员随机密码与凭证加密密钥都在配置中；缺少字段时自动补齐。停止后直接修改配置再 `pnpm start`，无需环境变量；切换空 PostgreSQL 库不再校验旧部署标记。接口用法见[认证与管理员 API](docs/auth-api.md)，配置与兼容规则见[启动配置](docs/deployment.md)。开发代理固定使用 API 的 3000 端口。
+
+支持 Nginx 子路径：将配置的 `[server].public_url` 设为 `https://xxx.com/gacha/`，Nginx 保留前缀转发，重启即可，不需要按路径重编前端。管理员地址为 `/gacha/admin`。参见 [Nginx 示例](deploy/nginx-subpath.conf.example)。Docker 环境变量仅用于初始化配置，之后以 config.toml 为准。
 
 普通用户从 `/login` 登录，在 `/settings` 修改密码。管理员直接输入 `/admin` 访问；普通页面不提供管理入口。管理员创建账号后，普通用户使用 `12345678` 首次登录，密码提醒可以暂时忽略。页面使用说明见 [R05 账号页面](docs/account-pages.md)。
 

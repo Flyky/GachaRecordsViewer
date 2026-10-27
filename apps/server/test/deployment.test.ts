@@ -1,5 +1,4 @@
-import { randomUUID } from 'node:crypto';
-import { readFile, unlink, writeFile } from 'node:fs/promises';
+import { readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse, stringify } from 'smol-toml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -29,108 +28,99 @@ async function edit(deployment: Deployment, modify: (config: Record<string, unkn
   modify(config); await writeFile(deployment.config.configFile, stringify(config));
 }
 
-describe('persistent deployment initialization', () => {
-  it('defaults to SQLite and preserves generated secrets, users and the session epoch on restart', async () => {
+describe('simple file-based deployment', () => {
+  it('creates one config and SQLite, then preserves credentials, users and session epoch', async () => {
     const first = await start();
-    expect(first.config.database.driver).toBe('sqlite');
-    expect(first.config.adminUsername).toBe('admin');
-    expect(first.config.adminPassword).toMatch(/^[A-Za-z0-9_-]{32}$/);
-    expect(first.credentialKey.length).toBe(32);
     const config = await readFile(first.config.configFile, 'utf8');
-    const key = await readFile(first.config.keyFile, 'utf8');
-    const user = await first.repositories.users.create({ username: 'Friend', passwordHash: 'fixture-hash' });
+    expect(first.config.database.driver).toBe('sqlite');
+    expect(first.config.adminPassword).toMatch(/^[A-Za-z0-9_-]{32}$/);
+    expect(parse(config).security).toHaveProperty('credential_key');
+    expect(await readdir(directory.directory)).not.toContain('installation.json');
+    expect(await readdir(directory.directory)).not.toContain('credential-key');
+    const user = await first.repositories.users.create({ username: 'friend', passwordHash: 'fixture-hash' });
     await stop(first);
     const second = await start();
     expect(await readFile(second.config.configFile, 'utf8')).toBe(config);
-    expect(await readFile(second.config.keyFile, 'utf8')).toBe(key);
-    expect(second.adminSessionVersion).toBe(first.adminSessionVersion);
     expect(second.credentialKey.equals(first.credentialKey)).toBe(true);
+    expect(second.adminSessionVersion).toBe(first.adminSessionVersion);
     expect((await second.repositories.users.findByUsername('friend'))?.id).toBe(user.id);
   });
 
-  it('revokes existing admin sessions after a config password change while retaining user sessions', async () => {
+  it('seeds env once, then accepts config edits despite stale environment overrides', async () => {
+    const env = { PORT: '3105', PUBLIC_URL: 'https://example.test/gacha/' };
+    const first = await start(env);
+    expect(first.config.publicUrl).toBe('https://example.test/gacha/');
+    await stop(first);
+    await edit(first, (config) => { (config.server as Record<string, unknown>).port = 3200; });
+    const second = await start(env);
+    expect(second.config.port).toBe(3200);
+    expect(second.config.publicUrl).toBe('https://example.test/gacha/');
+  });
+
+  it('ignores legacy markers and locks, and initializes a newly selected empty database', async () => {
+    const first = await start(); await stop(first);
+    await writeFile(join(directory.directory, 'installation.json'), '{"legacy":true}');
+    await writeFile(join(directory.directory, '.bootstrap.lock'), 'old-lock');
+    await edit(first, (config) => { (config.database as Record<string, unknown>).sqlite_path = './other.sqlite'; });
+    const second = await start();
+    expect(second.config.database).toMatchObject({ driver: 'sqlite', filename: join(directory.directory, 'other.sqlite') });
+    expect((await second.connection.inspect()).state).toBeDefined();
+  });
+
+  it('upgrades the old external key without changing its value or active sessions', async () => {
+    const first = await start(); await stop(first);
+    const key = first.credentialKey.toString('hex');
+    await writeFile(first.config.keyFile, `v1:${key}\n`);
+    await edit(first, (config) => { config.security = { credential_key_file: './credential-key' }; config.installation = { id: 'old-id' }; });
+    const second = await start();
+    expect(second.credentialKey.equals(first.credentialKey)).toBe(true);
+    expect(second.adminSessionVersion).toBe(first.adminSessionVersion);
+    expect(parse(await readFile(second.config.configFile, 'utf8')).security).toHaveProperty('credential_key', `v1:${key}`);
+    // The old external key is retained, so a missing config can still use it.
+    await stop(second); await unlink(second.config.configFile);
+    expect((await start()).credentialKey.equals(first.credentialKey)).toBe(true);
+  });
+
+  it('applies defaults to partial config and retains only essential value/key checks', async () => {
+    await writeFile(join(directory.directory, 'config.toml'), '[server]\nport = 3101\n[extra]\nvalue = true\n');
+    const first = await start();
+    expect(first.config.port).toBe(3101);
+    expect(first.config.publicUrl).toBe('http://127.0.0.1:3101/');
+    await stop(first);
+    const source = await readFile(first.config.configFile, 'utf8');
+    for (const env of [{ PORT: '0' }, { PORT: '1.5' }, { DATABASE_DRIVER: 'mysql' }, { USER_TIMEZONE: 'invalid/timezone' }, { PUBLIC_URL: 'https://secret:private@example.test/' }]) {
+      expect(() => parseConfiguration(source, first.config.configFile, directory.directory, env)).toThrow();
+    }
+    expect(() => parseConfiguration('invalid = [', first.config.configFile, directory.directory, {})).toThrow('INVALID_TOML');
+    await edit(first, (config) => { (config.security as Record<string, unknown>).credential_key = `v1:${'ab'.repeat(32)}`; });
+    await expect(start()).rejects.toMatchObject({ code: 'KEY_MISMATCH' });
+  });
+
+  it('changing admin password revokes admin sessions while preserving user sessions', async () => {
     const first = await start();
     const user = await first.repositories.users.create({ username: 'friend', passwordHash: 'fixture-hash' });
     await first.repositories.sessions.create({ idHash: 'admin-session', kind: 'admin', authVersion: first.adminSessionVersion, expiresAt: 'fixture' });
     await first.repositories.sessions.create({ idHash: 'user-session', kind: 'user', ownerId: user.id, authVersion: '1', expiresAt: 'fixture' });
-    const key = Buffer.from(first.credentialKey);
     await stop(first);
     await edit(first, (config) => { (config.admin as Record<string, unknown>).password = 'changed-fixture-password'; });
     const second = await start();
     expect(second.adminSessionVersion).not.toBe(first.adminSessionVersion);
-    expect(second.credentialKey.equals(key)).toBe(true);
     expect(await second.repositories.sessions.get('admin-session')).toBeUndefined();
     expect(await second.repositories.sessions.get('user-session')).toBeDefined();
   });
-
-  it.each(['config', 'key', 'database'] as const)('fails closed when a previously initialized %s is missing', async (missing) => {
-    const first = await start(); await stop(first);
-    if (first.config.database.driver !== 'sqlite') throw new Error('Expected SQLite');
-    const file = missing === 'config' ? first.config.configFile : missing === 'key' ? first.config.keyFile : first.config.database.filename;
-    await unlink(file);
-    await expect(start()).rejects.toMatchObject({ code: missing === 'config' ? 'CONFIG_MISSING' : missing === 'key' ? 'KEY_OR_CONFIG_MISSING' : 'DATABASE_STATE_MISSING' });
-    await expect(readFile(file)).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('rejects replacement keys, installation IDs and switching to an empty database', async () => {
-    const first = await start(); await stop(first);
-    const key = await readFile(first.config.keyFile, 'utf8');
-    await writeFile(first.config.keyFile, `v1:${'ab'.repeat(32)}\n`);
-    await expect(start()).rejects.toMatchObject({ code: 'INSTALLATION_MARKER_MISMATCH' });
-    await writeFile(first.config.keyFile, key);
-    const original = await readFile(first.config.configFile, 'utf8');
-    await edit(first, (config) => { (config.installation as Record<string, unknown>).id = randomUUID(); });
-    await expect(start()).rejects.toMatchObject({ code: 'INSTALLATION_MARKER_MISMATCH' });
-    await writeFile(first.config.configFile, original);
-    await edit(first, (config) => { (config.database as Record<string, unknown>).sqlite_path = './other.sqlite'; });
-    await expect(start()).rejects.toMatchObject({ code: 'DATABASE_STATE_MISSING' });
-  });
-
-  it('does not steal another initializer lock or generate config when initialization is locked', async () => {
-    const lock = join(directory.directory, '.bootstrap.lock');
-    await writeFile(lock, 'fixture-lock');
-    await expect(start()).rejects.toMatchObject({ code: 'BOOTSTRAP_LOCKED' });
-    expect(await readFile(lock, 'utf8')).toBe('fixture-lock');
-    await expect(readFile(join(directory.directory, 'config.toml'))).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('applies validated environment overrides without silently selecting PostgreSQL from a URL', async () => {
-    const first = await start({ PORT: '3105', HOST: '0.0.0.0', PUBLIC_URL: 'https://example.test', USER_TIMEZONE: 'UTC', DATABASE_URL: 'postgres://unused:secret@invalid/db' });
-    expect(first.config).toMatchObject({ port: 3105, host: '0.0.0.0', publicUrl: 'https://example.test/', userTimezone: 'UTC', database: { driver: 'sqlite' } });
-    const source = await readFile(first.config.configFile, 'utf8');
-    for (const env of [{ PORT: '0' }, { PORT: '1.5' }, { DATABASE_DRIVER: 'mysql' }, { DATABASE_DRIVER: 'postgres', DATABASE_URL: 'http://secret:private@invalid/' }, { USER_TIMEZONE: 'invalid/timezone' }, { PUBLIC_URL: 'https://secret:private@example.test/' }]) {
-      expect(() => parseConfiguration(source, first.config.configFile, directory.directory, env)).toThrow(/^Startup failed:/);
-      try { parseConfiguration(source, first.config.configFile, directory.directory, env); } catch (error) { expect(String(error)).not.toMatch(/secret|private/); }
-    }
-    expect(() => parseConfiguration(source + '\n[unknown]\nvalue = 1\n', first.config.configFile, directory.directory, {})).toThrow('UNKNOWN_CONFIG_FIELD');
-    expect(() => parseConfiguration('invalid = [', first.config.configFile, directory.directory, {})).toThrow('INVALID_TOML');
-    await stop(first);
-    await edit(first, (config) => { (config.security as Record<string, unknown>).credential_key_file = './config.toml'; });
-    await expect(start()).rejects.toMatchObject({ code: 'OVERLAPPING_PATHS' });
-  });
 });
 
-describe.skipIf(!process.env.TEST_DATABASE_URL)('deployment with real PostgreSQL', () => {
-  it('initializes and restarts against the configured server and rejects switching to another empty database', async () => {
+describe.skipIf(!process.env.TEST_DATABASE_URL)('PostgreSQL configuration changes', () => {
+  it('allows SQLite -> empty PostgreSQL using the existing config and data directory', async () => {
     const postgres = await temporaryPostgres();
-    const empty = await temporaryPostgres();
     try {
-      const env = { DATABASE_DRIVER: 'postgres', DATABASE_URL: postgres.url };
-      const first = await start(env);
-      expect(first.connection.kind).toBe('postgres');
-      const user = await first.repositories.users.create({ username: 'pg-friend', passwordHash: 'fixture-hash' });
-      const profile = await first.repositories.profiles.create(user.id, { game: 'hk4e', uid: '100000001', timezone: 8 });
-      await first.repositories.records.insertBatch(user.id, profile.id, [{ id: '1900000000000000001', itemId: '10001', gachaType: '301', pityGroup: '301', timeLocal: '2026-10-26 12:00:00', timeUtc: '2026-10-26T04:00:00.000Z', source: 'fixture' }]);
-      await stop(first);
-      const second = await start(env);
-      expect(second.adminSessionVersion).toBe(first.adminSessionVersion);
-      expect(second.config.adminPassword).toBe(first.config.adminPassword);
-      expect(await second.repositories.records.count(user.id, profile.id)).toBe(1);
+      const first = await start(); await stop(first);
+      await edit(first, (config) => { config.database = { driver: 'postgres', url: postgres.url }; });
+      const second = await start();
+      expect(second.connection.kind).toBe('postgres');
+      expect((await second.connection.inspect()).state).toBeDefined();
+      expect(second.credentialKey.equals(first.credentialKey)).toBe(true);
       await stop(second);
-      await expect(start({ ...env, DATABASE_URL: empty.url })).rejects.toMatchObject({ code: 'DATABASE_STATE_MISSING' });
-    } finally {
-      await Promise.all(deployments.splice(0).map((deployment) => deployment.connection.close()));
-      await postgres.cleanup(); await empty.cleanup();
-    }
+    } finally { await postgres.cleanup(); }
   }, 30000);
 });

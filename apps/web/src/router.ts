@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import WorkspaceView from './views/WorkspaceView.vue';
 import { refreshUser, userSession } from './auth.js';
+import { basePath } from './base.js';
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(basePath),
   routes: [
     { path: '/login', component: () => import('./views/LoginView.vue') },
     { path: '/admin', component: () => import('./views/AdminView.vue') },

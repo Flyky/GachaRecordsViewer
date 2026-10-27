@@ -80,4 +80,21 @@ describe('application bootstrap', () => {
       buildApp({ serveWeb: true, webRoot: fileURLToPath(new URL('./missing-build/', import.meta.url)) }),
     ).rejects.toThrow('pnpm build');
   });
+
+  it('serves nested navigation with a runtime base and keeps API/assets/outside paths out of SPA fallback', async () => {
+    const app = await buildApp({ serveWeb: true, webRoot, basePath: '/gacha/' }); apps.push(app);
+    const redirect = await app.inject('/gacha?x=1');
+    expect(redirect.statusCode).toBe(308); expect(redirect.headers.location).toBe('/gacha/?x=1');
+    for (const url of ['/gacha/', '/gacha/index.html', '/gacha/records', '/gacha/help/miyoushe']) {
+      const response = await app.inject({ url, headers: { accept: 'text/html' } });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toContain('<base data-grv-base href="/gacha/">');
+    }
+    expect((await app.inject('/gacha/api/health')).statusCode).toBe(200);
+    const asset = await app.inject('/gacha/assets/fixture.js');
+    expect(asset.statusCode).toBe(200); expect(asset.body).toContain('subpath asset');
+    for (const url of ['/', '/gacha-other/', '/gacha/api/missing', '/gacha/assets/missing.js']) {
+      expect((await app.inject({ url, headers: { accept: 'text/html' } })).statusCode).toBe(404);
+    }
+  });
 });

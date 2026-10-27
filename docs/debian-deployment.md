@@ -8,7 +8,7 @@
 
 - 仅本机访问：使用 `http://127.0.0.1:3000`；远程服务器可通过 SSH 转发 `ssh -L 3000:127.0.0.1:3000 用户@服务器` 后在自己电脑打开这个地址。
 - 对外访问：建议域名加 HTTPS，示例为 `https://gacha.example.com`，替换为自己的域名。
-- `PUBLIC_URL` 必须和浏览器访问地址的协议、主机、端口一致，否则会出现 Origin 校验或 Cookie 登录问题。应用运行在站点根路径，不提供 `/gacha/` 子路径构建。
+- 配置中的 `server.public_url` 应填写实际完整地址，包括协议、主机、端口及子路径，例如 `https://xxx.com/gacha/`。首次启动可用 PUBLIC_URL 设置初始值，之后修改 config.toml；前端无需按路径重新构建。
 - 使用包含本轮部署文件的提交。**本地提交不会自动出现在 GitHub**：如果远端分支还没有 Dockerfile、Compose 和 deploy 目录，先同步所需提交，或将这份源码上传到服务器。不要上传 Windows 的 node_modules、真实记录、配置或密钥作为源码。
 
 ## 方案 A：Docker Compose
@@ -64,7 +64,7 @@ PUBLIC_URL=http://127.0.0.1:3000
 USER_TIMEZONE=Asia/Shanghai
 ```
 
-HTTPS 域名部署改为 `PUBLIC_URL=https://你的域名`，端口保持只绑定 127.0.0.1，之后配置反向代理。局域网直接访问可将 BIND_ADDRESS 改为 0.0.0.0，PUBLIC_URL 改成服务器实际 IP 与端口；这种 HTTP 访问下 Token 自动复制可能不可用，可主动查看后手动复制。
+HTTPS 域名部署首次可设 `PUBLIC_URL=https://你的域名/gacha/`，端口保持只绑定 127.0.0.1，之后配置反向代理。局域网直接访问可将 BIND_ADDRESS 改为 0.0.0.0，PUBLIC_URL 改成服务器实际 IP 与端口；这种 HTTP 访问下 Token 自动复制可能不可用，可主动查看后手动复制。已有配置时，环境变量不再覆盖配置，后续修改容器数据卷中的 config.toml。
 
 启动应用：
 
@@ -86,11 +86,11 @@ sudo less ./config.local.toml
 
 在 `[admin]` 中读取 password。浏览器直接访问 `/admin`，管理员用户名为 `admin`，普通页面没有管理入口。创建普通账号后，用初始密码 `12345678` 在 `/login` 登录；初始密码提醒可以暂时忽略。
 
-不要把 config.local.toml、credential-key、数据库或 Token 发到公开位置。普通数据导入在 `/data`，米游社账号、扫码及刷新在 `/accounts`，获取手册在 `/help/miyoushe`。
+不要把配置、数据库或 Token 发到公开位置。新配置已包含加密密钥，不另生成密钥或部署标记文件。普通数据导入在 `/data`，米游社账号、扫码及刷新在 `/accounts`，获取手册在 `/help/miyoushe`；子路径部署时这些地址均加上前缀，例如 `/gacha/admin`、`/gacha/data`。
 
 ### A4. 改用 PostgreSQL（可选）
 
-应在第一次初始化前选择。不要在已有 SQLite 部署上换文件并期待自动搬迁数据。
+以下用于首次配置 PostgreSQL。已有 SQLite 部署也允许沿用原数据目录，但需要按[配置参考](deployment.md)修改 config.toml 中的数据库驱动和 URL；仅更换 Compose 环境变量不会覆盖新格式配置，也不会自动搬迁数据。
 
 ```bash
 cp deploy/postgres.env.example .env.postgres
@@ -187,7 +187,7 @@ sudo -H -u gacha git clone https://github.com/Flyky/GachaRecordsViewer.git /opt/
 sudo -H -u gacha env "PATH=/opt/gacha-node/bin:$PATH" sh -c 'cd /opt/gacha-viewer && pnpm install --frozen-lockfile && pnpm build'
 ```
 
-运行数据目录第一次启动前应为空。用户 home／npm／pnpm 缓存与运行数据分开，避免缓存文件被识别为不完整旧部署。不要先在数据目录中手工新建缺少部署 ID 或密钥的配置。
+源码、缓存和运行数据分开便于维护。数据目录不要求为空；缺少配置时按默认配置启动，缺少配置字段时自动补齐，不再校验旧部署标记。
 
 ### B3. 配置环境与 systemd
 
@@ -208,7 +208,7 @@ USER_TIMEZONE=Asia/Shanghai
 DATABASE_DRIVER=sqlite
 ```
 
-域名部署只需将 PUBLIC_URL 改为实际 HTTPS 地址，并配置下一节的反向代理。环境文件由 systemd 读取；应用不会自行加载仓库中的 .env。
+这些变量只提供首次配置的初始值，环境文件由 systemd 读取，应用不会自行加载仓库中的 .env。后续修改 `/var/lib/gacha-viewer/config.toml` 即可；例如将 `[server].public_url` 设为实际的 `https://xxx.com/gacha/` 并配置下一节反向代理。
 
 ```bash
 sudo install -o root -g root -m 0644 /opt/gacha-viewer/deploy/gacha-viewer.service /etc/systemd/system/gacha-viewer.service
@@ -218,15 +218,15 @@ sudo systemctl status gacha-viewer --no-pager
 sudo journalctl -u gacha-viewer -n 100 --no-pager
 ```
 
-首次启动自动生成 `/var/lib/gacha-viewer/config.toml`、credential-key、installation.json 和 SQLite 数据库。读取管理员密码：
+首次启动自动生成 `/var/lib/gacha-viewer/config.toml` 和 SQLite 数据库，管理员密码及加密密钥均保存在配置中。读取管理员密码：
 
 ```bash
 sudo less /var/lib/gacha-viewer/config.toml
 ```
 
-管理员及普通用户登录方式与 A3 相同。修改环境文件后用 `sudo systemctl restart gacha-viewer`；修改 .service 后先 daemon-reload 再重启。
+管理员及普通用户登录方式与 A3 相同。修改 config.toml 后用 `sudo systemctl restart gacha-viewer`；修改 .service 后先 daemon-reload 再重启。
 
-修改管理员密码时先停止服务，用 `sudo nano /var/lib/gacha-viewer/config.toml` 只修改 `[admin].password`，保持部署 ID、密钥和其他配置不变，然后重新启动。Docker 方式先停止 app，复制原配置到本机、编辑后复制回 `app:/app/data/config.toml`，恢复文件所有者为 `node:node` 后启动；完整维护规则见 [运维手册](operations.md)。
+修改管理员密码时先停止服务，用 `sudo nano /var/lib/gacha-viewer/config.toml` 修改 `[admin].password`，保持加密密钥不变，然后重新启动。Docker 方式先停止 app，复制原配置到本机、编辑后复制回 `app:/app/data/config.toml`，恢复文件所有者为 `node:node` 后启动；完整维护规则见 [运维手册](operations.md)。
 
 ### B4. 原生 PostgreSQL（可选）
 
@@ -246,9 +246,9 @@ DATABASE_DRIVER=postgres
 DATABASE_URL=postgresql://gacha_app:URL编码后的密码@127.0.0.1:5432/gacha_records
 ```
 
-用实际密码替换占位文本；特殊字符必须按 URL 规则编码，随机十六进制密码则可直接使用。保留 GRV_DATA_DIR，那里仍需存放配置、主密钥与标记。数据库角色需拥有该专用数据库并可创建 public 中的表与 drizzle 迁移 Schema；服务自动建表，但不会创建数据库或角色。
+用实际密码替换占位文本；特殊字符必须按 URL 规则编码，随机十六进制密码则可直接使用。保留 GRV_DATA_DIR，那里存放配置与其中的加密密钥。数据库角色需拥有该专用数据库并可创建 public 中的表与 drizzle 迁移 Schema；服务自动建表，但不会创建数据库或角色。
 
-如果应用已经初始化为 SQLite，请保留原部署，另建数据目录与数据库；简单改连接字符串不会搬迁数据。
+如果已经启动过，直接修改 `/var/lib/gacha-viewer/config.toml` 的 `[database]` 为 `driver = "postgres"` 和 `url = "实际连接地址"`，重启即可初始化空 PostgreSQL 库。不需要换数据目录，也无需删文件；原 SQLite 文件保留，但其中的账号和记录不会自动搬迁。
 
 ### B5. 原生备份与恢复
 
@@ -269,20 +269,42 @@ PostgreSQL 同样停应用、复制配置与数据目录，并在重启前增加
 sudo pg_dump -h 127.0.0.1 -U gacha_app -W -d gacha_records -Fc -f "$BACKUP_DIR/gacha.dump"
 ```
 
-恢复时先停止应用，将备份数据复制到一个**新的空目录**，例如 `/var/lib/gacha-viewer-restored`，将其所有者设为 gacha，并在环境文件中调整 GRV_DATA_DIR。保持原配置、密钥、部署标记和数据库来自同一组备份。
+恢复时先停止应用，将备份数据复制到一个**新的空目录**，例如 `/var/lib/gacha-viewer-restored`，将其所有者设为 gacha，并在环境文件中调整 GRV_DATA_DIR。保持原配置（包含加密密钥）和数据库来自同一组备份；旧格式备份还应保留外部密钥文件。
 
-PostgreSQL 先创建新的空库再恢复，随后调整 DATABASE_URL；不要先启动空应用建立新部署：
+PostgreSQL 先创建新的空库再恢复，随后修改恢复目录的 config.toml 中 `[database].url`：
 
 ```bash
 sudo -u postgres createdb --owner=gacha_app gacha_records_restored
 sudo pg_restore -h 127.0.0.1 -U gacha_app -W -d gacha_records_restored --no-owner --exit-on-error "$BACKUP_DIR/gacha.dump"
 ```
 
-恢复后再启动应用并自行核对。配置中的数据库／密钥若使用了绝对路径，也要对应调整；不要重新生成密钥或安装 ID 来绕过不匹配错误。
+恢复后再启动应用并自行核对。配置中的数据库若使用了绝对路径，也要对应调整；保留原加密密钥，否则无法解密已保存的 Token。
 
 ## 两种方式共用：HTTPS、升级与自行验证
 
 ### HTTPS 反向代理
+
+如果通过现有 Nginx 域名的 `/gacha/` 访问，先停止应用，将 config.toml 的 `[server].public_url` 改成 `https://xxx.com/gacha/`，再启动。直接 pnpm start 时默认配置是仓库根目录下 `data/config.toml`，不需要额外 export。
+
+将以下内容合并到现有 HTTPS 的 `server` 块（完整模板为 `deploy/nginx-subpath.conf.example`）：
+
+```nginx
+location = /gacha {
+    return 308 /gacha/$is_args$args;
+}
+
+location /gacha/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    client_max_body_size 55m;
+    proxy_read_timeout 180s;
+}
+```
+
+`proxy_pass` 末尾不要添加 `/`，也不需要 rewrite，保持 `/gacha/` 转发给 Node。修改 Nginx 后运行 `sudo nginx -t`，通过再执行 `sudo systemctl reload nginx`。访问 `https://xxx.com/gacha/`，管理员入口为 `https://xxx.com/gacha/admin`。无需 proxy_cookie_path 或修改前端构建参数。
 
 仓库提供 `deploy/Caddyfile.example`，可用于宿主机 Caddy：
 
@@ -303,7 +325,7 @@ sudo systemctl enable --now caddy
 sudo systemctl reload caddy
 ```
 
-应用的 PUBLIC_URL 必须为同一 HTTPS 地址，修改后重新创建 Docker 应用容器或重启原生服务。你也可使用现有 Nginx 等代理，保持所有路径转发至应用。以上只是提供操作说明，本轮没有在目标服务器安装代理或申请证书。
+配置中的 server.public_url 必须为实际完整地址，修改后重启应用。Caddy 示例用于域名根路径；已有子路径可用前面的 Nginx 配置。以上只是提供操作说明，本轮没有在目标服务器安装代理或申请证书。
 
 ### 更新与回退
 
@@ -327,10 +349,10 @@ curl -f http://127.0.0.1:3000/api/ready
 
 | 现象 | 检查 |
 | --- | --- |
-| 登录后无会话／Origin 错误 | PUBLIC_URL 是否与浏览器实际地址完全匹配，HTTPS 是否仍从 HTTP 地址访问 |
+| 登录后无会话／Origin 错误 | config.toml 中 server.public_url 是否与实际协议／域名／端口／路径一致，是否仍从 HTTP 地址访问 |
 | 原生服务找不到 node／pnpm | B1 的 /opt/gacha-node 链接与服务 ExecStart／PATH 是否一致 |
-| 首启报 CONFIG_MISSING | 数据目录是否混入构建缓存或其他文件，是否误用了丢失配置的旧部署目录 |
-| KEY_MISMATCH／标记不匹配 | 数据库、配置、主密钥、标记是否来自同一部署；不要删除后强行重建 |
+| 旧版本报 DATABASE_STATE_MISSING | 更新到简化配置版本后，修改 config.toml 的 driver 与 url 即可初始化空 PostgreSQL 库 |
+| KEY_MISMATCH | 使用目标已有数据库对应的原加密密钥，避免已保存 Token 无法解密 |
 | 原生模块加载失败 | 是否使用 Node 24、是否误复制其他平台 node_modules；重新在 Debian 安装并构建 |
 | 数据库不通 | 驱动选择、URL 编码、PostgreSQL 服务／权限／连接规则是否正确 |
 | Docker Hub／npm 下载失败 | 服务器能否访问官方源，Docker 与当前 shell 的代理是否配置正确 |

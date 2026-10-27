@@ -35,7 +35,7 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       await open(original.directory);
       const initialPassword = deployment!.config.adminPassword, initialEpoch = deployment!.adminSessionVersion;
       const digest = (value: string) => createHash('sha256').update(value).digest('hex');
-      const keyDigest = digest(await readFile(deployment!.config.keyFile, 'utf8'));
+      const keyDigest = digest(deployment!.credentialKey.toString('hex'));
       const configDigest = digest(await readFile(deployment!.config.configFile, 'utf8'));
       const admin = await login('admin', 'admin', initialPassword);
       for (const username of ['release_a', 'release_b']) expect((await post('/api/admin/users', { username }, admin)).statusCode).toBe(201);
@@ -65,7 +65,7 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       await cp(original.directory, restored.directory, { recursive: true });
       await open(restored.directory);
       expect(deployment!.config.adminPassword === initialPassword).toBe(true); expect(deployment!.adminSessionVersion).toBe(initialEpoch);
-      expect(digest(await readFile(deployment!.config.keyFile, 'utf8'))).toBe(keyDigest);
+      expect(digest(deployment!.credentialKey.toString('hex'))).toBe(keyDigest);
       expect(digest(await readFile(deployment!.config.configFile, 'utf8'))).toBe(configDigest);
       expect((await get('/api/auth/me', a)).statusCode).toBe(200); expect((await get('/api/admin/me', admin)).statusCode).toBe(200);
       expect((await get('/api/ready')).statusCode).toBe(200);

@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
-import { link, mkdir, open, readFile, readdir, unlink } from 'node:fs/promises';
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bindInstallation, openConnection, repositories, type DatabaseConfig, type DatabaseConnection } from '@gacha/db';
@@ -12,23 +12,23 @@ export class StartupError extends Error {
 export interface RuntimeConfig {
   configFile: string;
   dataDirectory: string;
-  installationId: string;
   host: string;
   port: number;
   publicUrl: string;
   userTimezone: string;
   database: DatabaseConfig;
+  sqlitePath?: string;
   adminUsername: 'admin';
   adminPassword: string;
+  /** Legacy key file, read only when upgrading an older configuration. */
   keyFile: string;
+  keyText?: string;
 }
 
 interface DeploymentOptions { dataDirectory?: string; env?: Record<string, string | undefined> }
 const projectRoot = fileURLToPath(new URL('../../../', import.meta.url));
-
-function table(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new StartupError('INVALID_CONFIG');
-  return value as Record<string, unknown>;
+function section(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 function string(value: unknown) {
   if (typeof value !== 'string' || !value.trim() || /[\r\n\0]/.test(value)) throw new StartupError('INVALID_CONFIG');
@@ -39,49 +39,37 @@ function resolvePath(base: string, value: string) { return isAbsolute(value) ? v
 export function parseConfiguration(source: string, file: string, dataDirectory: string, env: Record<string, string | undefined>): RuntimeConfig {
   let raw;
   try { raw = parse(source); } catch { throw new StartupError('INVALID_TOML'); }
-  const known = { installation: ['id'], server: ['host', 'port', 'public_url', 'user_timezone'],
-    database: ['driver', 'sqlite_path', 'url'], admin: ['username', 'password'], security: ['credential_key_file'] };
-  for (const key of Object.keys(raw)) if (!Object.hasOwn(known, key)) throw new StartupError('UNKNOWN_CONFIG_FIELD');
-  for (const [section, fields] of Object.entries(known)) {
-    const values = table(raw[section]);
-    for (const key of Object.keys(values)) if (!fields.includes(key)) throw new StartupError('UNKNOWN_CONFIG_FIELD');
-  }
-  const installation = table(raw.installation), server = table(raw.server), database = table(raw.database);
-  const admin = table(raw.admin), security = table(raw.security);
-  const installationId = string(installation.id);
-  if (!/^[a-f0-9-]{36}$/i.test(installationId)) throw new StartupError('INVALID_INSTALLATION_ID');
-  const host = string(env.HOST ?? server.host);
-  const portInput = env.PORT ?? server.port;
-  if ((typeof portInput !== 'number' && typeof portInput !== 'string') || !/^\d+$/.test(String(portInput))) throw new StartupError('INVALID_PORT');
-  const port = Number(portInput);
-  if (port < 1 || port > 65535) throw new StartupError('INVALID_PORT');
+  const server = section(raw.server), database = section(raw.database);
+  const admin = section(raw.admin), security = section(raw.security);
+  const host = string(env.HOST ?? server.host ?? '127.0.0.1');
+  const port = Number(env.PORT ?? server.port ?? 3000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new StartupError('INVALID_PORT');
   let publicUrl: URL;
-  try { publicUrl = new URL(string(env.PUBLIC_URL ?? server.public_url)); }
+  try { publicUrl = new URL(string(env.PUBLIC_URL ?? server.public_url ?? `http://127.0.0.1:${port}`)); }
   catch { throw new StartupError('INVALID_PUBLIC_URL'); }
-  if (!['http:', 'https:'].includes(publicUrl.protocol) || publicUrl.username || publicUrl.password) throw new StartupError('INVALID_PUBLIC_URL');
-  const userTimezone = string(env.USER_TIMEZONE ?? server.user_timezone);
+  if (!['http:', 'https:'].includes(publicUrl.protocol) || publicUrl.username || publicUrl.password || publicUrl.search || publicUrl.hash) throw new StartupError('INVALID_PUBLIC_URL');
+  publicUrl.pathname = publicUrl.pathname.replace(/\/+$/, '') + '/';
+  if (!/^\/(?:[A-Za-z0-9_-]+\/)*$/.test(publicUrl.pathname)) throw new StartupError('INVALID_PUBLIC_URL');
+  const userTimezone = string(env.USER_TIMEZONE ?? server.user_timezone ?? 'Asia/Shanghai');
   try { new Intl.DateTimeFormat('en', { timeZone: userTimezone }); } catch { throw new StartupError('INVALID_TIMEZONE'); }
-  if (admin.username !== 'admin') throw new StartupError('INVALID_ADMIN_USERNAME');
-  const adminPassword = string(admin.password);
-  if (adminPassword.length < 8) throw new StartupError('ADMIN_PASSWORD_TOO_SHORT');
-  if (adminPassword.length > 1024) throw new StartupError('ADMIN_PASSWORD_TOO_LONG');
-  const driver = env.DATABASE_DRIVER ?? database.driver;
+  const adminPassword = string(admin.password ?? randomBytes(24).toString('base64url'));
+  if (adminPassword.length < 8 || adminPassword.length > 1024) throw new StartupError('INVALID_ADMIN_PASSWORD');
+  const driver = env.DATABASE_DRIVER ?? database.driver ?? 'sqlite';
   let connection: DatabaseConfig;
-  if (driver === 'sqlite') {
-    const filename = resolvePath(dirname(file), string(database.sqlite_path));
-    connection = { driver, filename };
-  } else if (driver === 'postgres') {
+  const sqlitePath = driver === 'sqlite' ? string(database.sqlite_path ?? './gacha.sqlite') : undefined;
+  if (driver === 'sqlite') connection = { driver, filename: resolvePath(dirname(file), sqlitePath!) };
+  else if (driver === 'postgres') {
     const url = string(env.DATABASE_URL ?? database.url);
     try { if (!['postgres:', 'postgresql:'].includes(new URL(url).protocol)) throw new Error(); }
     catch { throw new StartupError('INVALID_DATABASE_URL'); }
     connection = { driver, url };
   } else throw new StartupError('INVALID_DATABASE_DRIVER');
-  const keyFile = resolvePath(dirname(file), string(security.credential_key_file));
-  if (keyFile === file || (connection.driver === 'sqlite' && [file, keyFile].includes(connection.filename))) throw new StartupError('OVERLAPPING_PATHS');
-  const reserved = [resolve(dataDirectory, 'installation.json'), resolve(dataDirectory, '.bootstrap.lock')];
-  if ([file, keyFile, ...(connection.driver === 'sqlite' ? [connection.filename] : [])].some((path) => reserved.includes(path))) throw new StartupError('OVERLAPPING_PATHS');
-  return { configFile: file, dataDirectory, installationId, host, port, publicUrl: publicUrl.href,
-    userTimezone, database: connection, adminUsername: 'admin', adminPassword, keyFile };
+  const keyFile = resolvePath(dirname(file), string(security.credential_key_file ?? './credential-key'));
+  if (connection.driver === 'sqlite' && [file, keyFile].includes(connection.filename)) throw new StartupError('OVERLAPPING_PATHS');
+  if (security.credential_key === undefined && keyFile === file) throw new StartupError('OVERLAPPING_PATHS');
+  return { configFile: file, dataDirectory, host, port, publicUrl: publicUrl.href, userTimezone,
+    database: connection, ...(sqlitePath === undefined ? {} : { sqlitePath }), adminUsername: 'admin', adminPassword, keyFile,
+    ...(security.credential_key === undefined ? {} : { keyText: string(security.credential_key) }) };
 }
 
 async function readOptional(file: string): Promise<string | undefined> {
@@ -89,24 +77,14 @@ async function readOptional(file: string): Promise<string | undefined> {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw new StartupError('FILE_READ_FAILED'); }
 }
 
-/** Publish once without replacing an existing file, including on another startup process. */
-async function publish(file: string, content: string) {
-  await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-  const temporary = `${file}.${randomUUID()}.tmp`;
-  try {
-    const handle = await open(temporary, 'wx', 0o600);
-    try { await handle.writeFile(content); await handle.sync(); } finally { await handle.close(); }
-    await link(temporary, file);
-  } finally { await unlink(temporary).catch(() => undefined); }
-}
-
-function defaults() {
+function configurationDocument(config: RuntimeConfig, keyText: string) {
   return stringify({
-    installation: { id: randomUUID() },
-    server: { host: '127.0.0.1', port: 3000, public_url: 'http://127.0.0.1:3000', user_timezone: 'Asia/Shanghai' },
-    database: { driver: 'sqlite', sqlite_path: './gacha.sqlite' },
-    admin: { username: 'admin', password: randomBytes(24).toString('base64url') },
-    security: { credential_key_file: './credential-key' },
+    server: { host: config.host, port: config.port, public_url: config.publicUrl, user_timezone: config.userTimezone },
+    database: config.database.driver === 'sqlite'
+      ? { driver: 'sqlite', sqlite_path: config.sqlitePath ?? config.database.filename }
+      : { driver: 'postgres', url: config.database.url },
+    admin: { username: 'admin', password: config.adminPassword },
+    security: { credential_key: keyText.trim() },
   });
 }
 
@@ -114,60 +92,47 @@ export async function initializeDeployment(options: DeploymentOptions = {}) {
   const env = options.env ?? process.env;
   const dataDirectory = resolvePath(projectRoot, options.dataDirectory ?? env.GRV_DATA_DIR ?? './data');
   const configFile = resolvePath(projectRoot, env.GRV_CONFIG ?? resolve(dataDirectory, 'config.toml'));
-  const markerFile = resolve(dataDirectory, 'installation.json');
-  const lockFile = resolve(dataDirectory, '.bootstrap.lock');
-  await mkdir(dataDirectory, { recursive: true, mode: 0o700 });
-  let lock;
-  try { lock = await open(lockFile, 'wx', 0o600); }
-  catch { throw new StartupError('BOOTSTRAP_LOCKED'); }
+  await mkdir(dirname(configFile), { recursive: true, mode: 0o700 });
+  const source = await readOptional(configFile);
+  // Environment variables seed a new configuration. Existing files are authoritative.
+  // Legacy releases did not persist Docker overrides; consume those once during upgrade.
+  let legacy = false;
+  if (source !== undefined) {
+    try { legacy = section(parse(source).security).credential_key_file !== undefined; }
+    catch { throw new StartupError('INVALID_TOML'); }
+  }
+  const config = parseConfiguration(source ?? '', configFile, dataDirectory, source === undefined || legacy ? env : {});
+  let keyText = config.keyText ?? await readOptional(config.keyFile);
+  if (keyText === undefined) keyText = `v1:${randomBytes(32).toString('hex')}`;
+  if (!/^v1:[a-f0-9]{64}\n?$/.test(keyText)) throw new StartupError('INVALID_KEY_FILE');
+  const key = Buffer.from(keyText.trim().slice(3), 'hex');
+  const keyFingerprint = createHash('sha256').update(key).digest('hex');
+  const adminFingerprint = createHmac('sha256', key).update(`admin\0${config.adminPassword}`).digest('hex');
+  // Save defaults before connecting: a connection failure can be fixed by editing TOML.
+  const normalized = configurationDocument(config, keyText);
+  if (source !== normalized) {
+    const temporary = `${configFile}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temporary, normalized, { mode: 0o600, flag: 'wx' });
+      await rename(temporary, configFile);
+    } finally { await unlink(temporary).catch(() => undefined); }
+  }
   let connection: DatabaseConnection | undefined;
   try {
-    const source = await readOptional(configFile);
-    if (source === undefined && (await readdir(dataDirectory)).some((name) => name !== '.bootstrap.lock')) throw new StartupError('CONFIG_MISSING');
-    const pendingSource = source ?? defaults();
-    const config = parseConfiguration(pendingSource, configFile, dataDirectory, env);
-    const markerText = await readOptional(markerFile);
-    let marker: Record<string, unknown> | undefined;
-    if (markerText !== undefined) {
-      try { marker = table(JSON.parse(markerText)); } catch { throw new StartupError('INVALID_INSTALLATION_MARKER'); }
-    }
-    let keyText = await readOptional(config.keyFile);
-    if (marker && (keyText === undefined || source === undefined)) throw new StartupError('KEY_OR_CONFIG_MISSING');
-    if (config.database.driver === 'sqlite') {
-      if (marker && await readOptionalDatabaseExists(config.database.filename) === false) throw new StartupError('DATABASE_STATE_MISSING');
-      await mkdir(dirname(config.database.filename), { recursive: true, mode: 0o700 });
-    }
+    if (config.database.driver === 'sqlite') await mkdir(dirname(config.database.filename), { recursive: true, mode: 0o700 });
     try { connection = await openConnection(config.database); } catch { throw new StartupError('DATABASE_UNAVAILABLE'); }
     const before = await connection.inspect();
-    if (source === undefined && before.hasTables) throw new StartupError('CONFIG_MISSING');
-    if (marker && !before.state) throw new StartupError('DATABASE_STATE_MISSING');
-    if (before.hasTables && !before.state) throw new StartupError('UNRECOGNIZED_DATABASE');
-    if (before.state && keyText === undefined) throw new StartupError('KEY_MISSING');
-    if (keyText === undefined) keyText = `v1:${randomBytes(32).toString('hex')}\n`;
-    if (!/^v1:[a-f0-9]{64}\n?$/.test(keyText)) throw new StartupError('INVALID_KEY_FILE');
-    const key = Buffer.from(keyText.trim().slice(3), 'hex');
-    const keyFingerprint = createHash('sha256').update(key).digest('hex');
-    const adminFingerprint = createHmac('sha256', key).update(`admin\0${config.adminPassword}`).digest('hex');
-    if (marker && (marker.installationId !== config.installationId || marker.keyFingerprint !== keyFingerprint)) throw new StartupError('INSTALLATION_MARKER_MISMATCH');
-    if (before.state?.installation_id !== undefined && before.state.installation_id !== config.installationId) throw new StartupError('INSTALLATION_MISMATCH');
-    if (before.state?.key_fingerprint !== undefined && before.state.key_fingerprint !== keyFingerprint) throw new StartupError('KEY_MISMATCH');
-    if (source === undefined) await publish(configFile, pendingSource);
-    if (await readOptional(config.keyFile) === undefined) await publish(config.keyFile, keyText);
+    // Empty databases can be initialized; existing encrypted credentials still require their key.
+    if (before.state && before.state.key_fingerprint !== keyFingerprint) throw new StartupError('KEY_MISMATCH');
     await connection.migrate();
-    const adminSessionVersion = await bindInstallation(connection, { installationId: config.installationId, keyFingerprint, adminFingerprint });
-    if (marker === undefined) await publish(markerFile, JSON.stringify({ version: 1, installationId: config.installationId, keyFingerprint }) + '\n');
+    const adminSessionVersion = await bindInstallation(connection, {
+      installationId: before.state?.installation_id ?? randomUUID(), keyFingerprint, adminFingerprint,
+    });
     return { config, credentialKey: key, adminSessionVersion, connection, repositories: repositories(connection) };
   } catch (error) {
+    key.fill(0);
     if (connection) await connection.close().catch(() => undefined);
     if (error instanceof StartupError) throw error;
     throw new StartupError('INITIALIZATION_FAILED');
-  } finally {
-    await lock.close();
-    await unlink(lockFile);
   }
-}
-
-async function readOptionalDatabaseExists(file: string) {
-  try { const handle = await open(file, 'r'); await handle.close(); return true; }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw new StartupError('FILE_READ_FAILED'); }
 }

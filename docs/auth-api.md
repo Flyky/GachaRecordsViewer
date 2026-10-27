@@ -34,7 +34,7 @@ R04 已提供后端接口；R05 已接入登录、初始密码提醒、改密和
 
 会话 ID 为 32 字节随机数，只通过 HttpOnly Cookie 传递；数据库保存它的 SHA-256 摘要。普通会话固定有效期 7 天，管理员 8 小时，不随访问续期。密码使用 Argon2id（19456 KiB、2 轮、并行度 1）及独立随机盐保存。接口不返回密码哈希、会话版本或原始会话 ID。
 
-Cookie 设置 `Path=/`、`HttpOnly`、`SameSite=Strict`，不设置 Domain。`PUBLIC_URL` 为 HTTPS 时启用 `Secure`，Cookie 名为 `__Host-grv_user` / `__Host-grv_admin`；HTTP 本地开发使用 `grv_user` / `grv_admin`。是否 Secure 由部署配置决定，不信任请求传入的转发头。
+Cookie 设置 `HttpOnly`、`SameSite=Strict`，不设置 Domain；Path 使用配置 public_url 的路径（根路径为 `/`，子路径如 `/gacha/`）。HTTPS 启用 Secure：根路径 Cookie 名为 `__Host-grv_user`／`__Host-grv_admin`，子路径使用 `__Secure-grv_user`／`__Secure-grv_admin`；HTTP 使用 `grv_user`／`grv_admin`。是否 Secure 由部署配置决定，不信任请求传入的转发头。本文接口路径在子路径部署时统一加前缀，例如 `/gacha/api/auth/login`。
 
 所有 API 写请求都需要 `Content-Type: application/json` 和允许的 `Origin`，包括登录；缺失 Origin 也会拒绝。生产仅允许 `PUBLIC_URL` 的 origin；开发启动额外允许 `http://127.0.0.1:5173` 和 `http://localhost:5173`。没有开放跨域 CORS。
 

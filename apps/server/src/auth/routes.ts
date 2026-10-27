@@ -46,6 +46,8 @@ export async function registerAuth(app: FastifyInstance, options: AuthOptions) {
   const now = options.now ?? Date.now;
   const limiter = new AuthLimiter(now);
   const secure = new URL(options.publicUrl).protocol === 'https:';
+  const basePath = new URL(options.publicUrl).pathname.replace(/\/+$/, '') + '/';
+  const apiPrefix = `${basePath}api/`;
   const origins = new Set([new URL(options.publicUrl).origin]);
   if (options.development) {
     origins.add('http://127.0.0.1:5173'); origins.add('http://localhost:5173');
@@ -54,15 +56,15 @@ export async function registerAuth(app: FastifyInstance, options: AuthOptions) {
   app.addHook('onClose', async () => { csrfKey.fill(0); });
   const adminHash = await hashPassword(options.adminPassword);
   const dummyHash = await hashPassword(randomBytes(32).toString('hex'));
-  const cookieName = (kind: Kind) => `${secure ? '__Host-' : ''}grv_${kind}`;
-  const cookieOptions = { path: '/', httpOnly: true, sameSite: 'strict' as const, secure };
+  const cookieName = (kind: Kind) => `${secure ? basePath === '/' ? '__Host-' : '__Secure-' : ''}grv_${kind}`;
+  const cookieOptions = { path: basePath, httpOnly: true, sameSite: 'strict' as const, secure };
   const tokenCsrf = (kind: Kind, token: string) => createHmac('sha256', csrfKey).update(`${kind}\0${token}`).digest('base64url');
   const clearCookie = (reply: FastifyReply, kind: Kind) => reply.clearCookie(cookieName(kind), cookieOptions);
 
   // These hooks also apply to future authenticated modules on this application instance.
   app.addHook('onRequest', async (request, reply) => {
-    if (request.url.startsWith('/api/')) reply.header('Cache-Control', 'no-store');
-    if (['GET', 'HEAD', 'OPTIONS'].includes(request.method) || !request.url.startsWith('/api/')) return;
+    if (request.url.startsWith(apiPrefix)) reply.header('Cache-Control', 'no-store');
+    if (['GET', 'HEAD', 'OPTIONS'].includes(request.method) || !request.url.startsWith(apiPrefix)) return;
     if (!origins.has(request.headers.origin ?? '') || request.headers['sec-fetch-site'] === 'cross-site') {
       throw new ApiError(403, 'ORIGIN_REJECTED');
     }

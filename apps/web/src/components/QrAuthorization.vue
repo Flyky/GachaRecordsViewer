@@ -4,6 +4,7 @@ import { NButton } from 'naive-ui';
 import type { MiyousheQrCreateResponse, MiyousheQrResponse, MiyousheQrSession } from '@gacha/contracts';
 import { ApiError, userRequest, userSession } from '../auth.js';
 import { communityError, qrActive, qrLabel } from '../community.js';
+import { appUrl } from '../base.js';
 const props = defineProps<{ targetId?: string; targetIdentity?: string }>();
 const emit = defineEmits<{ authorized: [id: string]; close: [] }>();
 const session = shallowRef<MiyousheQrSession | null>(null), image = ref(''), busy = ref(false), error = ref(''), clock = ref(Date.now());
@@ -11,7 +12,7 @@ const seconds = computed(() => session.value ? Math.max(0, Math.ceil((Date.parse
 let active = true, generation = 0, pollTimer: ReturnType<typeof setTimeout> | undefined, clockTimer: ReturnType<typeof globalThis.setInterval> | undefined;
 const csrf = userSession.value?.csrfToken;
 function cancelOnLeave(id: string) {
-  void fetch(`/api/community/qr/${encodeURIComponent(id)}/cancel`, { method: 'POST', credentials: 'same-origin', keepalive: true,
+  void fetch(appUrl(`/api/community/qr/${encodeURIComponent(id)}/cancel`), { method: 'POST', credentials: 'same-origin', keepalive: true,
     headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) }, body: '{}' }).catch(() => undefined);
 }
 function stop() { globalThis.clearTimeout(pollTimer); }

@@ -1,5 +1,6 @@
 import { computed, shallowRef } from 'vue';
 import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse } from '@gacha/contracts';
+import { appUrl } from './base.js';
 
 type Role = 'user' | 'admin';
 export class ApiError extends Error {
@@ -39,7 +40,7 @@ async function request<T>(path: string, role: Role, body?: Record<string, unknow
   const epoch = role === 'user' ? userEpoch : adminEpoch;
   let response: Response;
   try {
-    response = await fetch(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
+    response = await fetch(appUrl(path), { method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
       headers: body ? { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) } : {},
       ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(timeout) });
   } catch { throw new ApiError('NETWORK_ERROR'); }
