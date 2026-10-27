@@ -2,7 +2,7 @@
 
 日期：2026-10-27（Asia/Shanghai）
 
-状态：R12 米游社凭证后端代码完成，新增校验链路待实测；下一轮实现扫码会话后端。UIGF 数据管理、多 UID、完整查询与统计页面已可使用。R02 官服角色池样本链路已实测通过。
+状态：R13 内置扫码授权后端代码完成，正式链路待本人扫码实测；下一轮实现原神在线刷新任务。UIGF 数据管理、多 UID、完整查询与统计页面已可使用。R02 官服角色池样本链路已实测通过。
 
 仓库已确定为 [Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)。
 
@@ -29,6 +29,8 @@
 统计使用：[R11 物品分栏、折线与日历页面](analysis-pages.md)。
 
 米游社接口：[R12 加密凭证、能力校验与绑定](community-api.md)。
+
+扫码授权：[R13 一次性会话、轮询与重新授权](miyoushe-qr-api.md)。
 
 1. [需求规格与验收标准](requirements.md)：逐项对应用户的 12 条需求，区分确定需求、建议默认值与未来扩展。
 2. [UIGF 与米游社调研](research-uigf-miyoushe.md)：规范版本、授权路径、接口依据、已失效方案及待实测项目。

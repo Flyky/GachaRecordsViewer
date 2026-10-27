@@ -12,6 +12,7 @@ import { registerRecords } from './records/routes.js';
 import { registerAnalysis } from './analysis/routes.js';
 import { registerCommunity } from './community/routes.js';
 import type { CommunityOptions } from './community/service.js';
+import type { QrOptions } from './community/qr.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -19,7 +20,7 @@ interface AppOptions {
   webRoot?: string;
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
-  community?: CommunityOptions;
+  community?: CommunityOptions & { qr?: QrOptions };
 }
 
 const defaultWebRoot = fileURLToPath(new URL('../../web/dist/', import.meta.url));

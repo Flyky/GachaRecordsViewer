@@ -6,4 +6,4 @@ export type { DatabaseConfig, DatabaseConnection, InstallationState, SqlExecutor
 export { uigfRepository, ImportError } from './imports.js';
 export type { PreviewState } from './imports.js';
 export { communityRepository, CommunityError } from './community.js';
-export type { StoredCommunity } from './community.js';
+export type { StoredCommunity, CredentialAuthorization } from './community.js';

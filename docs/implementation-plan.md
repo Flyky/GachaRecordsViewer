@@ -4,9 +4,9 @@
 
 仓库：[Flyky/GachaRecordsViewer](https://github.com/Flyky/GachaRecordsViewer)
 
-当前阶段：R12 米游社凭证与账号管理后端代码完成，两库模拟上游契约通过，新增真实上游校验待实测。
+当前阶段：R13 内置 App 扫码授权后端代码完成，两库契约通过，正式扫码／重授权及持久化后的真实上游复用待实测。
 
-下一轮：R13 内置 App 扫码授权后端。
+下一轮：R14 原神在线刷新任务后端；R13 真实扫码待用户确认方便后执行。
 
 ## 1. 执行方式
 
@@ -65,7 +65,7 @@
 | R10 | 分析计算与接口 | R06、R07 | `feat: add item monthly and daily analysis APIs` | 已完成 |
 | R11 | 三组统计分析页面 | R08、R10 | `feat: add grouped statistics and calendar charts` | 已完成 |
 | R12 | 米游社凭证与账号管理后端 | R02 调研结果、R03、R04 | `feat: add encrypted Miyoushe credentials and capability checks` | 代码完成 / 待实测：新增上游校验 |
-| R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 未开始 |
+| R13 | 内置 App 扫码授权后端 | R02、R12 | `feat: implement Miyoushe QR authorization sessions` | 代码完成 / 待实测：正式扫码与重授权 |
 | R14 | 原神在线刷新任务后端 | R06、R07、R12 | `feat: implement incremental Genshin history sync jobs` | 未开始 |
 | R15 | 米游社页面、Token 与刷新交互 | R05、R12、R13、R14 | `feat: add Miyoushe account token and sync screens` | 未开始 |
 | R16 | 部署交付与第一版联合验收 | R01–R15 | `chore: package deployment and verify v1 acceptance` | 未开始 |
@@ -355,3 +355,12 @@ R02 中需要用户扫码的真实验证若未完成，R03–R11 可继续。R12
 - 精简验证：73 项定向测试通过，含 provider 回归／新校验、加密、SQLite 与真实 PostgreSQL 各 5 组契约；受影响类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止，没有重跑前端／浏览器或无关全量。
 - 未读取真实 JSON、调用真实米游社账号或开始扫码。新增实时校验保留待实测，不能沿用 R02 样本结论宣布全部可用。遵照用户要求，后续扫码安排在最后并先询问，可加密持久化授权供后续测试使用。
 - 接口与范围见 [community-api.md](community-api.md)。无 Schema 迁移，扫码、刷新和页面分别留给 R13／R14／R15；下一轮 R13，本地 commit，不自动 push。
+
+### R13：内置 App 扫码授权后端，2026-10-27
+
+- 实现当前用户与本地登录 session 绑定的一次性二维码 API：创建、读取本地状态、有界轮询、取消；确认后沿用 R12 验证并加密保存凭证和同一设备上下文。重复确认只返回既有结果，不重复保存。
+- 单用户最多一个活动会话，最长 180 秒、最短 2 秒查询间隔、最多 90 次上游查询；并发 poll 不重复请求，验证挑战和失败明确终止。终态保留 5 分钟，内存上限 128，会话不跨服务重启。
+- 显式重新授权记录目标身份与凭证版本，拒绝错误身份或迟到替换。原子保存内重查本地会话、密码版本和扫码期限，取消／过期／退出后的迟到结果不能落库；进入落库阶段后取消返回明确冲突，避免宣称取消成功却保存凭证。
+- 精简验证：28 项定向测试通过，含 SQLite／真实 PostgreSQL 各 9 组扫码契约及各 5 组 R12 回归；受影响类型、零警告 lint、后端与依赖构建通过。独立 PostgreSQL 验证后停止，未重跑前端／浏览器或无关全量。
+- 真实扫码尚未开始；先完成可独立工作，最后询问用户方便后再创建二维码。用户允许加密留存授权供后续测试复用。正式扫码与重授权保持待实测，不沿用 R02 样本结论。
+- 说明见 [miyoushe-qr-api.md](miyoushe-qr-api.md)。无 Schema 迁移，不读取真实 JSON 或抽卡记录；页面留给 R15，下一开发轮 R14；本地 commit，不自动 push。

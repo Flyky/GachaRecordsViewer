@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { CapabilityResult, CommunityAccount, CommunityCapabilities, CredentialKind } from '@gacha/contracts';
-import { CommunityError, communityRepository, repositories, type DatabaseConnection, type StoredCommunity } from '@gacha/db';
+import { CommunityError, communityRepository, repositories, type CredentialAuthorization, type DatabaseConnection, type StoredCommunity } from '@gacha/db';
 import { createDevice, MiyousheClient, parseCredentials, ProbeError, type DeviceContext, type GameRole, type ManualCredentials } from '@gacha/providers';
 import { ApiError } from '../auth/security.js';
 import { CredentialVault } from './vault.js';
 
 export type CommunityClient = Pick<MiyousheClient, 'getLToken' | 'verifyLToken' | 'getCookieToken' | 'listRoles' | 'generateAuthKey'>;
-export interface CommunityOptions { client?: (device: DeviceContext) => CommunityClient }
+export interface CommunityOptions { client?: (device: DeviceContext, signal?: AbortSignal) => CommunityClient }
+export interface CommunityTarget { id: string; accountId: string; revision: string }
 interface Bundle extends ManualCredentials { version: 1; device: DeviceContext }
 const kinds: CredentialKind[] = ['stoken', 'ltoken', 'cookieToken'];
 const missing = (): CapabilityResult => ({ status: 'missing', checkedAt: null });
@@ -29,8 +30,8 @@ export function communityService(connection: DatabaseConnection, masterKey: Buff
       credentials: kinds.map((type) => ({ type, present: caps.tokens[type].status !== 'missing', maskedValue: caps.tokens[type].status === 'missing' ? null : '••••••••' })),
       profiles: await repo.profiles(owner, id) };
   }
-  async function check(input: ManualCredentials, device: DeviceContext) {
-    const client = options.client?.(device) ?? new MiyousheClient({ device }), caps = capabilities();
+  async function check(input: ManualCredentials, device: DeviceContext, signal?: AbortSignal) {
+    const client = options.client?.(device, signal) ?? new MiyousheClient({ device, ...(signal ? { signal } : {}) }), caps = capabilities();
     const timestamp = new Date(now()).toISOString();
     const verified = (): CapabilityResult => ({ status: 'verified', checkedAt: timestamp });
     const bundle: Bundle = { version: 1, accountId: input.accountId, device };
@@ -69,16 +70,30 @@ export function communityService(connection: DatabaseConnection, masterKey: Buff
     parseCredentials(JSON.stringify(bundle));
     return { bundle, caps, roles, client };
   }
-  async function persist(owner: string, id: string, checked: Awaited<ReturnType<typeof check>>, revision: string | null) {
+  async function persist(owner: string, id: string, checked: Awaited<ReturnType<typeof check>>, revision: string | null, authorization?: CredentialAuthorization) {
     const credentialId = randomUUID();
     await repo.save(owner, { id, accountId: checked.bundle.accountId, mid: checked.bundle.mid ?? null, capabilitiesJson: JSON.stringify(checked.caps),
       credentialId, encryptedValue: vault.seal(checked.bundle, owner, id, credentialId), expectedRevision: revision,
-      ...(checked.roles === undefined ? {} : { roles: checked.roles }) });
+      ...(checked.roles === undefined ? {} : { roles: checked.roles }), ...(authorization ? { authorization } : {}) });
     return publicAccount(owner, id);
   }
   return {
     close: () => vault.destroy(),
     get: publicAccount,
+    target: async (owner: string, id: string): Promise<CommunityTarget> => {
+      const row = await repo.get(owner, id);
+      if (!row.credential_id) throw new CommunityError('CREDENTIALS_CHANGED');
+      return { id: row.id, accountId: row.account_id, revision: row.credential_id };
+    },
+    authorize: (owner: string, input: ManualCredentials, device: DeviceContext, authorization: CredentialAuthorization, target?: CommunityTarget, signal?: AbortSignal) => operation(owner, async () => {
+      const parsed = parseCredentials(JSON.stringify(input));
+      if (target) {
+        const current = await repo.get(owner, target.id);
+        if (current.credential_id !== target.revision) throw new CommunityError('CREDENTIALS_CHANGED');
+        if (parsed.accountId !== target.accountId || current.account_id !== target.accountId) throw new CommunityError('COMMUNITY_IDENTITY_MISMATCH');
+      }
+      return persist(owner, target?.id ?? randomUUID(), await check(parsed, device, signal), target?.revision ?? null, authorization);
+    }),
     list: async (owner: string) => {
       const result: CommunityAccount[] = [];
       for (const row of await repo.list(owner)) result.push(await publicAccount(owner, row.id));

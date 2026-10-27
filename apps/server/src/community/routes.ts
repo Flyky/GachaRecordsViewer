@@ -5,14 +5,16 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { AuthLimiter } from '../auth/security.js';
 import { communityService, type CommunityOptions } from './service.js';
+import { qrService, type QrOptions } from './qr.js';
 
 const identifier = { type: 'string', minLength: 1, maxLength: 128 };
 const params = { type: 'object', required: ['accountId'], additionalProperties: false, properties: { accountId: identifier } };
 const input = { type: 'object', required: ['input'], additionalProperties: false, properties: { input: { type: 'string', minLength: 1, maxLength: 24000 } } };
 const noBody = { type: 'object', additionalProperties: false, properties: {} };
-export function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions = {}) {
+export function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions } = {}) {
   const service = communityService(auth.connection, auth.credentialKey, options, auth.now), limiter = new AuthLimiter(auth.now ?? Date.now);
-  app.addHook('onClose', async () => { service.close(); });
+  const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
+  app.addHook('onClose', async () => { qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };
   async function respond<T>(reply: FastifyReply, action: () => Promise<T>) {
@@ -27,6 +29,22 @@ export function registerCommunity(app: FastifyInstance, auth: AuthOptions, optio
       throw error;
     }
   }
+  const qrParams = { type: 'object', required: ['qrId'], additionalProperties: false, properties: { qrId: identifier } };
+  app.post<{ Body: { communityAccountId?: string } }>('/api/community/qr', {
+    onRequest: app.authenticateUser, preHandler: async (request) => { qrLimiter.consume(request.ip, `qr:${owner(request)}`); },
+    schema: { body: { type: 'object', additionalProperties: false, properties: { communityAccountId: identifier } } },
+  }, (request, reply) => respond(reply, async () => {
+    const result = await qr.create(owner(request), request.principal!.sessionHash, request.body.communityAccountId);
+    reply.code(201); return result;
+  }));
+  app.get<{ Params: { qrId: string } }>('/api/community/qr/:qrId', { onRequest: app.authenticateUser, schema: { params: qrParams } },
+    (request, reply) => respond(reply, async () => qr.get(owner(request), request.principal!.sessionHash, request.params.qrId)));
+  app.post<{ Params: { qrId: string }; Body: Record<string, never> }>('/api/community/qr/:qrId/poll', {
+    onRequest: app.authenticateUser, schema: { params: qrParams, body: noBody },
+  }, (request, reply) => respond(reply, () => qr.poll(owner(request), request.principal!.sessionHash, request.params.qrId)));
+  app.post<{ Params: { qrId: string }; Body: Record<string, never> }>('/api/community/qr/:qrId/cancel', {
+    onRequest: app.authenticateUser, schema: { params: qrParams, body: noBody },
+  }, (request, reply) => respond(reply, async () => qr.cancel(owner(request), request.principal!.sessionHash, request.params.qrId)));
   app.get('/api/community/accounts', { onRequest: app.authenticateUser }, (request, reply) => respond(reply, async () => ({ accounts: await service.list(owner(request)) })));
   app.get<{ Params: { accountId: string } }>('/api/community/accounts/:accountId', { onRequest: app.authenticateUser, schema: { params } },
     (request, reply) => respond(reply, async () => ({ account: await service.get(owner(request), request.params.accountId) })));

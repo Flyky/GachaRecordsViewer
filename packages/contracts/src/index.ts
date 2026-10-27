@@ -93,3 +93,11 @@ export interface CommunityAccount {
 }
 export interface CommunityAccountsResponse { accounts: CommunityAccount[] }
 export interface CredentialRevealResponse { accountId: string; mid: string | null; type: CredentialKind; value: string }
+
+export interface MiyousheQrSession {
+  id: string;
+  status: 'creating' | 'waiting' | 'scanned' | 'confirming' | 'confirmed' | 'cancelled' | 'expired' | 'verification_required' | 'failed';
+  expiresAt: string; pollAfterMs: number; communityAccountId?: string; code?: string;
+}
+export interface MiyousheQrResponse { session: MiyousheQrSession }
+export interface MiyousheQrCreateResponse extends MiyousheQrResponse { qrUrl: string }
