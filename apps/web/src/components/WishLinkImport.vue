@@ -27,9 +27,10 @@ async function submit() { if (await start({ url: url.value.trim(), region: regio
         <li>在运行游戏的电脑打开原神 → 祈愿 → 历史记录，等待列表加载，并保留游戏运行。</li>
         <li>
           <a
+            class="wish-link-download"
             :href="appUrl('/tools/get-wish-link.ps1')"
             download="get-wish-link.ps1"
-          >下载本地提取脚本</a>，可先用记事本查看源码。只读取日志／缓存和写入剪贴板，不上传文件、不修改游戏或系统代理。
+          >&gt;点击此处下载本地提取脚本&lt;</a>，可先用记事本查看源码。只读取日志／缓存和写入剪贴板，不上传文件、不修改游戏或系统代理。
         </li>
         <li>在下载文件所在目录打开 PowerShell，执行：<pre>powershell -NoProfile -ExecutionPolicy Bypass -File .\get-wish-link.ps1</pre></li>
         <li>自动定位失败时，指定 Data 目录（替换为实际路径）：<pre>powershell -NoProfile -ExecutionPolicy Bypass -File .\get-wish-link.ps1 -GameDataPath 'D:\游戏目录\YuanShen_Data'</pre>国际服目录一般为 GenshinImpact_Data。</li>
@@ -42,13 +43,15 @@ async function submit() { if (await start({ url: url.value.trim(), region: regio
       class="stack-form"
       @submit.prevent="submit"
     >
-      <label>游戏服务器</label><NSelect
-        :value="region"
-        :options="WISH_LINK_REGIONS.map((entry) => ({ label: entry.label, value: entry.value }))"
-        :disabled="busy || running"
-        aria-label="祈愿链接对应的服务器"
-        @update:value="region = $event"
-      />
+      <div class="wish-link-server">
+        <span id="wish-link-server-label">游戏服务器</span><NSelect
+          :value="region"
+          :options="WISH_LINK_REGIONS.map((entry) => ({ label: entry.label, value: entry.value }))"
+          :disabled="busy || running"
+          aria-labelledby="wish-link-server-label"
+          @update:value="region = $event"
+        />
+      </div>
       <p class="field-hint">
         请选择游戏实际服务器，用于确定记录时区。已有档案的服务器或时区不同时会停止合并。
       </p>

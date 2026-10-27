@@ -109,7 +109,6 @@ async function download() {
     </p>
   </section>
   <div class="data-stack">
-    <WishLinkImport />
     <section
       class="surface data-section"
       aria-labelledby="import-title"
@@ -278,6 +277,7 @@ async function download() {
       </NButton>
     </section>
 
+    <WishLinkImport />
     <section
       class="surface data-section"
       aria-labelledby="export-title"

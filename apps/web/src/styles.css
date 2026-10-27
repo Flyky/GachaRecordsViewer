@@ -36,7 +36,12 @@
 .wish-link-guide summary { cursor: pointer; font-weight: 600; }
 .wish-link-guide ol { padding-left: 22px; }
 .wish-link-guide li { margin: 12px 0; }
+.wish-link-guide .wish-link-download { color: #245e58; text-decoration: underline; text-underline-offset: 3px; }
+.wish-link-download:hover, .wish-link-download:focus-visible { font-weight: 700; }
 .wish-link-guide pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; background: #eaf0e8; border-radius: 5px; }
+.wish-link-server { display: flex; align-items: center; gap: 12px; margin-top: 15px; }
+.wish-link-server > span { flex-shrink: 0; font-size: 13px; }
+.wish-link-server > .n-select { flex: 1; min-width: 0; max-width: 360px; }
 .credential-panel > .list-heading { flex-wrap: wrap; gap: 10px; }
 .credential-export { margin-top: 15px; }
 .credential-export label { display: block; margin-bottom: 8px; font-size: 12px; }
