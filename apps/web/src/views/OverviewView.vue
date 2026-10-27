@@ -71,13 +71,19 @@ import { currentProfile, profilesLoading, profilesError, regionLabel, timezoneLa
       一切从第一份记录开始
     </p><h2>你的祈愿档案，静待开启</h2>
     <p class="muted">
-      导入一份 UIGF 文件，建立你的原神祈愿档案。<br>同一账号可以分别保存多个 UID。
+      导入 UIGF 或连接米游社，建立你的原神祈愿档案。<br>同一账号可以分别保存多个 UID。
     </p>
     <RouterLink
       class="outline-link"
       to="/data"
     >
       导入第一份记录 <span aria-hidden="true">↗</span>
+    </RouterLink>
+    <RouterLink
+      class="outline-link"
+      to="/accounts"
+    >
+      连接米游社 <span aria-hidden="true">↗</span>
     </RouterLink>
   </section>
 </template>

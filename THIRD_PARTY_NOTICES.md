@@ -24,6 +24,15 @@ The npm packages' license and notice texts are retained in
 - [ECharts notice](apps/web/public/licenses/echarts-NOTICE.txt)
 - [ZRender license](apps/web/public/licenses/zrender-LICENSE.txt)
 
+## QR Code browser encoder
+
+The Miyoushe account page uses [node-qrcode 1.5.4](https://github.com/soldair/node-qrcode)
+and its DijkstraJS 1.0.3 dependency to encode QR images locally in the browser.
+Both use the MIT License. Their complete notices are distributed with the web build:
+
+- [node-qrcode license](apps/web/public/licenses/qrcode-LICENSE.txt)
+- [DijkstraJS license](apps/web/public/licenses/dijkstrajs-LICENSE.txt)
+
 ## UIGF JSON Schemas
 
 The versioned JSON Schemas in `packages/uigf/src/schemas/` were extracted from

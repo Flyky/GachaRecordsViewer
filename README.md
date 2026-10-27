@@ -2,7 +2,7 @@
 
 原神抽卡记录管理与分析 Web App，[GenshinGachaRecords](https://github.com/Flyky/GenshinGachaRecords) 的重写版本。
 
-当前完成到 R14：UIGF 数据管理、完整记录查询和三组统计分析页面已可使用；米游社凭证、扫码及在线刷新任务后端已实现，官服当前窗口拉取、重启和增量刷新已实测通过，账号与刷新页面留给 R15。
+当前完成到 R15：UIGF 数据管理、查询与统计、米游社账号／Token／刷新任务页面已可使用。官服后端授权与当前窗口拉取已实测，部署打包与第一版联合验收留给 R16。
 
 ## 本地运行
 
@@ -34,9 +34,9 @@ pnpm start
 
 从「统计分析」或 `/analysis` 查看物品分栏、月度折线和全年 Daily 热力图，支持图例切换、缩放、年份／卡池筛选及 0 抽日期提示。页面说明见 [R11 统计分析](docs/analysis-pages.md)，数量与时区规则见 [R10 分析 API](docs/analysis-api.md)。
 
-米游社后端已提供本人凭证导入、加密保存、校验、查看和解绑，支持绑定已有离线 UID 档案并保留历史，见 [R12 凭证 API](docs/community-api.md)。[R13 扫码 API](docs/miyoushe-qr-api.md) 提供一次性会话、轮询、取消和显式重新授权，已通过两次本人扫码及保存后重启复用验证。账号页面尚未实现；后续优先复用已加密保存的授权，需要扫码时仍会在最后询问用户后再开始。
+从“米游社账号”或 `/accounts` 使用 App 扫码、手动导入、重新授权、本人 Token 查看／复制和解绑。选择绑定 UID 后可创建刷新、查看逐池进度、重试失败池和取消；授权获取手册在 `/help/miyoushe`。页面与隐私行为见 [R15 使用说明](docs/community-pages.md)。后续验证优先复用加密授权，需要扫码时仍会最后询问用户后再开始。
 
-[R14 在线刷新 API](docs/sync-api.md) 支持按卡池后台拉取、增量去重、完整重扫、任务进度、失败池重试和取消；重启保留已写记录，中断任务可重试。已有长期历史不会因上游窗口变化被删除。刷新按钮和任务页面将在 R15 接入。
+[R14 在线刷新 API](docs/sync-api.md) 支持按卡池后台拉取、增量去重、完整重扫、任务进度、失败池重试和取消；重启保留已写记录，中断任务可重试。已有长期历史不会因上游窗口变化被删除。凭证和扫码接口见 [R12](docs/community-api.md)／[R13](docs/miyoushe-qr-api.md)。
 
 ## 工程命令
 
@@ -69,7 +69,7 @@ pnpm start
 - [需求规格与验收标准](docs/requirements.md)
 - [UIGF 与米游社调研](docs/research-uigf-miyoushe.md)
 - [技术架构](docs/architecture.md)
-- [米游社授权手册草案](docs/miyoushe-authorization-guide.md)
+- [米游社授权获取手册](docs/miyoushe-authorization-guide.md)
 
 真实抽卡记录、部署配置、数据库和账号凭证不提交到仓库。旧格式 JSON 的导入与历史迁移均不实现，直接参考用户提供的 UIGF v4.1 文件。
 
