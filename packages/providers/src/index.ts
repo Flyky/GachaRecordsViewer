@@ -11,3 +11,5 @@ export { GameCheckinClient, CHECKIN_GAMES } from './miyoushe/checkin.js';
 export type { CheckinRole, CheckinSession } from './miyoushe/checkin.js';
 export { parseWishLink } from './miyoushe/wish-link.js';
 export type { ParsedWishLink } from './miyoushe/wish-link.js';
+export { GenshinTopupClient } from './miyoushe/topup.js';
+export type { RechargeGoods, RechargeRole, RechargeSession, RechargePayment } from './miyoushe/topup.js';

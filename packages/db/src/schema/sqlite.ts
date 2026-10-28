@@ -79,3 +79,12 @@ export const itemMetadata = sqliteTable('item_metadata', {
   namesJson: text('names_json').notNull().default('{}'), sourceVersion: text('source_version').notNull(),
 }, (t) => [primaryKey({ columns: [t.game, t.itemId] }),
   check('metadata_rank_valid', sql`${t.rank} IS NULL OR ${t.rank} IN (3, 4, 5)`)]);
+
+export const sharedSnapshots = sqliteTable('shared_snapshots', {
+  key: text('key').primaryKey(), payloadJson: text('payload_json').notNull(),
+});
+export const paymentOrders = sqliteTable('payment_orders', {
+  id: text('id').primaryKey(), ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status').notNull(), publicJson: text('public_json').notNull(), encryptedValue: text('encrypted_value'),
+  createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull(),
+}, (t) => [index('payment_orders_owner_created_idx').on(t.ownerId, t.createdAt)]);

@@ -1,6 +1,6 @@
 import { RECORD_POOLS, type DailyAnalysisResponse, type ItemAnalysisResponse, type LuckAnalysisResponse, type MonthlyAnalysisResponse, type RecordPool } from '@gacha/contracts';
 import { ImportError, uigfRepository } from '@gacha/db';
-import { dailyStatistics, genshinMetadata, itemStatistics, luckStatistics, monthlyStatistics } from '@gacha/gacha-core';
+import { builtinCharacterBanners, dailyStatistics, genshinMetadata, itemStatistics, luckStatistics, monthlyStatistics } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { ApiError } from '../auth/security.js';
@@ -16,8 +16,9 @@ export function registerAnalysis(app: FastifyInstance, options: AuthOptions) {
     try {
       const saved = await repository.snapshot(owner, profileId);
       const catalog = options.metadataCatalog ?? genshinMetadata;
+      const banners = options.bannerSnapshot?.() ?? builtinCharacterBanners;
       return { context: { profileId, uid: saved.uid, timezone: saved.timezone, dataVersion: saved.dataVersion,
-        dictionaryVersion: `${catalog.source.name}@${catalog.source.version}` }, history: analyzeProfile(saved, catalog).records };
+        dictionaryVersion: `${catalog.source.name}@${catalog.source.version}`, bannerVersion: banners.source.revision }, history: analyzeProfile(saved, catalog).records, banners };
     } catch (error) {
       if (error instanceof ImportError && error.code === 'PROFILE_NOT_FOUND') throw new ApiError(404, 'PROFILE_NOT_FOUND');
       throw error;
@@ -38,8 +39,8 @@ export function registerAnalysis(app: FastifyInstance, options: AuthOptions) {
   app.get<{ Params: { profileId: string } }>('/api/profiles/:profileId/analysis/luck', {
     onRequest: app.authenticateUser, schema: { params, querystring: querySchema({}) },
   }, async (request): Promise<LuckAnalysisResponse> => {
-    const { context, history } = await snapshot(request.principal!.user!.id, request.params.profileId);
-    return { ...context, ...luckStatistics(history, { timezone: context.timezone }) };
+    const { context, history, banners } = await snapshot(request.principal!.user!.id, request.params.profileId);
+    return { ...context, ...luckStatistics(history, { timezone: context.timezone, banners }) };
   });
   app.get<{ Params: { profileId: string }; Querystring: { year?: string; pool?: RecordPool | '' } }>('/api/profiles/:profileId/analysis/daily', {
     onRequest: app.authenticateUser, schema: { params, querystring: querySchema({ year: { type: 'string', pattern: '^[1-9][0-9]{0,3}$' }, pool: { type: 'string', enum: ['', ...RECORD_POOLS] } }) },

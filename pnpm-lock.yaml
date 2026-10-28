@@ -62,6 +62,9 @@ importers:
       '@gacha/uigf':
         specifier: workspace:*
         version: link:../../packages/uigf
+      acorn:
+        specifier: 8.19.0
+        version: 8.19.0
       argon2:
         specifier: 0.45.1
         version: 0.45.1

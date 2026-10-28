@@ -106,7 +106,8 @@ export async function bindInstallation(connection: DatabaseConnection, input: {
       // A database initialized during setup has no encrypted values to preserve.
       // Rebind only in that case; keep all user/profile/history rows intact.
       const credentials = await tx.query<{ id: string }>(sql`SELECT id FROM credentials LIMIT 1`);
-      if (credentials.length) throw new PersistenceError('KEY_MISMATCH');
+      const payments = await tx.query<{ id: string }>(sql`SELECT id FROM payment_orders WHERE encrypted_value IS NOT NULL LIMIT 1`);
+      if (credentials.length || payments.length) throw new PersistenceError('KEY_MISMATCH');
       await tx.execute(sql`DELETE FROM sessions`);
     }
     if (!keyChanged && existing?.admin_fingerprint === input.adminFingerprint) return existing.admin_session_version;

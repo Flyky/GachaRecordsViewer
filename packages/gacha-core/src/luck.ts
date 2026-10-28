@@ -5,6 +5,7 @@ import { analysisMetadata } from './statistics.js';
 
 export interface CharacterBanner { start: string; end: string; startGlobal: boolean; endGlobal: boolean; itemIds: string[] }
 export interface BannerSnapshot { source: { name: string; revision: string; url: string }; entries: CharacterBanner[] }
+export const builtinCharacterBanners: BannerSnapshot = characterBanners;
 const mean = (sum: number, count: number) => count ? sum / count : null;
 
 /** Descriptive statistics of saved history; missing boundaries never become exact pity or 50/50 samples. */

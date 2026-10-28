@@ -4,7 +4,7 @@ export interface AnalysisBundle { items: ItemAnalysisResponse; monthly: MonthlyA
 export function consistentAnalysis(profileId: string, responses: AnalysisContext[]) {
   const first = responses[0];
   return !!first && responses.every((response) => response.profileId === profileId && response.dataVersion === first.dataVersion
-    && response.dictionaryVersion === first.dictionaryVersion && response.historyCount === first.historyCount);
+    && response.dictionaryVersion === first.dictionaryVersion && response.bannerVersion === first.bannerVersion && response.historyCount === first.historyCount);
 }
 export const itemIssueLabel = (reason: string) => ({ 'unknown-type': '类型未知', 'unknown-rank': '星级未知',
   'conflicting-metadata': '元数据矛盾', 'unsupported-combination': '类型与星级组合异常' } as Record<string, string>)[reason] ?? reason;

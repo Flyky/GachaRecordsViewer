@@ -9,5 +9,7 @@ export { communityRepository, CommunityError } from './community.js';
 export type { StoredCommunity, CredentialAuthorization } from './community.js';
 export { syncRepository, SyncError, syncState, publicJob } from './sync.js';
 export type { StoredJob, SyncState, PoolState } from './sync.js';
-export { metadataRepository } from './metadata.js';
+export { metadataRepository, snapshotRepository } from './metadata.js';
+export { paymentRepository } from './payments.js';
+export type { PaymentRow } from './payments.js';
 export { wishLinkRepository } from './wish-link.js';

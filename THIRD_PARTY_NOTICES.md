@@ -57,6 +57,21 @@ original MIT license, Copyright (c) 2021 Made Baruna, is reproduced in
 `packages/gacha-core/BANNERS_LICENSE`. This application is not affiliated with
 paimon.moe or miHoYo. Historical coverage and boundaries depend on the source.
 
+## Official CN top-up protocol references
+
+The Genshin top-up provider implements request fields and state transitions
+researched from the publicly served miHoYo top-up web frontend 2.58.0 at
+[pay.mihoyo.com/ys/](https://pay.mihoyo.com/ys/index.html), including its
+`bundle_bbf5aaa55aa6bf4e8454.js`, `0_05373b53a3029602dd87.js`,
+`2_cc9b8b1a0b295719bf68.js` and official `checkout-flow/main-2.58.js`.
+No downloaded application bundle or game assets are redistributed. This project
+is not affiliated with miHoYo. Real payment availability requires account-specific
+verification; test fixtures do not create orders or move money.
+
+The server uses [Acorn](https://github.com/acornjs/acorn) 8.19.0 (MIT) to parse
+banner data without evaluating downloaded JavaScript. Its original license is
+distributed with the installed runtime package.
+
 ## TeyvatGuide
 
 The Miyoushe provider implements protocol behavior and parameters researched from

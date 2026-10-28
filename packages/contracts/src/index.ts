@@ -60,7 +60,7 @@ export interface RecordPageResponse {
 }
 
 export interface AnalysisMetadata { incompleteRecords: number; conflictRecords: number; unknownRankRecords: number }
-export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; dictionaryVersion: string; historyCount: number; metadataIssues: AnalysisMetadata }
+export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; dictionaryVersion: string; bannerVersion: string; historyCount: number; metadataIssues: AnalysisMetadata }
 export interface ItemStatistic { itemId: string; name: string | null; quantity: number }
 export interface ItemAnalysisResponse extends AnalysisContext {
   itemType: 'character' | 'weapon'; order: 'asc' | 'desc'; selectedTypeCount: number; otherTypeCount: number;
@@ -160,3 +160,19 @@ export interface ApiMockLink {
   recordCount: number; createdAt: number; expiresAt: number; url: string;
 }
 export interface ApiMockResponse { link: ApiMockLink | null; serverTime: number }
+
+export interface BannerStatus {
+  source: string; version: string; count: number; firstStart: string; lastEnd: string; updatedAt: string;
+  storage: 'builtin' | 'database'; updating: boolean; cacheWarning: boolean;
+}
+export type TopupMethod = 'alipay' | 'wechatpay';
+export interface TopupRole { uid: string; region: 'cn_gf01'; nickname: string }
+export interface TopupGoods { id: string; name: string; amount: number; currency: 'CNY'; tier: string; available: boolean; description: string }
+export interface TopupCatalog { roles: TopupRole[]; uid: string | null; goods: TopupGoods[]; methods: TopupMethod[] }
+export interface TopupQuote { id: string; communityAccountId: string; accountId: string; role: TopupRole; goods: TopupGoods; method: TopupMethod; expiresAt: number }
+export type TopupStatus = 'creating' | 'pending' | 'paid' | 'unknown' | 'verification_required' | 'failed' | 'archived';
+export interface TopupOrder {
+  id: string; communityAccountId: string; accountId: string; uid: string; region: 'cn_gf01'; goodsId: string; goodsName: string;
+  amount: number; currency: 'CNY'; method: TopupMethod; status: TopupStatus; createdAt: string; updatedAt: string;
+  orderNo: string | null; qrUrl: string | null; expiresAt: number | null; code: string | null;
+}

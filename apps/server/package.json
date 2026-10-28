@@ -17,6 +17,7 @@
     "@gacha/gacha-core": "workspace:*",
     "@gacha/providers": "workspace:*",
     "@gacha/uigf": "workspace:*",
+    "acorn": "8.19.0",
     "argon2": "0.45.1",
     "fastify": "5.12.7",
     "smol-toml": "1.9.1"

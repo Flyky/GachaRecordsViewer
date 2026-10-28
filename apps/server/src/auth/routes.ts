@@ -3,7 +3,7 @@ import cookie from '@fastify/cookie';
 import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, LocalUser, UserSessionResponse } from '@gacha/contracts';
 import { PersistenceError, repositories, type DatabaseConnection, type UserRow } from '@gacha/db';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { MetadataCatalog } from '@gacha/gacha-core';
+import type { MetadataCatalog, BannerSnapshot } from '@gacha/gacha-core';
 import { ApiError, AuthLimiter, digest, equalSecret, hashPassword, INITIAL_PASSWORD, verifyPassword } from './security.js';
 
 type Kind = 'admin' | 'user';
@@ -29,6 +29,7 @@ export interface AuthOptions {
   credentialKey: Buffer;
   publicUrl: string;
   metadataCatalog?: MetadataCatalog;
+  bannerSnapshot?: () => BannerSnapshot;
   development?: boolean;
   now?: () => number;
 }

@@ -32,6 +32,14 @@
 .credential-panel { margin-top: 22px; border-top: 1px solid #e5ebe4; padding-top: 14px; }
 .credential-panel h3 { margin: 0; }
 .wish-link-import { margin: 0; }
+.topup-fields { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin: 18px 0; }
+.topup-fields .field { flex: 1 1 220px; min-width: 0; }
+.topup-fields label { display: block; font-size: 13px; margin-bottom: 8px; }
+.topup-history-heading { margin: 24px 0 14px; }
+.account-form .topup-history-heading h3 { margin: 0; }
+.topup-order { border: 1px solid #e0e7de; border-radius: 8px; padding: 18px; margin: 14px 0; }
+.topup-order .list-heading { flex-wrap: wrap; gap: 8px; }
+.topup-order .qr-image { padding: 12px; }
 .wish-link-guide { margin: 18px 0; padding: 14px; background: #f5f7f3; border-radius: 8px; font-size: 13px; }
 .wish-link-guide summary { cursor: pointer; font-weight: 600; }
 .wish-link-guide ol { padding-left: 22px; }

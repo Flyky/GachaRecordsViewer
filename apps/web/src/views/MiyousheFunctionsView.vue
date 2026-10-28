@@ -2,6 +2,7 @@
 import { NButton, NTag } from 'naive-ui';
 import type { CheckinJob } from '@gacha/contracts';
 import { operationLabel, operationMessage, useOperation } from '../operations.js';
+import GenshinTopup from '../components/GenshinTopup.vue';
 const { job, busy, loading, error, running, load, start, cancel } = useOperation<CheckinJob>('/api/community/checkin');
 const games = { hk4e_cn: '原神', hkrpg_cn: '星穹铁道', nap_cn: '绝区零' };
 const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签到成功', already_signed: '今日已签到', no_roles: '未绑定支持的游戏', failed: '未完成', verification_required: '需要安全验证' } as Record<string, string>)[status] ?? status;
@@ -97,4 +98,5 @@ const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签
       服务重启后不保留任务状态。重复执行会先检查官方签到状态，已签到的角色不会再次提交。
     </p>
   </section>
+  <GenshinTopup />
 </template>

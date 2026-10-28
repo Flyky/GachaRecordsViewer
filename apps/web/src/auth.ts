@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue';
-import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus } from '@gacha/contracts';
+import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus, BannerStatus } from '@gacha/contracts';
 import { appUrl } from './base.js';
 
 type Role = 'user' | 'admin';
@@ -101,6 +101,8 @@ export const createUser = (username: string) => request<AccountPasswordResponse>
 export const resetPassword = (id: string) => request<AccountPasswordResponse>(`/api/admin/users/${encodeURIComponent(id)}/reset-password`, 'admin', {});
 export const getDictionary = () => request<DictionaryStatus>('/api/admin/dictionary', 'admin');
 export const refreshDictionary = () => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', {}, 60000);
+export const getBanners = () => request<BannerStatus>('/api/admin/banners', 'admin');
+export const refreshBanners = () => request<BannerStatus>('/api/admin/banners/refresh', 'admin', {}, 60000);
 export function errorMessage(error: unknown) {
   if (!(error instanceof ApiError)) return '操作未完成，请稍后重试。';
   if (error.code === 'RATE_LIMITED') return `尝试次数较多，请约 ${Math.max(1, Math.ceil(error.retryAfter / 60))} 分钟后再试。`;
@@ -112,6 +114,9 @@ export function errorMessage(error: unknown) {
     ORIGIN_REJECTED: '当前访问地址与服务配置不一致，请使用正确的站点地址。', CSRF_REJECTED: '登录状态已变化，请刷新页面后重试。',
     DICTIONARY_BUSY: '字典正在刷新，请稍后重试。', DICTIONARY_UNAVAILABLE: '服务正在停止，请稍后重试。',
     DICTIONARY_REFRESH_FAILED: '字典刷新失败，已保留原字典。请检查服务器到 genshin-db 数据源的网络连接后重试。',
+    BANNER_BUSY: '历史卡池正在刷新，请稍后重试。', BANNER_UNAVAILABLE: '服务正在停止，请稍后重试。',
+    BANNER_CHARACTER_UNKNOWN: '历史卡池包含尚未收录的角色，请先刷新物品字典，再重试刷新历史卡池。',
+    BANNER_REFRESH_FAILED: '历史卡池刷新失败，已保留原数据。请检查服务器到 GitHub 的网络连接后重试。',
   };
   return messages[error.code] ?? '操作未完成，请稍后重试。';
 }

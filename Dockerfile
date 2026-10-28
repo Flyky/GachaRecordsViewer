@@ -37,6 +37,7 @@ COPY --from=build /app/packages/uigf/dist ./packages/uigf/dist
 COPY THIRD_PARTY_NOTICES.md ./THIRD_PARTY_NOTICES.md
 COPY LICENSE ./LICENSE
 COPY packages/gacha-core/METADATA_LICENSE ./licenses/METADATA_LICENSE
+COPY packages/gacha-core/BANNERS_LICENSE ./licenses/BANNERS_LICENSE
 COPY packages/uigf/SCHEMA_LICENSE ./licenses/SCHEMA_LICENSE
 RUN mkdir -p /app/data && chown node:node /app/data
 USER node

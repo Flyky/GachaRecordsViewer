@@ -1,6 +1,6 @@
 import { CommunityError, SyncError } from '@gacha/db';
 import { ProbeError } from '@gacha/providers';
-import type { CredentialKind, SyncPool } from '@gacha/contracts';
+import type { CredentialKind, SyncPool, TopupMethod } from '@gacha/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { AuthLimiter } from '../auth/security.js';
@@ -8,17 +8,19 @@ import { communityService, type CommunityOptions } from './service.js';
 import { qrService, type QrOptions } from './qr.js';
 import { syncService, SYNC_POOLS, type SyncOptions } from './sync.js';
 import { checkinService, type CheckinOptions } from './checkin.js';
+import { topupService, type TopupOptions } from './topup.js';
 
 const identifier = { type: 'string', minLength: 1, maxLength: 128 };
 const params = { type: 'object', required: ['accountId'], additionalProperties: false, properties: { accountId: identifier } };
 const input = { type: 'object', required: ['input'], additionalProperties: false, properties: { input: { type: 'string', minLength: 1, maxLength: 24000 } } };
 const noBody = { type: 'object', additionalProperties: false, properties: {} };
-export async function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions } = {}) {
+export async function registerCommunity(app: FastifyInstance, auth: AuthOptions, options: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions; topup?: TopupOptions } = {}) {
   const service = communityService(auth.connection, auth.credentialKey, options, auth.now), limiter = new AuthLimiter(auth.now ?? Date.now);
   const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
   const sync = await syncService(auth.connection, service, options.sync, auth.now, auth.metadataCatalog), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
   const checkin = checkinService(service, options.checkin, auth.now);
-  app.addHook('onClose', async () => { await checkin.close(); await sync.close(); qr.close(); service.close(); });
+  const topup = topupService(auth.connection, auth.credentialKey, service, options.topup, auth.now);
+  app.addHook('onClose', async () => { await topup.close(); await checkin.close(); await sync.close(); qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };
   async function respond<T>(reply: FastifyReply, action: () => Promise<T>) {
@@ -35,6 +37,24 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
     }
   }
   const jobParams = { type: 'object', required: ['jobId'], additionalProperties: false, properties: { jobId: identifier } };
+  const uuid = { type: 'string', pattern: '^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$' };
+  const topupBody = (required: string[], properties: Record<string, unknown>) => ({ type: 'object', required, additionalProperties: false, properties });
+  app.post<{ Body: { communityAccountId: string; uid?: string } }>('/api/community/topup/catalog', {
+    onRequest: app.authenticateUser, bodyLimit: 4096, schema: { body: topupBody(['communityAccountId'], { communityAccountId: identifier, uid: { type: 'string', pattern: '^[1-9][0-9]{0,19}$' } }) },
+  }, (request, reply) => respond(reply, () => topup.catalog(owner(request), request.body.communityAccountId, request.body.uid)));
+  app.post<{ Body: { communityAccountId: string; uid: string; goodsId: string; method: TopupMethod } }>('/api/community/topup/quote', {
+    onRequest: app.authenticateUser, preHandler: limit, bodyLimit: 4096, schema: { body: topupBody(['communityAccountId', 'uid', 'goodsId', 'method'], {
+      communityAccountId: identifier, uid: { type: 'string', pattern: '^[1-9][0-9]{0,19}$' }, goodsId: identifier, method: { type: 'string', enum: ['alipay', 'wechatpay'] },
+    }) },
+  }, (request, reply) => respond(reply, () => topup.quote(owner(request), request.body)));
+  app.get('/api/community/topup/orders', { onRequest: app.authenticateUser }, (request, reply) => respond(reply, async () => ({ orders: await topup.list(owner(request)) })));
+  app.post<{ Body: { quoteId: string; requestId: string } }>('/api/community/topup/orders', {
+    onRequest: app.authenticateUser, preHandler: limit, bodyLimit: 4096, schema: { body: topupBody(['quoteId', 'requestId'], { quoteId: uuid, requestId: uuid }) },
+  }, (request, reply) => respond(reply, async () => ({ order: await topup.create(owner(request), request.body.quoteId, request.body.requestId) })));
+  for (const action of ['check', 'archive'] as const) app.post<{ Params: { orderId: string } }>(`/api/community/topup/orders/:orderId/${action}`, {
+    onRequest: app.authenticateUser, bodyLimit: 4096,
+    schema: { params: topupBody(['orderId'], { orderId: uuid }), body: noBody },
+  }, (request, reply) => respond(reply, async () => ({ order: await topup[action](owner(request), request.params.orderId) })));
   app.get('/api/community/checkin/job', { onRequest: app.authenticateUser }, async (request) => ({ job: checkin.get(owner(request)) }));
   app.post('/api/community/checkin/jobs', { onRequest: app.authenticateUser, schema: { body: noBody } },
     async (request, reply) => reply.code(202).send({ job: checkin.create(owner(request)) }));

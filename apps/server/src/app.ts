@@ -18,6 +18,8 @@ import { metadataService, registerMetadata, type MetadataOptions } from './metad
 import type { CheckinOptions } from './community/checkin.js';
 import { registerWishLink, type WishLinkOptions } from './wish-link.js';
 import { registerApiMock } from './api-mock.js';
+import { bannerService, registerBanners, type BannerOptions } from './banners.js';
+import type { TopupOptions } from './community/topup.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -26,8 +28,9 @@ interface AppOptions {
   basePath?: string;
   database?: Pick<DatabaseConnection, 'probe' | 'close'>;
   auth?: AuthOptions;
-  community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions };
+  community?: CommunityOptions & { qr?: QrOptions; sync?: SyncOptions; checkin?: CheckinOptions; topup?: TopupOptions };
   metadata?: MetadataOptions;
+  banners?: BannerOptions;
   wishLink?: WishLinkOptions;
 }
 
@@ -87,10 +90,13 @@ export async function buildApp(options: AppOptions = {}) {
   await app.register(async (site) => {
     if (options.auth) {
       const metadata = await metadataService(options.auth.connection, options.metadata);
+      const banners = await bannerService(options.auth.connection, metadata.catalog, options.banners);
+      site.addHook('onClose', async () => { await banners.close(); });
       site.addHook('onClose', async () => { await metadata.close(); });
-      const auth = { ...options.auth, metadataCatalog: metadata.catalog };
+      const auth = { ...options.auth, metadataCatalog: metadata.catalog, bannerSnapshot: banners.get };
       await registerAuth(site, auth);
       registerMetadata(site, metadata);
+      registerBanners(site, banners);
       registerUigf(site, auth);
       registerApiMock(site, auth);
       registerRecords(site, auth);

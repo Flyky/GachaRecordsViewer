@@ -22,3 +22,16 @@ export function metadataRepository(connection: DatabaseConnection) {
     }),
   };
 }
+
+export function snapshotRepository(connection: DatabaseConnection) {
+  return {
+    load: async (key: string): Promise<unknown | undefined> => {
+      const rows = await connection.executor.query<{ payload_json: string }>(sql`SELECT payload_json FROM shared_snapshots WHERE key=${key}`);
+      return rows[0] ? JSON.parse(rows[0].payload_json) as unknown : undefined;
+    },
+    save: (key: string, snapshot: unknown) => connection.transaction(async (tx) => {
+      await tx.execute(sql`INSERT INTO shared_snapshots (key,payload_json) VALUES (${key},${JSON.stringify(snapshot)})
+        ON CONFLICT (key) DO UPDATE SET payload_json=excluded.payload_json`);
+    }),
+  };
+}
