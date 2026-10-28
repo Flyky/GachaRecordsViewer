@@ -47,7 +47,7 @@ export function registerDataSources(app: FastifyInstance, service: Awaited<Retur
 
 // Only fixed public upstreams call this helper. No cookies, tokens or caller headers are forwarded.
 export async function requestPublicData<T>(url: string, read: (response: Response) => Promise<T>, options: {
-  fetch: typeof globalThis.fetch; signal: AbortSignal; proxy?: string | undefined; proxyUrl?: string; directTimeoutMs?: number;
+  fetch: typeof globalThis.fetch; signal: AbortSignal; proxy?: string | undefined; proxyUrl?: string; directTimeoutMs?: number; proxyOnly?: boolean;
 }) {
   const attempt = async (target: string, signal: AbortSignal) => {
     const response = await options.fetch(target, { signal, redirect: 'error', headers: { Accept: 'application/json', 'User-Agent': 'GachaRecordsViewer' } });
@@ -56,14 +56,13 @@ export async function requestPublicData<T>(url: string, read: (response: Respons
       return await read(response);
     } catch (error) { await response.body?.cancel().catch(() => undefined); throw error; }
   };
+  if (options.proxyOnly) {
+    const upstream = options.proxyUrl ?? url, parsed = new URL(upstream);
+    if (!options.proxy) throw new ApiError(400, 'DATA_PROXY_REQUIRED');
+    if (parsed.protocol !== 'https:' || !['api.github.com', 'raw.githubusercontent.com', 'github.com'].includes(parsed.hostname)) throw new Error('Unsupported public source');
+    options.signal.throwIfAborted(); return attempt(options.proxy + upstream, options.signal);
+  }
   const direct = new AbortController();
   try { return await attempt(url, AbortSignal.any([options.signal, direct.signal, AbortSignal.timeout(options.directTimeoutMs ?? 8000)])); }
-  catch (error) {
-    direct.abort();
-    options.signal.throwIfAborted();
-    if (!options.proxy) throw error;
-    const upstream = options.proxyUrl ?? url, parsed = new URL(upstream);
-    if (parsed.protocol !== 'https:' || !['api.github.com', 'raw.githubusercontent.com', 'github.com'].includes(parsed.hostname)) throw error;
-    return await attempt(options.proxy + upstream, options.signal);
-  } finally { direct.abort(); }
+  finally { direct.abort(); }
 }

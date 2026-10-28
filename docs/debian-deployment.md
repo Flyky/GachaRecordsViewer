@@ -356,5 +356,5 @@ curl -f http://127.0.0.1:3000/api/ready
 | 原生模块加载失败 | 是否使用 Node 24、是否误复制其他平台 node_modules；重新在 Debian 安装并构建 |
 | 数据库不通 | 驱动选择、URL 编码、PostgreSQL 服务／权限／连接规则是否正确 |
 | Docker Hub／npm 下载失败 | 服务器能否访问官方源，Docker 与当前 shell 的代理是否配置正确 |
-| 管理员字典／历史卡池刷新失败 | 在管理员「公共数据网络设置」保存 `https://gh-proxy.com/` 等可用前缀，再刷新；需要支持 API、Raw、archive，见 [代理说明](r24-public-data-proxy.md) |
+| 管理员字典／历史卡池刷新失败 | 保存可用代理前缀，直连失败后点击「是」使用代理；也可展开卡片「手动导入数据」，粘贴或上传，见 [操作说明](r25-manual-public-data.md) |
 | 米游社要求验证／授权过期 | 在官方 App 正常处理，再更新授权；已有历史保留 |

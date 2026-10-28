@@ -6,9 +6,14 @@ import { sql, temporaryDirectory } from '../../../packages/db/test/helpers.js';
 import { pull, sample } from '../../../packages/uigf/test/fixtures.js';
 import { buildApp } from '../src/app.js';
 import { initializeDeployment } from '../src/deployment.js';
+import { metadataService } from '../src/metadata.js';
+import { DICTIONARY_RESOURCES } from '@gacha/contracts';
 
 const prefix = '/gacha/api', origin = 'https://dictionary.example.test';
 const extra: ItemMetadata = { id: '199999999', itemType: 'character', rank: 5, names: { 'zh-cn': '测试新角色', 'en-us': 'Synthetic New Character' } };
+const manualSources = (omit = '') => DICTIONARY_RESOURCES.map(({ folder, language }) => JSON.stringify([...genshinMetadata.all(), extra]
+  .filter((item) => item.itemType === (folder === 'characters' ? 'character' : 'weapon') && item.id !== omit)
+  .map((item) => ({ id: Number(item.id), rarity: item.rank, name: item.names[language === 'English' ? 'en-us' : 'zh-cn'] }))));
 type Session = { cookie: string; 'x-csrf-token': string };
 describe('administrator runtime dictionary', () => {
   let directory: Awaited<ReturnType<typeof temporaryDirectory>>, deployment: Awaited<ReturnType<typeof initializeDeployment>>, app: Awaited<ReturnType<typeof buildApp>>;
@@ -115,7 +120,36 @@ describe('administrator runtime dictionary', () => {
       await started;
       expect((await get('/admin/dictionary')).json()).toMatchObject({ updating: true, storage: 'builtin' });
       expect((await post('/admin/dictionary/refresh', {})).statusCode).toBe(409);
+      expect((await post('/admin/dictionary/import', { sources: manualSources() })).statusCode).toBe(409);
     } finally { release(); }
     expect((await first).statusCode).toBe(200);
+  });
+
+  it('imports all four local JSON sources atomically behind admin guards without fetching', async () => {
+    const sources = manualSources(), url = `${prefix}/admin/dictionary/import`;
+    expect((await post('/admin/dictionary/import', { sources }, user)).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url, headers: { origin, cookie: admin.cookie }, payload: { sources } })).statusCode).toBe(403);
+    expect((await post('/admin/dictionary/import', { sources: sources.slice(1) })).statusCode).toBe(400);
+    const saved = await post('/admin/dictionary/import', { sources });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json()).toMatchObject({ source: 'genshin-db-manual', count: genshinMetadata.size + 1, storage: 'database' });
+    const loaded = await metadataService(deployment.connection);
+    expect(loaded.catalog.get(extra.id)?.names['zh-cn']).toBe(extra.names['zh-cn']); await loaded.close();
+    const repeated = JSON.parse(sources[0]!) as unknown[]; repeated.push(repeated[0]);
+    for (const bad of [manualSources('11301'), ['invalid', ...sources.slice(1)], [JSON.stringify(repeated), ...sources.slice(1)]]) {
+      expect((await post('/admin/dictionary/import', { sources: bad })).json().error.code).toBe('DICTIONARY_IMPORT_INVALID');
+      expect((await get('/admin/dictionary')).json()).toEqual(saved.json());
+    }
+    expect(calls).toHaveLength(0);
+  });
+
+  it('never uses a saved proxy on the initial refresh and requires a configured prefix for explicit proxy requests', async () => {
+    expect((await post('/admin/dictionary/refresh', { useProxy: true })).json().error.code).toBe('DATA_PROXY_REQUIRED');
+    await post('/admin/data-sources', { githubProxy: 'https://proxy.example.test/' }); mode = 'network';
+    expect((await post('/admin/dictionary/refresh', {})).statusCode).toBe(502);
+    expect(calls).toHaveLength(4); expect(calls.every((value) => value.startsWith('https://genshin-db-api.vercel.app/'))).toBe(true);
+    calls.length = 0;
+    expect((await post('/admin/dictionary/refresh', { useProxy: true })).statusCode).toBe(502);
+    expect(calls).toEqual(['https://proxy.example.test/https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz']);
   });
 });

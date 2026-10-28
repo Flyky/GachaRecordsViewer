@@ -100,11 +100,13 @@ export const listUsers = () => request<AdminUsersResponse>('/api/admin/users', '
 export const createUser = (username: string) => request<AccountPasswordResponse>('/api/admin/users', 'admin', { username });
 export const resetPassword = (id: string) => request<AccountPasswordResponse>(`/api/admin/users/${encodeURIComponent(id)}/reset-password`, 'admin', {});
 export const getDictionary = () => request<DictionaryStatus>('/api/admin/dictionary', 'admin');
-export const refreshDictionary = () => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', {}, 60000);
+export const refreshDictionary = (useProxy = false) => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', { useProxy }, 60000);
+export const importDictionary = (sources: string[]) => request<DictionaryStatus>('/api/admin/dictionary/import', 'admin', { sources }, 60000);
 export const getBanners = () => request<BannerStatus>('/api/admin/banners', 'admin');
 export const getDataSources = () => request<DataSourceSettings>('/api/admin/data-sources', 'admin');
 export const saveDataSources = (githubProxy: string) => request<DataSourceSettings>('/api/admin/data-sources', 'admin', { githubProxy });
-export const refreshBanners = () => request<BannerStatus>('/api/admin/banners/refresh', 'admin', {}, 60000);
+export const refreshBanners = (useProxy = false) => request<BannerStatus>('/api/admin/banners/refresh', 'admin', { useProxy }, 60000);
+export const importBanners = (content: string) => request<BannerStatus>('/api/admin/banners/import', 'admin', { content }, 60000);
 export const getAdminFeatures = () => request<FeatureSettings>('/api/admin/features', 'admin');
 export const setGenshinTopup = (enabled: boolean) => request<FeatureSettings>('/api/admin/features/genshin-topup', 'admin', { enabled });
 export function errorMessage(error: unknown) {
@@ -123,6 +125,9 @@ export function errorMessage(error: unknown) {
     BANNER_REFRESH_FAILED: '历史卡池刷新失败，已保留原数据。请检查 GitHub 网络连接或已保存的代理服务；代理须支持 GitHub API 和原始文件。',
     DATA_PROXY_INVALID: '请填写不带账号、参数或片段的 HTTPS 代理前缀，例如 https://gh-proxy.com/；留空可停用。',
     DATA_PROXY_BUSY: '网络设置正在保存，请稍后重试。',
+    DATA_PROXY_REQUIRED: '请先在公共数据网络设置中填写并保存代理前缀，再使用代理刷新。',
+    DICTIONARY_IMPORT_INVALID: '字典导入失败，已保留原数据。请按标注顺序提供四份完整的 JSON 数组；不得缺少现有物品或名称、ID、星级信息。',
+    BANNER_IMPORT_INVALID: '卡池导入失败，已保留原数据。请提供完整的 banners.js、卡池 JSON 数组或应用卡池快照；覆盖范围不能少于现有数据。',
     FEATURE_BUSY: '功能设置正在保存，请稍后重试。', TOPUP_DISABLED: '管理员已关闭原神充值功能。',
   };
   return messages[error.code] ?? '操作未完成，请稍后重试。';

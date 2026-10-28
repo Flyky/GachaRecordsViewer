@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { DictionaryStatus } from '@gacha/contracts';
+import { DICTIONARY_RESOURCES, type DictionaryStatus } from '@gacha/contracts';
 import { metadataRepository, type DatabaseConnection } from '@gacha/db';
 import { createMetadataCatalog, genshinMetadata, type ItemMetadata, type MetadataCatalog, type MetadataSnapshot } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
@@ -28,25 +28,18 @@ async function readJson(response: Response) {
 }
 
 export async function downloadDictionary(fetcher: typeof globalThis.fetch, signal: AbortSignal, now: number, proxy = ''): Promise<MetadataSnapshot> {
-  const controller = new AbortController(), directSignal = AbortSignal.any([signal, controller.signal]);
-  try { return await downloadApiDictionary(fetcher, directSignal, now); }
-  catch (error) {
-    signal.throwIfAborted(); if (!proxy) throw error;
-  } finally { controller.abort(); }
+  if (!proxy) return downloadApiDictionary(fetcher, signal, now);
   const pages = await requestPublicData('https://codeload.github.com/theBowja/genshin-db/tar.gz/refs/heads/main', readDictionaryArchive,
-    { fetch: fetcher, signal, proxy, proxyUrl: 'https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz' });
+    { fetch: fetcher, signal, proxy, proxyOnly: true, proxyUrl: 'https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz' });
   return dictionarySnapshot(pages, now, 'genshin-db-github');
 }
 
 async function downloadApiDictionary(fetcher: typeof globalThis.fetch, signal: AbortSignal, now: number): Promise<MetadataSnapshot> {
-  const requests = (['characters', 'weapons'] as const).flatMap((folder) =>
-    (['ChineseSimplified', 'English'] as const).map(async (language) => {
-      const url = new URL(`https://genshin-db-api.vercel.app/api/v5/${folder}`);
-      url.search = new URLSearchParams({ query: 'names', matchCategories: 'true', verboseCategories: 'true', resultLanguage: language }).toString();
-      const rows = await requestPublicData(url.href, readJson, { fetch: fetcher, signal });
-      if (!Array.isArray(rows) || !rows.length) throw new Error('Invalid dictionary source');
-      return { folder, language, rows: rows as Record<string, unknown>[] };
-    }));
+  const requests = DICTIONARY_RESOURCES.map(async ({ folder, language, url }) => {
+    const rows = await requestPublicData(url, readJson, { fetch: fetcher, signal });
+    if (!Array.isArray(rows) || !rows.length) throw new Error('Invalid dictionary source');
+    return { folder, language, rows: rows as Record<string, unknown>[] };
+  });
   return dictionarySnapshot(await Promise.all(requests), now, 'genshin-db-api');
 }
 
@@ -84,35 +77,55 @@ export async function metadataService(connection: DatabaseConnection, options: M
   let controller: AbortController | undefined, pending: Promise<DictionaryStatus> | undefined, closed = false;
   const status = (): DictionaryStatus => ({ source: current.source.name, version: current.source.version, count: current.size,
     updatedAt: current.source.retrievedAt, storage, updating: pending !== undefined, cacheWarning });
+  const execute = (load: (signal: AbortSignal) => Promise<MetadataSnapshot>, manual = false) => {
+    if (closed) throw new ApiError(503, 'DICTIONARY_UNAVAILABLE');
+    if (pending) throw new ApiError(409, 'DICTIONARY_BUSY');
+    const refreshController = new AbortController(); controller = refreshController;
+    const signal = AbortSignal.any([refreshController.signal, AbortSignal.timeout(45000)]);
+    const run = async () => {
+      try {
+        const snapshot = await load(signal);
+        const candidate = createMetadataCatalog(snapshot);
+        if (current.all().some((item) => !candidate.get(item.id))) throw new Error('Dictionary lost existing items');
+        if (closed || signal.aborted) throw new Error('Dictionary refresh stopped');
+        await repo.save(snapshot);
+        current = candidate; storage = 'database'; cacheWarning = false;
+        return { ...status(), updating: false };
+      } catch { throw new ApiError(manual ? 400 : 502, manual ? 'DICTIONARY_IMPORT_INVALID' : 'DICTIONARY_REFRESH_FAILED'); }
+      finally { refreshController.abort(); controller = undefined; pending = undefined; }
+    };
+    pending = run();
+    return pending;
+  };
   return {
     catalog, status,
-    refresh: async () => {
-      if (closed) throw new ApiError(503, 'DICTIONARY_UNAVAILABLE');
-      if (pending) throw new ApiError(409, 'DICTIONARY_BUSY');
-      const refreshController = new AbortController(); controller = refreshController;
-      const signal = AbortSignal.any([refreshController.signal, AbortSignal.timeout(45000)]);
-      const run = async () => {
-        try {
-          const snapshot = await downloadDictionary(options.fetch ?? globalThis.fetch, signal, (options.now ?? Date.now)(), options.githubProxy?.());
-          const candidate = createMetadataCatalog(snapshot);
-          if (current.all().some((item) => !candidate.get(item.id))) throw new Error('Dictionary lost existing items');
-          if (closed || signal.aborted) throw new Error('Dictionary refresh stopped');
-          await repo.save(snapshot);
-          current = candidate; storage = 'database'; cacheWarning = false;
-          return { ...status(), updating: false };
-        } catch { throw new ApiError(502, 'DICTIONARY_REFRESH_FAILED'); }
-        finally { refreshController.abort(); controller = undefined; pending = undefined; }
-      };
-      pending = run();
-      return pending;
+    refresh: (useProxy = false) => {
+      const proxy = useProxy ? options.githubProxy?.() : '';
+      if (useProxy && !proxy) throw new ApiError(400, 'DATA_PROXY_REQUIRED');
+      return execute((signal) => downloadDictionary(options.fetch ?? globalThis.fetch, signal, (options.now ?? Date.now)(), proxy));
     },
+    import: (sources: string[]) => execute(async () => {
+      if (sources.length !== DICTIONARY_RESOURCES.length) throw new Error('Missing sources');
+      const pages = DICTIONARY_RESOURCES.map(({ folder, language }, index) => {
+        const content = sources[index]!; if (Buffer.byteLength(content) > 8 * 1024 * 1024) throw new Error('Source too large');
+        const rows = JSON.parse(content.replace(/^\uFEFF/, '')) as unknown;
+        if (!Array.isArray(rows) || !rows.length) throw new Error('Expected dictionary array');
+        return { folder, language, rows };
+      });
+      return dictionarySnapshot(pages, (options.now ?? Date.now)(), 'genshin-db-manual');
+    }, true),
     close: async () => { closed = true; controller?.abort(); await pending?.catch(() => undefined); },
   };
 }
 
 export function registerMetadata(app: FastifyInstance, service: Awaited<ReturnType<typeof metadataService>>) {
   app.get('/api/admin/dictionary', { onRequest: app.authenticateAdmin }, async () => service.status());
-  app.post('/api/admin/dictionary/refresh', { onRequest: app.authenticateAdmin,
-    schema: { body: { type: 'object', additionalProperties: false } },
-  }, async () => service.refresh());
+  app.post<{ Body: { useProxy?: boolean } }>('/api/admin/dictionary/refresh', { onRequest: app.authenticateAdmin,
+    schema: { body: { type: 'object', additionalProperties: false, properties: { useProxy: { type: 'boolean' } } } },
+  }, async (request) => service.refresh(request.body.useProxy));
+  app.post<{ Body: { sources: string[] } }>('/api/admin/dictionary/import', { onRequest: app.authenticateAdmin, bodyLimit: 40 * 1024 * 1024,
+    schema: { body: { type: 'object', additionalProperties: false, required: ['sources'], properties: {
+      sources: { type: 'array', minItems: 4, maxItems: 4, items: { type: 'string', minLength: 1, maxLength: 8 * 1024 * 1024 } },
+    } } },
+  }, async (request) => service.import(request.body.sources));
 }

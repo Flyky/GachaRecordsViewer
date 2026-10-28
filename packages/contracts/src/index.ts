@@ -167,6 +167,13 @@ export interface BannerStatus {
 }
 export interface FeatureSettings { genshinTopup: boolean; updatedAt: string | null }
 export interface DataSourceSettings { githubProxy: string; updatedAt: string | null }
+export const DICTIONARY_RESOURCES = (['characters', 'weapons'] as const).flatMap((folder) =>
+  (['ChineseSimplified', 'English'] as const).map((language) => ({ folder, language,
+    label: `${folder === 'characters' ? '角色' : '武器'} · ${language === 'ChineseSimplified' ? '简体中文' : '英文'}`,
+    url: `https://genshin-db-api.vercel.app/api/v5/${folder}?query=names&matchCategories=true&verboseCategories=true&resultLanguage=${language}`,
+  })));
+export const BANNER_SOURCE_URL = 'https://raw.githubusercontent.com/MadeBaruna/paimon-moe/main/src/data/banners.js';
+export const BANNER_JSON_URL = 'https://raw.githubusercontent.com/Flyky/GachaRecordsViewer/main/packages/gacha-core/src/catalog/character-banners.json';
 export type TopupMethod = 'alipay' | 'wechatpay';
 export interface TopupRole { uid: string; region: 'cn_gf01'; nickname: string }
 export interface TopupGoods { id: string; name: string; amount: number; currency: 'CNY'; tier: string; available: boolean; description: string }

@@ -20,7 +20,7 @@ const fetcher: typeof fetch = async (input) => {
   if (String(input).includes('api.github.com')) return new Response(JSON.stringify([{ sha: revision }]));
   return new Response(mode === 'unknown' ? source([{ ...entries[0]!, featured: ['not_in_dictionary'] }, ...entries.slice(1)]) : mode === 'shrunk' ? source(entries.slice(0, -1)) : source());
 };
-const post = (headers: Record<string, string> = session) => app.inject({ method: 'POST', url: '/gacha/api/admin/banners/refresh', headers: { origin, ...headers }, payload: {} });
+const post = (headers: Record<string, string> = session, payload: object = {}) => app.inject({ method: 'POST', url: '/gacha/api/admin/banners/refresh', headers: { origin, ...headers }, payload });
 beforeEach(async () => {
   mode = 'good'; calls = []; fixture = await temporaryDirectory(); deployment = await initializeDeployment({ dataDirectory: fixture.directory, env: {} });
   app = await buildApp({ database: deployment.connection, banners: { fetch: fetcher }, auth: { connection: deployment.connection, credentialKey: deployment.credentialKey,
@@ -60,7 +60,7 @@ it('does not execute expressions and rejects nonliteral featured lists and dupli
   expect(parseBannerSource(source(), genshinMetadata)).toEqual(builtinCharacterBanners.entries);
 });
 
-it('protects and persists proxy settings, then falls back for both GitHub API and raw files', async () => {
+it('protects and persists proxy settings, and only uses the proxy after explicit confirmation', async () => {
   const url = '/gacha/api/admin/data-sources', headers = { origin, ...session };
   expect(calls).toEqual([]);
   expect((await app.inject({ url })).statusCode).toBe(401);
@@ -72,12 +72,36 @@ it('protects and persists proxy settings, then falls back for both GitHub API an
   const saved = await app.inject({ method: 'POST', url, headers, payload: { githubProxy: ' https://proxy.example.test ' } });
   expect(saved.json().githubProxy).toBe('https://proxy.example.test/');
   expect((await dataSourceService(deployment.connection)).proxy()).toBe('https://proxy.example.test/');
-  mode = 'proxy'; expect((await post()).statusCode).toBe(200);
-  expect(calls).toHaveLength(4);
+  mode = 'proxy'; expect((await post()).statusCode).toBe(502);
+  expect(calls).toHaveLength(1); expect(calls[0]).toMatch(/^https:\/\/api.github.com\//);
+  expect((await post(session, { useProxy: true })).statusCode).toBe(200);
+  expect(calls).toHaveLength(3);
   expect(calls[1]).toBe('https://proxy.example.test/' + calls[0]);
-  expect(calls[3]).toBe('https://proxy.example.test/' + calls[2]);
+  expect(calls[2]).toMatch(/^https:\/\/proxy.example.test\/https:\/\/raw.githubusercontent.com\//);
   mode = 'network'; expect((await post()).statusCode).toBe(502);
   expect((await app.inject({ url: '/gacha/api/admin/banners', headers })).json().version).toBe(revision);
   expect((await app.inject({ method: 'POST', url, headers, payload: { githubProxy: '' } })).json().githubProxy).toBe('');
   expect((await dataSourceService(deployment.connection)).proxy()).toBe('');
+  expect((await post(session, { useProxy: true })).json().error.code).toBe('DATA_PROXY_REQUIRED');
+});
+
+it('imports local JSON snapshots or literal upstream JS without network access and keeps valid data on errors', async () => {
+  const url = '/gacha/api/admin/banners/import', headers = { origin, ...session };
+  const upload = (content: string) => app.inject({ method: 'POST', url, headers, payload: { content } });
+  expect((await app.inject({ method: 'POST', url, headers: { origin, cookie: session.cookie }, payload: { content: source() } })).statusCode).toBe(403);
+  expect((await app.inject({ method: 'POST', url, headers: { origin }, payload: { content: source() } })).statusCode).toBe(401);
+  expect((await upload(JSON.stringify(builtinCharacterBanners))).statusCode).toBe(200);
+  const loaded = await bannerService(deployment.connection, genshinMetadata);
+  expect(loaded.get().entries).toEqual(builtinCharacterBanners.entries);
+  expect(loaded.get().source.revision).toMatch(/^manual-[a-f0-9]{64}$/); await loaded.close();
+  expect((await upload(source())).statusCode).toBe(200);
+  expect((await upload(JSON.stringify({ characters: entries }))).statusCode).toBe(200);
+  const before = (await app.inject({ url: '/gacha/api/admin/banners', headers })).json();
+  for (const content of ['{broken', 'export const banners = globalThis.fetch("https://evil.test")', JSON.stringify({ ...builtinCharacterBanners, entries: builtinCharacterBanners.entries.slice(0, -1) })]) {
+    expect((await upload(content)).json().error.code).toBe('BANNER_IMPORT_INVALID');
+  }
+  const unknown = structuredClone(builtinCharacterBanners); unknown.entries[0]!.itemIds = ['199999999'];
+  expect((await upload(JSON.stringify(unknown))).json().error.code).toBe('BANNER_CHARACTER_UNKNOWN');
+  expect((await app.inject({ url: '/gacha/api/admin/banners', headers })).json()).toEqual(before);
+  expect(calls).toHaveLength(0);
 });

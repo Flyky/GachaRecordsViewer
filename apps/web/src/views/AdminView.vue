@@ -1,28 +1,34 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NButton, NInput, NModal, NSpin, NTag } from 'naive-ui';
-import type { LocalUser, DictionaryStatus } from '@gacha/contracts';
+import { DICTIONARY_RESOURCES, type LocalUser, type DictionaryStatus } from '@gacha/contracts';
 import BrandMark from '../components/BrandMark.vue';
 import AdminBanners from '../components/AdminBanners.vue';
 import AdminFeatures from '../components/AdminFeatures.vue';
 import AdminDataSources from '../components/AdminDataSources.vue';
-import { adminSession, createUser, errorMessage, listUsers, loginAdmin, logout, refreshAdmin, resetPassword, getDictionary, refreshDictionary } from '../auth.js';
+import AdminManualImport from '../components/AdminManualImport.vue';
+import AdminProxyPrompt from '../components/AdminProxyPrompt.vue';
+import { ApiError, adminSession, createUser, errorMessage, listUsers, loginAdmin, logout, refreshAdmin, resetPassword, getDictionary, refreshDictionary, importDictionary } from '../auth.js';
 const checking = ref(true), busy = ref(false), password = ref(''), username = ref('');
 const error = ref(''), success = ref(''), users = ref<LocalUser[]>([]), target = ref<LocalUser | null>(null), showReset = ref(false);
 const listError = ref(''), loadingUsers = ref(false);
 const dictionary = shallowRef<DictionaryStatus | null>(null), dictionaryBusy = ref(false), dictionaryError = ref(''), dictionaryNotice = ref('');
+const dictionaryProxyPrompt = ref(false);
 let active = true, dictionaryEpoch = 0;
 onUnmounted(() => { active = false; dictionaryEpoch++; });
-watch(adminSession, (session) => { if (!session) { dictionaryEpoch++; dictionary.value = null; dictionaryBusy.value = false; dictionaryError.value = ''; dictionaryNotice.value = ''; } });
-async function loadDictionary(refresh = false) {
+watch(adminSession, (session) => { if (!session) { dictionaryEpoch++; dictionary.value = null; dictionaryBusy.value = false; dictionaryError.value = ''; dictionaryNotice.value = ''; dictionaryProxyPrompt.value = false; } });
+async function loadDictionary(refresh = false, useProxy = false, sources?: string[]) {
   if (dictionaryBusy.value) return;
-  const epoch = ++dictionaryEpoch; dictionaryBusy.value = true; dictionaryError.value = ''; dictionaryNotice.value = '';
+  const epoch = ++dictionaryEpoch; dictionaryBusy.value = true; dictionaryError.value = ''; dictionaryNotice.value = ''; dictionaryProxyPrompt.value = false;
   try {
-    const result = await (refresh ? refreshDictionary() : getDictionary());
+    const result = await (sources ? importDictionary(sources) : refresh ? refreshDictionary(useProxy) : getDictionary());
     if (!active || epoch !== dictionaryEpoch || !adminSession.value) return;
     dictionary.value = result;
-    if (refresh) dictionaryNotice.value = `字典已刷新，共 ${result.count} 个物品。新的查询、导入和刷新会立即使用，无需重启。`;
-  } catch (cause) { if (active && epoch === dictionaryEpoch && adminSession.value) dictionaryError.value = errorMessage(cause); }
+    if (refresh || sources) dictionaryNotice.value = `字典已保存，共 ${result.count} 个物品。新的查询、导入和刷新会立即使用，无需重启。`;
+  } catch (cause) { if (active && epoch === dictionaryEpoch && adminSession.value) {
+    dictionaryError.value = errorMessage(cause);
+    dictionaryProxyPrompt.value = refresh && !useProxy && !sources && cause instanceof ApiError && cause.code === 'DICTIONARY_REFRESH_FAILED';
+  } }
   finally { if (active && epoch === dictionaryEpoch) dictionaryBusy.value = false; }
 }
 watch(adminSession, (session) => { if (!session) { users.value = []; target.value = null; showReset.value = false; success.value = ''; } });
@@ -179,7 +185,7 @@ async function reset() {
           v-if="dictionary"
           class="field-hint dictionary-info"
         >
-          {{ dictionary.storage === 'database' ? '已保存的在线字典' : '随应用内置字典' }} · {{ dictionary.count }} 个物品<br>
+          {{ dictionary.storage === 'database' ? '已保存的字典' : '随应用内置字典' }} · {{ dictionary.count }} 个物品<br>
           {{ dictionary.source }} · {{ dictionary.version }}<br>
           获取时间：{{ new Date(dictionary.updatedAt).toLocaleString() }}
         </p>
@@ -196,6 +202,22 @@ async function reset() {
         >
           {{ dictionaryError }}
         </p>
+        <AdminProxyPrompt
+          v-if="dictionaryProxyPrompt"
+          :disabled="dictionaryBusy"
+          @confirm="loadDictionary(true, true)"
+          @cancel="dictionaryProxyPrompt = false"
+        />
+        <AdminManualImport
+          :resources="DICTIONARY_RESOURCES"
+          :disabled="busy || dictionaryBusy"
+          :max-bytes="8 * 1024 * 1024"
+          @submit="loadDictionary(false, false, $event)"
+        >
+          <p class="field-hint">
+            在能联网的电脑打开以下四个链接，分别复制完整 JSON 数组，或下载四份 JSON 后在对应位置上传。四份数据齐全后一次导入，不需要手动合并文件。
+          </p>
+        </AdminManualImport>
         <p
           v-if="dictionaryNotice"
           class="feedback success"

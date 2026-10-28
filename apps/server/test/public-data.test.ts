@@ -34,7 +34,7 @@ it('normalizes optional HTTPS prefixes and rejects credentials, query strings an
   for (const input of ['http://proxy.example.test', 'https://user:pass@proxy.example.test/', 'https://proxy.example.test/?token=x', 'https://proxy.example.test/#x', 'https://127.0.0.1', 'https://[::1]', 'https://x.local/']) expect(() => normalizeGithubProxy(input)).toThrow();
 });
 
-it('uses direct success without contacting a proxy and retries invalid public responses through the prefix', async () => {
+it('never contacts a saved proxy without an explicit proxy request, including invalid direct responses', async () => {
   const calls: string[] = [], read = async (response: Response) => response.json() as Promise<{ ok: boolean }>;
   let direct = true;
   const fetcher: typeof fetch = async (input, init) => {
@@ -43,20 +43,26 @@ it('uses direct success without contacting a proxy and retries invalid public re
   };
   expect(await requestPublicData(url, read, { fetch: fetcher, signal: signal(), proxy })).toEqual({ ok: true });
   expect(calls).toEqual([url]); calls.length = 0; direct = false;
-  expect(await requestPublicData(url, read, { fetch: fetcher, signal: signal(), proxy })).toEqual({ ok: true });
+  await expect(requestPublicData(url, read, { fetch: fetcher, signal: signal(), proxy })).rejects.toThrow();
+  expect(calls).toEqual([url]);
+  expect(await requestPublicData(url, read, { fetch: fetcher, signal: signal(), proxy, proxyOnly: true })).toEqual({ ok: true });
   expect(calls).toEqual([url, proxy + url]);
 });
 
-it('falls back after a direct timeout, but never retries after the whole refresh is aborted', async () => {
+it('reports a direct timeout without proxy fallback and never requests an aborted proxy refresh', async () => {
   const calls: string[] = [];
   const fetcher: typeof fetch = async (input, init) => {
     calls.push(String(input)); if (String(input).startsWith(proxy)) return new Response('ok');
     return new Promise((_resolve, reject) => { init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true }); });
   };
-  expect(await requestPublicData(url, (response) => response.text(), { fetch: fetcher, signal: signal(), proxy, directTimeoutMs: 5 })).toBe('ok');
+  await expect(requestPublicData(url, (response) => response.text(), { fetch: fetcher, signal: signal(), proxy, directTimeoutMs: 5 })).rejects.toThrow();
+  expect(calls).toEqual([url]);
   const controller = new AbortController(); calls.length = 0;
   const pending = requestPublicData(url, (response) => response.text(), { fetch: fetcher, signal: controller.signal, proxy }); controller.abort();
   await expect(pending).rejects.toThrow(); expect(calls).toEqual([url]);
+  calls.length = 0;
+  await expect(requestPublicData(url, (response) => response.text(), { fetch: fetcher, signal: controller.signal, proxy, proxyOnly: true })).rejects.toThrow();
+  expect(calls).toHaveLength(0);
 });
 
 it('reads dictionary files from a bounded archive and rejects HTML or incomplete archives', async () => {
@@ -80,7 +86,7 @@ it('stops the archive download after both locale subtrees and cancels the unused
   expect(offset).toBeLessThan(data.length / 2); expect(cancelled).toBe(true);
 });
 
-it('keeps Vercel URLs out of GHProxy, falling back to the same project archive with both locales', async () => {
+it('uses only the same project archive for a confirmed proxy refresh, keeping Vercel URLs out of GHProxy', async () => {
   const calls: string[] = [], data = archive();
   const fetcher: typeof fetch = async (input) => {
     calls.push(String(input));
@@ -89,7 +95,7 @@ it('keeps Vercel URLs out of GHProxy, falling back to the same project archive w
   };
   const snapshot = await downloadDictionary(fetcher, signal(), Date.now(), proxy);
   expect(snapshot.items).toEqual(genshinMetadata.all()); expect(snapshot.source.name).toBe('genshin-db-github');
-  expect(calls).toHaveLength(6);
+  expect(calls).toHaveLength(1);
   expect(calls.at(-1)).toBe(proxy + 'https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz');
   expect(calls.some((value) => value.startsWith(proxy + 'https://genshin-db-api'))).toBe(false);
 });
