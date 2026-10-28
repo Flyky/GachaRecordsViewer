@@ -10,10 +10,11 @@ import { operationCode } from '../tasks.js';
 type Client = Pick<GenshinTopupClient, 'roles' | 'getCookieToken' | 'catalog' | 'createBusinessOrder' | 'paymentCode' | 'status'>;
 export interface TopupOptions { client?: (device: DeviceContext, signal: AbortSignal) => Client }
 interface PrivateOrder { revision: string; payment: RechargePayment }
-export function topupService(connection: DatabaseConnection, key: Buffer, community: ReturnType<typeof communityService>, options: TopupOptions = {}, now = Date.now) {
+export function topupService(connection: DatabaseConnection, key: Buffer, community: ReturnType<typeof communityService>, options: TopupOptions = {}, now = Date.now, enabled = () => true) {
   const repo = paymentRepository(connection), vault = new CredentialVault(key), quotes = new Map<string, { owner: string; revision: string; quote: TopupQuote }>();
   const running = new Set<string>(), controllers = new Set<AbortController>(), tasks = new Set<Promise<unknown>>(); let closed = false;
   const timestamp = () => new Date(now()).toISOString();
+  const requireEnabled = () => { if (!enabled()) throw new ApiError(503, 'TOPUP_DISABLED'); };
   function run<T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> {
     if (closed) throw new ApiError(503, 'TOPUP_UNAVAILABLE');
     if (controllers.size >= 32) throw new ApiError(429, 'TOPUP_BUSY');
@@ -36,10 +37,12 @@ export function topupService(connection: DatabaseConnection, key: Buffer, commun
     return { client, session, revision: saved.revision, check };
   }
   async function catalog(owner: string, account: string, uid: string | undefined, signal: AbortSignal) {
+    requireEnabled();
     const context = await prepare(owner, account, signal), roles = await context.check(() => context.client.roles(context.session));
     const role = uid ? roles.find((entry) => entry.uid === uid) : roles[0];
     if (uid && !role) throw new ApiError(422, 'TOPUP_ROLE_NOT_AVAILABLE');
     const data = role ? await context.check(() => context.client.catalog(context.session, role)) : { goods: [], methods: [] };
+    requireEnabled();
     return { context, role, catalog: { roles, uid: role?.uid ?? null, ...data } satisfies TopupCatalog };
   }
   const seal = (owner: string, id: string, value: PrivateOrder) => vault.seal(value, owner, `topup:${id}`, id);
@@ -64,6 +67,7 @@ export function topupService(connection: DatabaseConnection, key: Buffer, commun
       const goods = result.catalog.goods.find((entry) => entry.id === input.goodsId);
       if (!goods?.available || !result.role) throw new ApiError(422, 'TOPUP_GOODS_NOT_AVAILABLE');
       if (!result.catalog.methods.includes(input.method)) throw new ApiError(422, 'TOPUP_METHOD_NOT_AVAILABLE');
+      requireEnabled();
       for (const [id, value] of quotes) if (value.quote.expiresAt <= now() || value.owner === owner) quotes.delete(id);
       if (quotes.size >= 128) throw new ApiError(429, 'TOPUP_BUSY');
       const quote: TopupQuote = { id: randomUUID(), communityAccountId: input.communityAccountId, accountId: result.context.session.accountId,
@@ -71,6 +75,7 @@ export function topupService(connection: DatabaseConnection, key: Buffer, commun
       quotes.set(quote.id, { owner, revision: result.context.revision, quote }); return quote;
     }),
     create: (owner: string, quoteId: string, requestId: string) => run(async (signal): Promise<TopupOrder> => {
+      requireEnabled();
       const previous = await repo.get(owner, requestId); if (previous) return publicOrder(owner, previous);
       const candidate = quotes.get(quoteId);
       if (!candidate || candidate.owner !== owner || candidate.quote.expiresAt <= now()) throw new ApiError(409, 'TOPUP_QUOTE_EXPIRED');
@@ -81,15 +86,16 @@ export function topupService(connection: DatabaseConnection, key: Buffer, commun
       const order: TopupOrder = { id: requestId, communityAccountId: quote.communityAccountId, accountId: quote.accountId, uid: quote.role.uid, region: 'cn_gf01',
         goodsId: goods.id, goodsName: goods.name, amount: goods.amount, currency: 'CNY', method: quote.method, status: 'creating',
         createdAt: timestamp(), updatedAt: timestamp(), orderNo: null, qrUrl: null, expiresAt: null, code: null };
+      requireEnabled();
       const reserved = await repo.reserve(owner, requestId, order, order.createdAt);
       if (reserved === 'busy') throw new ApiError(409, 'TOPUP_PENDING_ORDER');
       if (reserved === 'existing') return publicOrder(owner, await find(owner, requestId));
       running.add(order.id); quotes.delete(quoteId); let payment: RechargePayment | undefined;
       const save = async () => { order.updatedAt = timestamp(); await repo.save(owner, order.id, order.status, { ...order, qrUrl: null }, payment ? seal(owner, order.id, { revision, payment }) : null, order.updatedAt); };
       try {
-        payment = await result.context.check(() => result.context.client.createBusinessOrder(result.context.session, result.role!, goods));
+        payment = await result.context.check(() => { requireEnabled(); return result.context.client.createBusinessOrder(result.context.session, result.role!, goods); });
         order.orderNo = payment.orderNo; await save();
-        payment = await result.context.check(() => result.context.client.paymentCode(result.context.session, payment!, quote.method));
+        payment = await result.context.check(() => { requireEnabled(); return result.context.client.paymentCode(result.context.session, payment!, quote.method); });
         order.status = 'pending'; order.expiresAt = payment.expiresAt; await save();
       } catch (error) {
         order.status = operationCode(error) === 'MIYOUSHE_VERIFICATION_REQUIRED' ? 'verification_required' : 'unknown';

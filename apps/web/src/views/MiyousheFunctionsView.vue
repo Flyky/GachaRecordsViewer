@@ -1,8 +1,22 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue';
 import { NButton, NTag } from 'naive-ui';
-import type { CheckinJob } from '@gacha/contracts';
+import type { CheckinJob, FeatureSettings } from '@gacha/contracts';
 import { operationLabel, operationMessage, useOperation } from '../operations.js';
 import GenshinTopup from '../components/GenshinTopup.vue';
+import { userRequest } from '../auth.js';
+const topupEnabled = ref(false), featureError = ref('');
+let active = true, featureEpoch = 0;
+async function loadFeatures() {
+  const epoch = ++featureEpoch;
+  try {
+    const result = await userRequest<FeatureSettings>('/api/features');
+    if (active && epoch === featureEpoch) { topupEnabled.value = result.genshinTopup; featureError.value = ''; }
+  } catch { if (active && epoch === featureEpoch) { topupEnabled.value = false; featureError.value = '暂时无法读取功能设置，充值卡片未显示。请刷新页面重试。'; } }
+}
+const onVisible = () => { if (globalThis.document.visibilityState === 'visible') void loadFeatures(); };
+onMounted(() => { void loadFeatures(); globalThis.document.addEventListener('visibilitychange', onVisible); });
+onUnmounted(() => { active = false; featureEpoch++; globalThis.document.removeEventListener('visibilitychange', onVisible); });
 const { job, busy, loading, error, running, load, start, cancel } = useOperation<CheckinJob>('/api/community/checkin');
 const games = { hk4e_cn: '原神', hkrpg_cn: '星穹铁道', nap_cn: '绝区零' };
 const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签到成功', already_signed: '今日已签到', no_roles: '未绑定支持的游戏', failed: '未完成', verification_required: '需要安全验证' } as Record<string, string>)[status] ?? status;
@@ -98,5 +112,14 @@ const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签
       服务重启后不保留任务状态。重复执行会先检查官方签到状态，已签到的角色不会再次提交。
     </p>
   </section>
-  <GenshinTopup />
+  <p
+    v-if="featureError"
+    class="field-hint"
+  >
+    {{ featureError }}
+  </p>
+  <GenshinTopup
+    v-if="topupEnabled"
+    @disabled="topupEnabled = false"
+  />
 </template>

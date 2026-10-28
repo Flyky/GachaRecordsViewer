@@ -30,6 +30,7 @@ export interface AuthOptions {
   publicUrl: string;
   metadataCatalog?: MetadataCatalog;
   bannerSnapshot?: () => BannerSnapshot;
+  genshinTopupEnabled?: () => boolean;
   development?: boolean;
   now?: () => number;
 }

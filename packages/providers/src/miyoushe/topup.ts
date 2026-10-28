@@ -13,6 +13,12 @@ interface Options { transport?: Transport; device?: DeviceContext; timeoutMs?: n
 const base = 'https://topup-api-sdk.mihoyo.com/hk4e_cn', cashier = 'https://api-payment.mihoyo.com/plutus/api/v2';
 const identifier = (value: unknown) => { if (typeof value !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(value)) throw new ProbeError('protocol', 'topup'); return value; };
 const text = (value: unknown, max = 2048) => { if (typeof value !== 'string' || !value || value.length > max || /[\r\n\0]/.test(value)) throw new ProbeError('protocol', 'topup'); return value; };
+function money(value: unknown) {
+  // Official protobuf int64 amounts arrive as decimal strings; never parse a display price or a float.
+  const amount = typeof value === 'string' && /^[1-9]\d{0,7}$/.test(value) ? Number(value) : value;
+  if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount <= 0 || amount > 10000000) throw new ProbeError('protocol', 'topup_goods');
+  return amount;
+}
 function checkQr(value: unknown) {
   const input = text(value, 16000); let url: URL;
   try { url = new URL(input); } catch { throw new ProbeError('protocol', 'topup_qr'); }
@@ -68,10 +74,11 @@ export class GenshinTopupClient {
     if (!Array.isArray(data.goods_list) || data.goods_list.length > 256) throw new ProbeError('protocol', 'topup_goods');
     const goods = data.goods_list.map((value): RechargeGoods => {
       const item = object(value, 'topup_goods'), price = object(item.price, 'topup_goods');
-      if (price.currency !== 'CNY' || !Number.isSafeInteger(price.amount) || Number(price.amount) <= 0 || Number(price.amount) > 10000000) throw new ProbeError('protocol', 'topup_goods');
+      if (price.currency !== 'CNY' || price.amount_decimal !== undefined && price.amount_decimal !== 2) throw new ProbeError('protocol', 'topup_goods');
+      const amount = money(price.amount);
       const count = Number(object(item.virtual_currency ?? {}, 'topup_goods').count ?? 0);
       const name = `${Number.isSafeInteger(count) && count > 0 ? count : ''}${text(item.goods_name)}`;
-      return { id: identifier(item.goods_id), name, amount: Number(price.amount), currency: 'CNY', tier: identifier(String(price.tier)),
+      return { id: identifier(item.goods_id), name, amount, currency: 'CNY', tier: identifier(String(price.tier)),
         available: item.purchase_eligible === true, description: typeof item.goods_desc === 'string' ? item.goods_desc.replace(/<[^>]*>/g, '').slice(0, 2048) : '' };
     });
     if (new Set(goods.map((item) => item.id)).size !== goods.length) throw new ProbeError('protocol', 'topup_goods');

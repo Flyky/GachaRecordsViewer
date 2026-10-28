@@ -11,6 +11,7 @@ const origin = 'https://topup.example.test', prefix = '/gacha/api/community/topu
 type Session = { cookie: string; 'x-csrf-token': string };
 let fixture: Awaited<ReturnType<typeof temporaryDirectory>>, deployment: Awaited<ReturnType<typeof initializeDeployment>>, app: Awaited<ReturnType<typeof buildApp>>;
 let a: Session, b: Session, account: string, time: number, creates: number, codes: number, paid: boolean, mode: 'good' | 'lost-create' | 'lost-code', amount: number;
+let createGate: Promise<void> | undefined;
 const goods = (): RechargeGoods => ({ id: 'test_goods', name: '合成充值商品', amount, currency: 'CNY', tier: 'Tier_5', available: true, description: '' });
 const open = async () => {
   deployment = await initializeDeployment({ dataDirectory: fixture.directory, env: {} });
@@ -20,7 +21,7 @@ const open = async () => {
       listRoles: async () => [{ uid: '123456789', region: 'cn_gf01', gameBiz: 'hk4e_cn' }], generateAuthKey: async () => 'unused' }),
     topup: { client: () => ({ getCookieToken: async () => 'private-cookie', roles: async () => [{ uid: '123456789', region: 'cn_gf01', nickname: '合成角色' }],
       catalog: async () => ({ goods: [goods()], methods: ['alipay', 'wechatpay'] }),
-      createBusinessOrder: async () => { creates++; if (mode === 'lost-create') throw new ProbeError('network', 'topup'); return { orderNo: '9007199254740993001', jwt: 'synthetic-private-payment-jwt', qrUrl: null, expiresAt: null }; },
+      createBusinessOrder: async () => { creates++; if (mode === 'lost-create') throw new ProbeError('network', 'topup'); if (createGate) await createGate; return { orderNo: '9007199254740993001', jwt: 'synthetic-private-payment-jwt', qrUrl: null, expiresAt: null }; },
       paymentCode: async (_session, payment) => { codes++; if (mode === 'lost-code') throw new ProbeError('network', 'topup'); return { ...payment, qrUrl: 'https://qr.alipay.com/synthetic-private-qr', expiresAt: time + 300000 }; },
       status: async () => paid,
     }) },
@@ -34,7 +35,7 @@ const quote = async () => {
 };
 const create = (quoteId: string, requestId = randomUUID()) => post(`${prefix}/orders`, { quoteId, requestId });
 beforeEach(async () => {
-  time = Date.now(); creates = 0; codes = 0; paid = false; mode = 'good'; amount = 3000; fixture = await temporaryDirectory(); await open();
+  time = Date.now(); creates = 0; codes = 0; paid = false; mode = 'good'; amount = 3000; createGate = undefined; fixture = await temporaryDirectory(); await open();
   const passwordHash = await hashPassword('12345678');
   for (const id of ['a', 'b']) await deployment.repositories.users.create({ id, username: `topup_${id}`, passwordHash });
   for (const id of ['a', 'b']) {
@@ -88,4 +89,40 @@ it('prevents key rebinding when payment secrets remain even after community cred
   await deployment.connection.executor.execute(sql`DELETE FROM credentials`);
   const [state] = await deployment.connection.executor.query<{ installation_id: string; admin_fingerprint: string }>(sql`SELECT * FROM app_state`);
   await expect(bindInstallation(deployment.connection, { installationId: state!.installation_id, adminFingerprint: state!.admin_fingerprint, keyFingerprint: 'different-key' })).rejects.toMatchObject({ code: 'KEY_MISMATCH' });
+});
+async function administrator() {
+  const login = await post('/gacha/api/admin/login', { username: 'admin', password: deployment.config.adminPassword }, {} as Session);
+  return { cookie: String(login.headers['set-cookie']).split(';')[0]!, 'x-csrf-token': login.json().csrfToken as string };
+}
+it('persists administrator visibility and blocks disabled top-up APIs while retaining order check and archive access', async () => {
+  const admin = await administrator();
+  const setting = '/gacha/api/admin/features/genshin-topup';
+  expect((await app.inject({ url: '/gacha/api/features', headers: a })).json().genshinTopup).toBe(true);
+  expect((await app.inject('/gacha/api/features')).statusCode).toBe(401);
+  expect((await post(setting, { enabled: false }, a)).statusCode).toBe(401);
+  expect((await post(setting, { enabled: false }, { cookie: admin.cookie } as Session)).statusCode).toBe(403);
+  expect((await post(setting, { enabled: 'false' }, admin)).statusCode).toBe(400);
+  const first = await quote(), order = (await create(first.id)).json().order;
+  const second = await quote();
+  expect((await post(setting, { enabled: false }, admin)).json().genshinTopup).toBe(false);
+  expect((await post(`${prefix}/catalog`, { communityAccountId: account })).json().error.code).toBe('TOPUP_DISABLED');
+  expect((await post(`${prefix}/quote`, { communityAccountId: account, uid: '123456789', goodsId: 'test_goods', method: 'alipay' })).json().error.code).toBe('TOPUP_DISABLED');
+  expect((await create(second.id)).json().error.code).toBe('TOPUP_DISABLED'); expect(creates).toBe(1);
+  expect((await post(`${prefix}/orders/${order.id}/check`, {})).json().order.status).toBe('pending');
+  expect((await post(`${prefix}/orders/${order.id}/archive`, {})).json().order.status).toBe('archived');
+  await app.close(); deployment.credentialKey.fill(0); await open();
+  expect((await app.inject({ url: '/gacha/api/features', headers: a })).json().genshinTopup).toBe(false);
+  expect((await post(setting, { enabled: true }, admin)).json().genshinTopup).toBe(true);
+  expect((await post(`${prefix}/catalog`, { communityAccountId: account })).statusCode).toBe(200);
+});
+it('does not start a cashier request when the administrator disables an order already in flight', async () => {
+  const admin = await administrator(), preview = await quote(); let release!: () => void;
+  createGate = new Promise<void>((resolve) => { release = resolve; });
+  const request = Promise.resolve(create(preview.id));
+  try {
+    await expect.poll(() => creates, { timeout: 3000, interval: 10 }).toBe(1);
+    expect((await post('/gacha/api/admin/features/genshin-topup', { enabled: false }, admin)).statusCode).toBe(200);
+  } finally { release(); }
+  const result = await request;
+  expect(result.json().order).toMatchObject({ status: 'unknown', code: 'TOPUP_DISABLED' }); expect(codes).toBe(0);
 });

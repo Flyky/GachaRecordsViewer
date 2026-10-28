@@ -165,6 +165,7 @@ export interface BannerStatus {
   source: string; version: string; count: number; firstStart: string; lastEnd: string; updatedAt: string;
   storage: 'builtin' | 'database'; updating: boolean; cacheWarning: boolean;
 }
+export interface FeatureSettings { genshinTopup: boolean; updatedAt: string | null }
 export type TopupMethod = 'alipay' | 'wechatpay';
 export interface TopupRole { uid: string; region: 'cn_gf01'; nickname: string }
 export interface TopupGoods { id: string; name: string; amount: number; currency: 'CNY'; tier: string; available: boolean; description: string }

@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue';
-import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus, BannerStatus } from '@gacha/contracts';
+import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus, BannerStatus, FeatureSettings } from '@gacha/contracts';
 import { appUrl } from './base.js';
 
 type Role = 'user' | 'admin';
@@ -103,6 +103,8 @@ export const getDictionary = () => request<DictionaryStatus>('/api/admin/diction
 export const refreshDictionary = () => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', {}, 60000);
 export const getBanners = () => request<BannerStatus>('/api/admin/banners', 'admin');
 export const refreshBanners = () => request<BannerStatus>('/api/admin/banners/refresh', 'admin', {}, 60000);
+export const getAdminFeatures = () => request<FeatureSettings>('/api/admin/features', 'admin');
+export const setGenshinTopup = (enabled: boolean) => request<FeatureSettings>('/api/admin/features/genshin-topup', 'admin', { enabled });
 export function errorMessage(error: unknown) {
   if (!(error instanceof ApiError)) return '操作未完成，请稍后重试。';
   if (error.code === 'RATE_LIMITED') return `尝试次数较多，请约 ${Math.max(1, Math.ceil(error.retryAfter / 60))} 分钟后再试。`;
@@ -117,6 +119,7 @@ export function errorMessage(error: unknown) {
     BANNER_BUSY: '历史卡池正在刷新，请稍后重试。', BANNER_UNAVAILABLE: '服务正在停止，请稍后重试。',
     BANNER_CHARACTER_UNKNOWN: '历史卡池包含尚未收录的角色，请先刷新物品字典，再重试刷新历史卡池。',
     BANNER_REFRESH_FAILED: '历史卡池刷新失败，已保留原数据。请检查服务器到 GitHub 的网络连接后重试。',
+    FEATURE_BUSY: '功能设置正在保存，请稍后重试。', TOPUP_DISABLED: '管理员已关闭原神充值功能。',
   };
   return messages[error.code] ?? '操作未完成，请稍后重试。';
 }

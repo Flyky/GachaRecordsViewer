@@ -20,6 +20,7 @@ import { registerWishLink, type WishLinkOptions } from './wish-link.js';
 import { registerApiMock } from './api-mock.js';
 import { bannerService, registerBanners, type BannerOptions } from './banners.js';
 import type { TopupOptions } from './community/topup.js';
+import { featureService, registerFeatures } from './features.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -91,12 +92,14 @@ export async function buildApp(options: AppOptions = {}) {
     if (options.auth) {
       const metadata = await metadataService(options.auth.connection, options.metadata);
       const banners = await bannerService(options.auth.connection, metadata.catalog, options.banners);
+      const features = await featureService(options.auth.connection, options.auth.now);
       site.addHook('onClose', async () => { await banners.close(); });
       site.addHook('onClose', async () => { await metadata.close(); });
-      const auth = { ...options.auth, metadataCatalog: metadata.catalog, bannerSnapshot: banners.get };
+      const auth = { ...options.auth, metadataCatalog: metadata.catalog, bannerSnapshot: banners.get, genshinTopupEnabled: features.topupEnabled };
       await registerAuth(site, auth);
       registerMetadata(site, metadata);
       registerBanners(site, banners);
+      registerFeatures(site, features);
       registerUigf(site, auth);
       registerApiMock(site, auth);
       registerRecords(site, auth);

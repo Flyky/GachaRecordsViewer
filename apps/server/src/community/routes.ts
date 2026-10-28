@@ -19,7 +19,7 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
   const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
   const sync = await syncService(auth.connection, service, options.sync, auth.now, auth.metadataCatalog), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
   const checkin = checkinService(service, options.checkin, auth.now);
-  const topup = topupService(auth.connection, auth.credentialKey, service, options.topup, auth.now);
+  const topup = topupService(auth.connection, auth.credentialKey, service, options.topup, auth.now, auth.genshinTopupEnabled);
   app.addHook('onClose', async () => { await topup.close(); await checkin.close(); await sync.close(); qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };

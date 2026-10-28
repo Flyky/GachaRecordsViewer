@@ -16,7 +16,7 @@ it('reads live goods, creates one signed business order, obtains a native code a
       { game_biz: 'hkrpg_cn', game_uid: '123456780', region: 'prod_gf_cn' },
     ] });
     if (url.pathname.endsWith('getTallyProfile')) return response({ top_up_toggle: true, regions: [{ region: 'cn_gf01' }], pay_plat_toggle: [{ toggle: true, pay_type: 'alipay' }, { toggle: true, pay_type: 'wechatpay' }] });
-    if (url.pathname.endsWith('listGoodsWeb')) return response({ goods_list: [{ goods_id: goods.id, goods_name: goods.name, goods_desc: '<b>说明</b>', purchase_eligible: true, price: { amount: 3000, currency: 'CNY', tier: goods.tier } }] });
+    if (url.pathname.endsWith('listGoodsWeb')) return response({ goods_list: [{ goods_id: goods.id, goods_name: goods.name, goods_desc: '<b>说明</b>', purchase_eligible: true, price: { amount: '3000', amount_decimal: 2, currency: 'CNY', tier: goods.tier } }] });
     if (url.pathname.endsWith('createOrder')) {
       const body = JSON.parse(String(init.body)); expect(body.sign).toMatch(/^[a-f0-9]{64}$/);
       expect(body.order).toMatchObject({ amount: 3000, account: '12345', uid: role.uid, region: role.region, pay_plat: 'payment-cn' });
@@ -46,6 +46,15 @@ it('supports the current official hosted QR token path without exposing the paym
   } });
   const result = await client.paymentCode(session, payment, 'alipay'); expect(result.qrUrl).toContain('https://pay.mihoyo.com/hk4e_cn/t/payment/platform/checkout-order/index.html?token=synthetic-code-token');
   expect(result.qrUrl).not.toContain(payment.jwt);
+});
+it('accepts integer cents in either numeric representation but rejects floats, exponent strings and unsafe amounts', async () => {
+  for (const amount of [3000, '3000', '1e3', '30.00', '9007199254740993', '-100', '0', 1.5, Number.POSITIVE_INFINITY]) {
+    const client = new GenshinTopupClient({ transport: async (url) => url.pathname.endsWith('getTallyProfile')
+      ? response({ top_up_toggle: true, regions: [{ region: 'cn_gf01' }], pay_plat_toggle: [] })
+      : response({ goods_list: [{ goods_id: goods.id, goods_name: goods.name, purchase_eligible: true, price: { amount, amount_decimal: 2, currency: 'CNY', tier: goods.tier } }] }) });
+    if (amount === 3000 || amount === '3000') expect((await client.catalog(session, role)).goods[0]!.amount).toBe(3000);
+    else await expect(client.catalog(session, role)).rejects.toBeInstanceOf(ProbeError);
+  }
 });
 it('never retries timed-out mutations or executes returned verification and foreign URLs', async () => {
   let calls = 0; const client = new GenshinTopupClient({ transport: async () => { calls++; throw new Error('synthetic lost response'); } });

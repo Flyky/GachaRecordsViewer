@@ -4,6 +4,7 @@ import { NButton, NModal, NSelect } from 'naive-ui';
 import type { CommunityAccount, TopupCatalog, TopupMethod, TopupOrder, TopupQuote } from '@gacha/contracts';
 import { ApiError, errorMessage, userRequest } from '../auth.js';
 import TopupOrderCard from './TopupOrderCard.vue';
+const emit = defineEmits<{ disabled: [] }>();
 const accounts = shallowRef<CommunityAccount[]>([]), orders = shallowRef<TopupOrder[]>([]), catalog = shallowRef<TopupCatalog | null>(null), quote = shallowRef<TopupQuote | null>(null);
 const accountId = ref<string | null>(null), uid = ref<string | null>(null), goodsId = ref<string | null>(null), method = ref<TopupMethod>('alipay');
 const busy = ref(false), error = ref(''), requestId = ref('');
@@ -30,7 +31,12 @@ function message(cause: unknown) {
 }
 async function perform(work: () => Promise<void>) {
   if (busy.value) return; busy.value = true; error.value = '';
-  try { await work(); } catch (cause) { if (active) error.value = message(cause); }
+  try { await work(); } catch (cause) {
+    if (active) {
+      error.value = message(cause);
+      if (cause instanceof ApiError && cause.code === 'TOPUP_DISABLED') emit('disabled');
+    }
+  }
   finally { if (active) busy.value = false; }
 }
 function changeAccount(value: string) { accountId.value = value; uid.value = null; goodsId.value = null; catalog.value = null; quote.value = null; requestId.value = ''; }
