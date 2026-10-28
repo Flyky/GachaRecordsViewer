@@ -5,6 +5,7 @@ import type { LocalUser, DictionaryStatus } from '@gacha/contracts';
 import BrandMark from '../components/BrandMark.vue';
 import AdminBanners from '../components/AdminBanners.vue';
 import AdminFeatures from '../components/AdminFeatures.vue';
+import AdminDataSources from '../components/AdminDataSources.vue';
 import { adminSession, createUser, errorMessage, listUsers, loginAdmin, logout, refreshAdmin, resetPassword, getDictionary, refreshDictionary } from '../auth.js';
 const checking = ref(true), busy = ref(false), password = ref(''), username = ref('');
 const error = ref(''), success = ref(''), users = ref<LocalUser[]>([]), target = ref<LocalUser | null>(null), showReset = ref(false);
@@ -158,6 +159,7 @@ async function reset() {
       >
         {{ error }}
       </p>
+      <AdminDataSources />
       <AdminBanners />
       <AdminFeatures />
       <section class="surface dictionary-settings">

@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue';
-import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus, BannerStatus, FeatureSettings } from '@gacha/contracts';
+import type { AccountPasswordResponse, AdminSessionResponse, AdminUsersResponse, UserSessionResponse, DictionaryStatus, BannerStatus, FeatureSettings, DataSourceSettings } from '@gacha/contracts';
 import { appUrl } from './base.js';
 
 type Role = 'user' | 'admin';
@@ -102,6 +102,8 @@ export const resetPassword = (id: string) => request<AccountPasswordResponse>(`/
 export const getDictionary = () => request<DictionaryStatus>('/api/admin/dictionary', 'admin');
 export const refreshDictionary = () => request<DictionaryStatus>('/api/admin/dictionary/refresh', 'admin', {}, 60000);
 export const getBanners = () => request<BannerStatus>('/api/admin/banners', 'admin');
+export const getDataSources = () => request<DataSourceSettings>('/api/admin/data-sources', 'admin');
+export const saveDataSources = (githubProxy: string) => request<DataSourceSettings>('/api/admin/data-sources', 'admin', { githubProxy });
 export const refreshBanners = () => request<BannerStatus>('/api/admin/banners/refresh', 'admin', {}, 60000);
 export const getAdminFeatures = () => request<FeatureSettings>('/api/admin/features', 'admin');
 export const setGenshinTopup = (enabled: boolean) => request<FeatureSettings>('/api/admin/features/genshin-topup', 'admin', { enabled });
@@ -115,10 +117,12 @@ export function errorMessage(error: unknown) {
     INVALID_REQUEST: '请检查填写内容是否符合要求。', USER_NOT_FOUND: '该账号已不存在，请刷新列表。',
     ORIGIN_REJECTED: '当前访问地址与服务配置不一致，请使用正确的站点地址。', CSRF_REJECTED: '登录状态已变化，请刷新页面后重试。',
     DICTIONARY_BUSY: '字典正在刷新，请稍后重试。', DICTIONARY_UNAVAILABLE: '服务正在停止，请稍后重试。',
-    DICTIONARY_REFRESH_FAILED: '字典刷新失败，已保留原字典。请检查服务器到 genshin-db 数据源的网络连接后重试。',
+    DICTIONARY_REFRESH_FAILED: '字典刷新失败，已保留原字典。请检查 genshin-db 网络连接，或在公共数据网络设置中保存可用的 GitHub 代理前缀后重试。',
     BANNER_BUSY: '历史卡池正在刷新，请稍后重试。', BANNER_UNAVAILABLE: '服务正在停止，请稍后重试。',
     BANNER_CHARACTER_UNKNOWN: '历史卡池包含尚未收录的角色，请先刷新物品字典，再重试刷新历史卡池。',
-    BANNER_REFRESH_FAILED: '历史卡池刷新失败，已保留原数据。请检查服务器到 GitHub 的网络连接后重试。',
+    BANNER_REFRESH_FAILED: '历史卡池刷新失败，已保留原数据。请检查 GitHub 网络连接或已保存的代理服务；代理须支持 GitHub API 和原始文件。',
+    DATA_PROXY_INVALID: '请填写不带账号、参数或片段的 HTTPS 代理前缀，例如 https://gh-proxy.com/；留空可停用。',
+    DATA_PROXY_BUSY: '网络设置正在保存，请稍后重试。',
     FEATURE_BUSY: '功能设置正在保存，请稍后重试。', TOPUP_DISABLED: '管理员已关闭原神充值功能。',
   };
   return messages[error.code] ?? '操作未完成，请稍后重试。';

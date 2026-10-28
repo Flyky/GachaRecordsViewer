@@ -4,8 +4,10 @@ import { metadataRepository, type DatabaseConnection } from '@gacha/db';
 import { createMetadataCatalog, genshinMetadata, type ItemMetadata, type MetadataCatalog, type MetadataSnapshot } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import { ApiError } from './auth/security.js';
+import { requestPublicData } from './public-data.js';
+import { readDictionaryArchive, type DictionaryPage } from './dictionary-archive.js';
 
-export interface MetadataOptions { fetch?: typeof globalThis.fetch; now?: () => number }
+export interface MetadataOptions { fetch?: typeof globalThis.fetch; now?: () => number; githubProxy?: () => string }
 const sourceUrl = 'https://github.com/theBowja/genshin-db';
 
 async function readJson(response: Response) {
@@ -25,16 +27,31 @@ async function readJson(response: Response) {
   finally { reader.releaseLock(); }
 }
 
-export async function downloadDictionary(fetcher: typeof globalThis.fetch, signal: AbortSignal, now: number): Promise<MetadataSnapshot> {
+export async function downloadDictionary(fetcher: typeof globalThis.fetch, signal: AbortSignal, now: number, proxy = ''): Promise<MetadataSnapshot> {
+  const controller = new AbortController(), directSignal = AbortSignal.any([signal, controller.signal]);
+  try { return await downloadApiDictionary(fetcher, directSignal, now); }
+  catch (error) {
+    signal.throwIfAborted(); if (!proxy) throw error;
+  } finally { controller.abort(); }
+  const pages = await requestPublicData('https://codeload.github.com/theBowja/genshin-db/tar.gz/refs/heads/main', readDictionaryArchive,
+    { fetch: fetcher, signal, proxy, proxyUrl: 'https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz' });
+  return dictionarySnapshot(pages, now, 'genshin-db-github');
+}
+
+async function downloadApiDictionary(fetcher: typeof globalThis.fetch, signal: AbortSignal, now: number): Promise<MetadataSnapshot> {
   const requests = (['characters', 'weapons'] as const).flatMap((folder) =>
     (['ChineseSimplified', 'English'] as const).map(async (language) => {
       const url = new URL(`https://genshin-db-api.vercel.app/api/v5/${folder}`);
       url.search = new URLSearchParams({ query: 'names', matchCategories: 'true', verboseCategories: 'true', resultLanguage: language }).toString();
-      const rows = await readJson(await fetcher(url, { signal, redirect: 'error', headers: { Accept: 'application/json' } }));
+      const rows = await requestPublicData(url.href, readJson, { fetch: fetcher, signal });
       if (!Array.isArray(rows) || !rows.length) throw new Error('Invalid dictionary source');
       return { folder, language, rows: rows as Record<string, unknown>[] };
     }));
-  const pages = await Promise.all(requests), items = new Map<string, ItemMetadata>();
+  return dictionarySnapshot(await Promise.all(requests), now, 'genshin-db-api');
+}
+
+export function dictionarySnapshot(pages: DictionaryPage[], now: number, name: string): MetadataSnapshot {
+  const items = new Map<string, ItemMetadata>();
   for (const { folder, language, rows } of pages) {
     const locale = language === 'ChineseSimplified' ? 'zh-cn' : 'en-us', itemType = folder === 'characters' ? 'character' : 'weapon';
     for (const row of rows) {
@@ -49,7 +66,7 @@ export async function downloadDictionary(fetcher: typeof globalThis.fetch, signa
   const sorted = [...items.values()].sort((a, b) => a.id.length - b.id.length || a.id.localeCompare(b.id, 'en'));
   if (sorted.length < 100 || sorted.some((item) => !item.names['zh-cn'] || !item.names['en-us'])) throw new Error('Incomplete dictionary');
   const hash = createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0, 12);
-  return { schemaVersion: 1, game: 'hk4e', source: { name: 'genshin-db-api', version: `v5-${hash}`, url: sourceUrl, license: 'MIT', retrievedAt: new Date(now).toISOString() }, items: sorted };
+  return { schemaVersion: 1, game: 'hk4e', source: { name, version: `v5-${hash}`, url: sourceUrl, license: 'MIT', retrievedAt: new Date(now).toISOString() }, items: sorted };
 }
 
 export async function metadataService(connection: DatabaseConnection, options: MetadataOptions = {}) {
@@ -76,7 +93,7 @@ export async function metadataService(connection: DatabaseConnection, options: M
       const signal = AbortSignal.any([refreshController.signal, AbortSignal.timeout(45000)]);
       const run = async () => {
         try {
-          const snapshot = await downloadDictionary(options.fetch ?? globalThis.fetch, signal, (options.now ?? Date.now)());
+          const snapshot = await downloadDictionary(options.fetch ?? globalThis.fetch, signal, (options.now ?? Date.now)(), options.githubProxy?.());
           const candidate = createMetadataCatalog(snapshot);
           if (current.all().some((item) => !candidate.get(item.id))) throw new Error('Dictionary lost existing items');
           if (closed || signal.aborted) throw new Error('Dictionary refresh stopped');

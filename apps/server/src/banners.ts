@@ -5,8 +5,9 @@ import { snapshotRepository, type DatabaseConnection } from '@gacha/db';
 import { builtinCharacterBanners, gameTime, type BannerSnapshot, type CharacterBanner, type MetadataCatalog } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import { ApiError } from './auth/security.js';
+import { requestPublicData } from './public-data.js';
 
-export interface BannerOptions { fetch?: typeof globalThis.fetch; now?: () => number }
+export interface BannerOptions { fetch?: typeof globalThis.fetch; now?: () => number; githubProxy?: () => string }
 type Node = { type: string; [key: string]: unknown };
 const node = (input: unknown) => { if (!input || typeof input !== 'object' || typeof (input as Node).type !== 'string') throw new Error('Invalid AST'); return input as Node; };
 const field = (input: Node, key: string): Node | undefined => {
@@ -73,13 +74,17 @@ export async function bannerService(connection: DatabaseConnection, catalog: Met
     refresh: () => {
       if (closed) throw new ApiError(503, 'BANNER_UNAVAILABLE'); if (pending) throw new ApiError(409, 'BANNER_BUSY');
       controller = new AbortController(); const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(45000)]), fetcher = options.fetch ?? globalThis.fetch;
-      const request = (url: string) => fetcher(url, { signal, redirect: 'error', headers: { Accept: 'application/json', 'User-Agent': 'GachaRecordsViewer' } }).then(read);
+      const proxy = options.githubProxy?.();
+      const request = <T>(url: string, parse: (text: string) => T) => requestPublicData(url, async (response) => parse(await read(response)), { fetch: fetcher, signal, proxy });
       pending = (async () => {
         try {
-          const commits = JSON.parse(await request('https://api.github.com/repos/MadeBaruna/paimon-moe/commits?path=src/data/banners.js&per_page=1')) as { sha: string }[];
-          const revision = commits[0]?.sha; if (!revision || !/^[a-f0-9]{40}$/.test(revision)) throw new Error('Missing revision');
-          const url = `https://raw.githubusercontent.com/MadeBaruna/paimon-moe/${revision}/src/data/banners.js`, source = await request(url);
-          const candidate = validate({ source: { name: 'paimon-moe', revision, url, retrievedAt: new Date(now()).toISOString(), license: 'MIT', sha256: createHash('sha256').update(source).digest('hex') }, entries: parseBannerSource(source, catalog) });
+          const revision = await request('https://api.github.com/repos/MadeBaruna/paimon-moe/commits?path=src/data/banners.js&per_page=1', (text) => {
+            const commits = JSON.parse(text) as { sha: string }[], sha = commits[0]?.sha;
+            if (!sha || !/^[a-f0-9]{40}$/.test(sha)) throw new Error('Missing revision'); return sha;
+          });
+          const url = `https://raw.githubusercontent.com/MadeBaruna/paimon-moe/${revision}/src/data/banners.js`;
+          const { source, entries } = await request(url, (source) => ({ source, entries: parseBannerSource(source, catalog) }));
+          const candidate = validate({ source: { name: 'paimon-moe', revision, url, retrievedAt: new Date(now()).toISOString(), license: 'MIT', sha256: createHash('sha256').update(source).digest('hex') }, entries });
           const before = range(current), after = range(candidate);
           if (after.firstStart > before.firstStart || after.lastEnd < before.lastEnd) throw new Error('Banner coverage shrank');
           signal.throwIfAborted(); if (closed) throw new Error('Closed');

@@ -21,6 +21,7 @@ import { registerApiMock } from './api-mock.js';
 import { bannerService, registerBanners, type BannerOptions } from './banners.js';
 import type { TopupOptions } from './community/topup.js';
 import { featureService, registerFeatures } from './features.js';
+import { dataSourceService, registerDataSources } from './public-data.js';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];
@@ -90,8 +91,9 @@ export async function buildApp(options: AppOptions = {}) {
   if (prefix) registerHealth(app);
   await app.register(async (site) => {
     if (options.auth) {
-      const metadata = await metadataService(options.auth.connection, options.metadata);
-      const banners = await bannerService(options.auth.connection, metadata.catalog, options.banners);
+      const dataSources = await dataSourceService(options.auth.connection, options.auth.now);
+      const metadata = await metadataService(options.auth.connection, { ...options.metadata, githubProxy: dataSources.proxy });
+      const banners = await bannerService(options.auth.connection, metadata.catalog, { ...options.banners, githubProxy: dataSources.proxy });
       const features = await featureService(options.auth.connection, options.auth.now);
       site.addHook('onClose', async () => { await banners.close(); });
       site.addHook('onClose', async () => { await metadata.close(); });
@@ -100,6 +102,7 @@ export async function buildApp(options: AppOptions = {}) {
       registerMetadata(site, metadata);
       registerBanners(site, banners);
       registerFeatures(site, features);
+      registerDataSources(site, dataSources);
       registerUigf(site, auth);
       registerApiMock(site, auth);
       registerRecords(site, auth);
