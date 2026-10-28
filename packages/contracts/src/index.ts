@@ -75,6 +75,14 @@ export interface DailyAnalysisResponse extends AnalysisContext {
   year: number; pool: RecordPool | null; calendarTimeZone: 'Asia/Shanghai'; availableYears: number[];
   days: { date: string; count: number }[]; total: number; maxDailyCount: number; hasRecords: boolean;
 }
+export interface LuckAnalysisResponse extends AnalysisContext {
+  pools: { pool: '301' | '302' | '200' | '500'; totalPulls: number; fiveStars: number; completeIntervals: number;
+    excludedFiveStars: number; averageFiveStarPulls: number | null; observedPullsPerFiveStar: number | null; unknownRankRecords: number }[];
+  bannerSource: { name: string; revision: string; url: string; firstStart: string | null; lastEnd: string | null };
+  character: { upFiveStars: number; offBannerFiveStars: number; unclassifiedFiveStars: number; unknownStateFiveStars: number; inconsistentFiveStars: number;
+    smallAttempts: number; smallWins: number; smallLosses: number; guaranteedUps: number; smallWinRate: number | null;
+    averageUpPulls: number | null; upCostSamples: number; maxWinStreak: number | null; maxLossStreak: number | null };
+}
 
 export type CredentialKind = 'stoken' | 'ltoken' | 'cookieToken';
 export interface CapabilityResult {

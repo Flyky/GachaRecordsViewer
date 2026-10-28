@@ -2,13 +2,14 @@
 import { onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NButton, NSelect } from 'naive-ui';
 import { RouterLink } from 'vue-router';
-import type { DailyAnalysisResponse, ItemAnalysisResponse, MonthlyAnalysisResponse, RecordPool } from '@gacha/contracts';
+import type { DailyAnalysisResponse, ItemAnalysisResponse, LuckAnalysisResponse, MonthlyAnalysisResponse, RecordPool } from '@gacha/contracts';
 import { ApiError, errorMessage, userRequest } from '../auth.js';
 import { currentProfile, profilesLoading, profilesError, timezoneLabel } from '../profiles.js';
 import { consistentAnalysis, itemIssueLabel, type AnalysisBundle } from '../analysis.js';
 import { poolOptions } from '../records.js';
 import MonthlyChart from '../components/MonthlyChart.vue';
 import DailyCalendar from '../components/DailyCalendar.vue';
+import LuckAnalysis from '../components/LuckAnalysis.vue';
 
 const bundle = shallowRef<AnalysisBundle | null>(null), busy = ref(false), error = ref('');
 const itemType = ref<'character' | 'weapon'>('character'), order = ref<'asc' | 'desc'>('desc');
@@ -27,14 +28,15 @@ async function load() {
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       const prefix = `/api/profiles/${encodeURIComponent(profile.id)}/analysis`;
-      const [items, monthly, daily] = await Promise.all([
+      const [items, monthly, daily, luck] = await Promise.all([
         userRequest<ItemAnalysisResponse>(`${prefix}/items?${itemQuery}`, undefined, 60000),
         userRequest<MonthlyAnalysisResponse>(`${prefix}/monthly`, undefined, 60000),
         userRequest<DailyAnalysisResponse>(`${prefix}/daily?${params}`, undefined, 60000),
+        userRequest<LuckAnalysisResponse>(`${prefix}/luck`, undefined, 60000),
       ]);
       if (!active || requestGeneration !== generation) return;
-      if (!consistentAnalysis(profile.id, [items, monthly, daily])) continue;
-      bundle.value = { items, monthly, daily }; year.value = daily.year; availableYears.value = daily.availableYears; return;
+      if (!consistentAnalysis(profile.id, [items, monthly, daily, luck])) continue;
+      bundle.value = { items, monthly, daily, luck }; year.value = daily.year; availableYears.value = daily.availableYears; return;
     }
     throw new ApiError('ANALYSIS_CHANGED');
   } catch (cause) {
@@ -202,6 +204,10 @@ watch(() => [currentProfile.value?.id, currentProfile.value?.dataVersion] as con
           </details>
         </template>
       </section>
+      <LuckAnalysis
+        v-if="bundle"
+        :data="bundle.luck"
+      />
       <section
         class="surface analysis-section"
         aria-labelledby="monthly-analysis-title"

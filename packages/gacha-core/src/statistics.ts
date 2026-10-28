@@ -37,6 +37,7 @@ function displayName(entry: ItemEntry) {
   names.sort((a, b) => a.priority - b.priority || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return names[0]?.name ?? null;
 }
+export function analysisMetadata(records: readonly AnalyzedRecord[]) { return metadataSummary(indexItems(records)); }
 export function itemStatistics(records: readonly AnalyzedRecord[], itemType: ItemType = 'character', order: 'asc' | 'desc' = 'desc') {
   const index = indexItems(records), groups = (itemType === 'character' ? [5, 4] as const : [5, 4, 3] as const)
     .map((rank) => ({ rank, total: 0, items: [] as ItemCount[] }));

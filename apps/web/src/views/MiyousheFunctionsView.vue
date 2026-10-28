@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { NButton, NTag } from 'naive-ui';
-import { RouterLink } from 'vue-router';
 import type { CheckinJob } from '@gacha/contracts';
 import { operationLabel, operationMessage, useOperation } from '../operations.js';
 const { job, busy, loading, error, running, load, start, cancel } = useOperation<CheckinJob>('/api/community/checkin');
@@ -42,12 +41,7 @@ const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签
         @click="cancel"
       >
         取消任务
-      </NButton><RouterLink
-        class="outline-link"
-        to="/accounts"
-      >
-        管理米游社账号
-      </RouterLink>
+      </NButton>
     </div>
     <p
       v-if="error"

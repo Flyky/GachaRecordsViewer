@@ -47,6 +47,16 @@ Copyright (c) 2022 Masterain. The complete license is reproduced in
 [packages/uigf/SCHEMA_LICENSE](packages/uigf/SCHEMA_LICENSE).
 Only formatting has changed; the complete upstream schemas are retained.
 
+## paimon-moe character banner data
+
+`packages/gacha-core/src/catalog/character-banners.json` is derived from
+[MadeBaruna/paimon-moe](https://github.com/MadeBaruna/paimon-moe),
+`src/data/banners.js` at revision `105d0ebd1d551de96668b805d88c2c9a0590177a`.
+Only character banner dates, timing flags and featured IDs are retained. The
+original MIT license, Copyright (c) 2021 Made Baruna, is reproduced in
+`packages/gacha-core/BANNERS_LICENSE`. This application is not affiliated with
+paimon.moe or miHoYo. Historical coverage and boundaries depend on the source.
+
 ## TeyvatGuide
 
 The Miyoushe provider implements protocol behavior and parameters researched from

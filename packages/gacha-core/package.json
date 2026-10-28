@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "update:metadata": "node scripts/update-metadata.mjs"
+    "update:metadata": "node scripts/update-metadata.mjs",
+    "update:banners": "node scripts/update-banners.mjs"
   },
   "devDependencies": { "genshin-db": "5.2.14" }
 }

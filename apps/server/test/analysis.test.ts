@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
-import type { DailyAnalysisResponse, ItemAnalysisResponse, MonthlyAnalysisResponse } from '@gacha/contracts';
+import type { DailyAnalysisResponse, ItemAnalysisResponse, LuckAnalysisResponse, MonthlyAnalysisResponse } from '@gacha/contracts';
 import { openConnection, repositories, uigfRepository, type DatabaseConnection } from '@gacha/db';
 import { decodeUigf } from '@gacha/uigf';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -69,7 +69,7 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       expect((await get('items', { itemType: 'weapon' }, empty)).json<ItemAnalysisResponse>().groups.map((group) => group.items)).toEqual([[], [], []]);
       const calendar = (await get('daily', { year: '2024' }, empty)).json<DailyAnalysisResponse>();
       expect(calendar.days).toHaveLength(366); expect(calendar.days.every((day) => day.count === 0)).toBe(true);
-      for (const kind of ['items', 'monthly', 'daily']) {
+      for (const kind of ['items', 'monthly', 'daily', 'luck']) {
         expect((await app.inject(`/api/profiles/${primary}/analysis/${kind}`)).statusCode).toBe(401);
         expect((await get(kind, {}, primary, b)).statusCode).toBe(404);
         expect((await get(kind, {}, 'not-a-profile')).statusCode).toBe(404);
@@ -79,6 +79,17 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       for (const query of [{ year: '0' }, { year: '10000' }, { year: '2024.5' }, { pool: '400' }, { pool: '301,302' }]) expect((await get('daily', query)).statusCode).toBe(400);
       expect((await get('items', { itemType: 'other' })).statusCode).toBe(400);
       expect((await get('items', { order: 'bad' })).statusCode).toBe(400);
+    });
+    it('exposes full-history luck metrics with matching context, null empty samples and no private fields', async () => {
+      const response = await get('luck'); expect(response.statusCode).toBe(200); expect(response.headers['cache-control']).toBe('no-store');
+      const luck = response.json<LuckAnalysisResponse>(), monthly = (await get('monthly')).json<MonthlyAnalysisResponse>();
+      expect(luck).toMatchObject({ profileId: primary, uid: monthly.uid, dataVersion: monthly.dataVersion,
+        dictionaryVersion: monthly.dictionaryVersion, historyCount: monthly.historyCount, metadataIssues: monthly.metadataIssues });
+      expect(luck.pools.map((entry) => entry.pool)).toEqual(['301', '302', '200', '500']);
+      expect(luck.pools.find((entry) => entry.pool === '301')).toMatchObject({ fiveStars: 1, completeIntervals: 0, averageFiveStarPulls: null });
+      expect(luck.character).toMatchObject({ smallAttempts: 0, smallWinRate: null, averageUpPulls: null });
+      expect((await get('luck', {}, empty)).json<LuckAnalysisResponse>().pools.every((entry) => entry.totalPulls === 0 && entry.averageFiveStarPulls === null)).toBe(true);
+      expect(response.body).not.toMatch(/password_hash|owner_id|metadata_json|credential/);
     });
     it('reflects backfilled history and its data version without leaking additional snapshot fields into exports', async () => {
       const document = analysisFixture(); document.hk4e = [document.hk4e![0]!];

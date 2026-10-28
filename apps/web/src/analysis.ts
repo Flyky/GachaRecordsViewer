@@ -1,6 +1,6 @@
-import type { AnalysisContext, DailyAnalysisResponse, ItemAnalysisResponse, MonthlyAnalysisResponse } from '@gacha/contracts';
+import type { AnalysisContext, DailyAnalysisResponse, ItemAnalysisResponse, LuckAnalysisResponse, MonthlyAnalysisResponse } from '@gacha/contracts';
 
-export interface AnalysisBundle { items: ItemAnalysisResponse; monthly: MonthlyAnalysisResponse; daily: DailyAnalysisResponse }
+export interface AnalysisBundle { items: ItemAnalysisResponse; monthly: MonthlyAnalysisResponse; daily: DailyAnalysisResponse; luck: LuckAnalysisResponse }
 export function consistentAnalysis(profileId: string, responses: AnalysisContext[]) {
   const first = responses[0];
   return !!first && responses.every((response) => response.profileId === profileId && response.dataVersion === first.dataVersion

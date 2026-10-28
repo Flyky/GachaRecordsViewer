@@ -1,6 +1,6 @@
-import { RECORD_POOLS, type DailyAnalysisResponse, type ItemAnalysisResponse, type MonthlyAnalysisResponse, type RecordPool } from '@gacha/contracts';
+import { RECORD_POOLS, type DailyAnalysisResponse, type ItemAnalysisResponse, type LuckAnalysisResponse, type MonthlyAnalysisResponse, type RecordPool } from '@gacha/contracts';
 import { ImportError, uigfRepository } from '@gacha/db';
-import { dailyStatistics, genshinMetadata, itemStatistics, monthlyStatistics } from '@gacha/gacha-core';
+import { dailyStatistics, genshinMetadata, itemStatistics, luckStatistics, monthlyStatistics } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { ApiError } from '../auth/security.js';
@@ -34,6 +34,12 @@ export function registerAnalysis(app: FastifyInstance, options: AuthOptions) {
   }, async (request): Promise<MonthlyAnalysisResponse> => {
     const { context, history } = await snapshot(request.principal!.user!.id, request.params.profileId);
     return { ...context, ...monthlyStatistics(history) };
+  });
+  app.get<{ Params: { profileId: string } }>('/api/profiles/:profileId/analysis/luck', {
+    onRequest: app.authenticateUser, schema: { params, querystring: querySchema({}) },
+  }, async (request): Promise<LuckAnalysisResponse> => {
+    const { context, history } = await snapshot(request.principal!.user!.id, request.params.profileId);
+    return { ...context, ...luckStatistics(history, { timezone: context.timezone }) };
   });
   app.get<{ Params: { profileId: string }; Querystring: { year?: string; pool?: RecordPool | '' } }>('/api/profiles/:profileId/analysis/daily', {
     onRequest: app.authenticateUser, schema: { params, querystring: querySchema({ year: { type: 'string', pattern: '^[1-9][0-9]{0,3}$' }, pool: { type: 'string', enum: ['', ...RECORD_POOLS] } }) },
