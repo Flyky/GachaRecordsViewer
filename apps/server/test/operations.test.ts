@@ -61,7 +61,7 @@ describe('owned check-in batches and wish-link import', () => {
       auth: { connection: deployment.connection, credentialKey: deployment.credentialKey, publicUrl: deployment.config.publicUrl, adminPassword: deployment.config.adminPassword, adminSessionVersion: deployment.adminSessionVersion },
       community: { client: () => ({ getCookieToken: async (credential) => `cookie-${credential.accountId}`, getLToken: async (credential) => `l-${credential.accountId}`,
         verifyLToken: async (accountId) => ({ accountId, mid: `m-${accountId}` }), listRoles: async () => [], generateAuthKey: async () => 'unused' }),
-        checkin: { client: (device, signal) => new GameCheckinClient({ device, signal, transport }), wait: async () => undefined } },
+        checkin: { client: (device, signal) => new GameCheckinClient({ device, signal, transport }), wait: async () => undefined, automatic: { start: false } } },
       wishLink: { client: (signal) => new MiyousheClient({ signal, transport }), wait: async () => undefined },
     });
     const login = async (kind: string, username: string, password: string) => {
@@ -74,6 +74,20 @@ describe('owned check-in batches and wish-link import', () => {
     }
   });
   afterEach(async () => { await app?.close(); deployment?.credentialKey.fill(0); await directory.cleanup(); });
+
+  it('protects automatic check-in settings, isolates users and makes no upstream sign request when configuring', async () => {
+    const path = '/community/checkin/automatic', settings = { enabled: true, startMinute: 100, endMinute: 1340 };
+    expect((await get(path)).json()).toMatchObject({ enabled: false, startMinute: 90, endMinute: 1350, nextRunAt: null });
+    expect((await post(path, settings, admin)).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: prefix + path, payload: settings, headers: { origin, cookie: a.cookie } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: prefix + path, payload: settings, headers: { ...a, origin: 'https://other.test' } })).statusCode).toBe(403);
+    expect((await post(path, { ...settings, startMinute: 95 })).statusCode).toBe(400);
+    const response = await post(path, settings); expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ ...settings, timezone: 'Asia/Shanghai' }); expect(response.json().nextRunAt).toEqual(expect.any(String));
+    expect((await get(path, b)).json()).toMatchObject({ enabled: false, nextRunAt: null });
+    expect((await get(path)).json()).toEqual(response.json());
+    expect(signCalls).toEqual([]);
+  });
 
   it('signs all three supported games and multiple roles/accounts, isolates owners and skips repeated daily submissions', async () => {
     expect((await post('/community/checkin/jobs', {}, admin)).statusCode).toBe(401);

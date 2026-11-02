@@ -22,7 +22,8 @@ export function requestPacer(options: PaceOptions = {}) {
 }
 
 /** Bounded owner-scoped FIFO; private payloads never enter the public job or persistence. */
-export function ownedTaskQueue<T extends OperationJob, P>(run: (owner: string, job: T, payload: P, signal: AbortSignal) => Promise<void>, now = Date.now) {
+export function ownedTaskQueue<T extends OperationJob, P>(run: (owner: string, job: T, payload: P, signal: AbortSignal) => Promise<void>, now = Date.now,
+  onFinished?: (owner: string, job: T) => Promise<void>) {
   type Entry = { owner: string; job: T; payload: P | undefined; controller: AbortController };
   const entries = new Map<string, Entry>(), queue: Entry[] = [];
   let running: Promise<void> | undefined, closed = false;
@@ -41,6 +42,7 @@ export function ownedTaskQueue<T extends OperationJob, P>(run: (owner: string, j
         entry.job.code = entry.controller.signal.aborted ? 'OPERATION_CANCELLED' : operationCode(error);
       } finally {
         entry.payload = undefined; touch(entry.job); entry.job.finishedAt = entry.job.updatedAt;
+        await onFinished?.(entry.owner, structuredClone(entry.job)).catch(() => undefined);
       }
     }
   }

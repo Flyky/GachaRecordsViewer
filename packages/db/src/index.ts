@@ -13,3 +13,4 @@ export { metadataRepository, snapshotRepository } from './metadata.js';
 export { paymentRepository } from './payments.js';
 export type { PaymentRow } from './payments.js';
 export { wishLinkRepository } from './wish-link.js';
+export { autoCheckinRepository } from './auto-checkin.js';

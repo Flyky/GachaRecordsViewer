@@ -4,6 +4,7 @@ import { NButton, NTag } from 'naive-ui';
 import type { CheckinJob, FeatureSettings } from '@gacha/contracts';
 import { operationLabel, operationMessage, useOperation } from '../operations.js';
 import GenshinTopup from '../components/GenshinTopup.vue';
+import AutoCheckin from '../components/AutoCheckin.vue';
 import { userRequest } from '../auth.js';
 const topupEnabled = ref(false), featureError = ref('');
 let active = true, featureEpoch = 0;
@@ -34,7 +35,7 @@ const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签
       一键检查所有已添加米游社账号下的国服原神、星穹铁道、绝区零角色，未签到的逐个签到；官服和渠道服分别处理。
     </p>
     <p class="field-hint">
-      需要 Cookie Token 或能换取它的 SToken。首次绑定和安全验证需先在米游社 App 手动处理；不会自动或定时执行。
+      需要 Cookie Token 或能换取它的 SToken。首次绑定和安全验证需先在米游社 App 手动处理；自动签到默认关闭，可在下方开启。
     </p>
     <div class="button-row">
       <NButton
@@ -109,8 +110,9 @@ const resultLabel = (status: string) => ({ pending: '等待处理', signed: '签
       </p>
     </div>
     <p class="data-footnote">
-      服务重启后不保留任务状态。重复执行会先检查官方签到状态，已签到的角色不会再次提交。
+      手动任务详情在服务重启后不保留。自动签到设置、执行计划和最近结果摘要会保留；重复执行会先检查官方签到状态。
     </p>
+    <AutoCheckin />
   </section>
   <p
     v-if="featureError"

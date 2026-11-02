@@ -1,6 +1,6 @@
 import { CommunityError, SyncError } from '@gacha/db';
 import { ProbeError } from '@gacha/providers';
-import type { CredentialKind, SyncPool, TopupMethod } from '@gacha/contracts';
+import type { AutoCheckinInput, CredentialKind, SyncPool, TopupMethod } from '@gacha/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AuthOptions } from '../auth/routes.js';
 import { AuthLimiter } from '../auth/security.js';
@@ -8,6 +8,7 @@ import { communityService, type CommunityOptions } from './service.js';
 import { qrService, type QrOptions } from './qr.js';
 import { syncService, SYNC_POOLS, type SyncOptions } from './sync.js';
 import { checkinService, type CheckinOptions } from './checkin.js';
+import { autoCheckinService } from './auto-checkin.js';
 import { topupService, type TopupOptions } from './topup.js';
 
 const identifier = { type: 'string', minLength: 1, maxLength: 128 };
@@ -19,8 +20,10 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
   const qr = qrService(service, options.qr, auth.now), qrLimiter = new AuthLimiter(auth.now ?? Date.now);
   const sync = await syncService(auth.connection, service, options.sync, auth.now, auth.metadataCatalog), syncLimiter = new AuthLimiter(auth.now ?? Date.now);
   const checkin = checkinService(service, options.checkin, auth.now);
+  const autoCheckin = autoCheckinService(auth.connection, checkin, options.checkin?.automatic, auth.now);
+  checkin.observe(autoCheckin.finished);
   const topup = topupService(auth.connection, auth.credentialKey, service, options.topup, auth.now, auth.genshinTopupEnabled);
-  app.addHook('onClose', async () => { await topup.close(); await checkin.close(); await sync.close(); qr.close(); service.close(); });
+  app.addHook('onClose', async () => { await autoCheckin.close(); checkin.observe(undefined); await topup.close(); await checkin.close(); await sync.close(); qr.close(); service.close(); });
   const owner = (request: FastifyRequest) => request.principal!.user!.id;
   const limit = async (request: FastifyRequest) => { limiter.consume(request.ip, `community:${owner(request)}`); };
   async function respond<T>(reply: FastifyReply, action: () => Promise<T>) {
@@ -56,6 +59,12 @@ export async function registerCommunity(app: FastifyInstance, auth: AuthOptions,
     schema: { params: topupBody(['orderId'], { orderId: uuid }), body: noBody },
   }, (request, reply) => respond(reply, async () => ({ order: await topup[action](owner(request), request.params.orderId) })));
   app.get('/api/community/checkin/job', { onRequest: app.authenticateUser }, async (request) => ({ job: checkin.get(owner(request)) }));
+  app.get('/api/community/checkin/automatic', { onRequest: app.authenticateUser }, async (request) => autoCheckin.get(owner(request)));
+  app.post<{ Body: AutoCheckinInput }>('/api/community/checkin/automatic', { onRequest: app.authenticateUser, bodyLimit: 4096,
+    schema: { body: { type: 'object', required: ['enabled', 'startMinute', 'endMinute'], additionalProperties: false, properties: {
+      enabled: { type: 'boolean' }, startMinute: { type: 'integer', minimum: 90, maximum: 1350 }, endMinute: { type: 'integer', minimum: 90, maximum: 1350 },
+    } } },
+  }, (request) => autoCheckin.save(owner(request), request.body));
   app.post('/api/community/checkin/jobs', { onRequest: app.authenticateUser, schema: { body: noBody } },
     async (request, reply) => reply.code(202).send({ job: checkin.create(owner(request)) }));
   app.post('/api/community/checkin/job/cancel', { onRequest: app.authenticateUser, schema: { body: noBody } },

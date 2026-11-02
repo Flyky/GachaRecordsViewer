@@ -138,6 +138,18 @@ export interface CheckinResult {
 }
 export interface CheckinJob extends OperationJob { results: CheckinResult[]; accountsCompleted: number; accountsTotal: number }
 export interface CheckinJobResponse { job: CheckinJob | null }
+export const AUTO_CHECKIN_MIN_MINUTE = 90;
+export const AUTO_CHECKIN_MAX_MINUTE = 1350;
+export const AUTO_CHECKIN_STEP_MINUTE = 10;
+export interface AutoCheckinInput { enabled: boolean; startMinute: number; endMinute: number }
+export interface AutoCheckinRun {
+  day: string; scheduledFor: string; jobId: string; startedAt: string | null; finishedAt: string | null;
+  status: OperationStatus | 'skipped' | 'interrupted'; code: string | null;
+  signed: number; alreadySigned: number; failed: number;
+}
+export interface AutoCheckinSettings extends AutoCheckinInput {
+  timezone: 'Asia/Shanghai'; nextRunAt: string | null; lastRun: AutoCheckinRun | null; updatedAt: string | null;
+}
 export const WISH_LINK_REGIONS = [
   { value: 'cn_gf01', label: '国服官服', timezone: 8, overseas: false },
   { value: 'cn_qd01', label: '国服渠道服', timezone: 8, overseas: false },

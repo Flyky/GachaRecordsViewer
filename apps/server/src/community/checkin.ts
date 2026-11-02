@@ -4,12 +4,15 @@ import { GameCheckinClient, ProbeError, type CheckinSession, type DeviceContext 
 import { ApiError } from '../auth/security.js';
 import { operationCode, ownedTaskQueue, requestPacer, type PaceOptions } from '../tasks.js';
 import type { communityService } from './service.js';
+import type { AutoCheckinOptions } from './auto-checkin.js';
 
 type Client = Pick<GameCheckinClient, 'getCookieToken' | 'listRoles' | 'status' | 'sign'>;
-export interface CheckinOptions extends PaceOptions { client?: (device: DeviceContext, signal: AbortSignal) => Client }
+export interface CheckinOptions extends PaceOptions { client?: (device: DeviceContext, signal: AbortSignal) => Client; automatic?: AutoCheckinOptions }
 export function checkinService(community: ReturnType<typeof communityService>, options: CheckinOptions = {}, now = Date.now) {
   const pace = requestPacer(options), timestamp = () => new Date(now()).toISOString();
-  const tasks = ownedTaskQueue<CheckinJob, true>(async (owner, job, _payload, signal) => {
+  let observer: ((owner: string, job: CheckinJob) => Promise<void>) | undefined;
+  const tasks = ownedTaskQueue<CheckinJob, { notAfter?: number }>(async (owner, job, payload, signal) => {
+    if (payload.notAfter !== undefined && now() > payload.notAfter) throw new ApiError(422, 'AUTO_CHECKIN_WINDOW_MISSED');
     const accounts = await community.list(owner); job.accountsTotal = accounts.length;
     if (!accounts.length) throw new ApiError(422, 'NO_COMMUNITY_ACCOUNTS');
     const started = Date.now();
@@ -70,13 +73,14 @@ export function checkinService(community: ReturnType<typeof communityService>, o
       }
     }
     job.status = job.results.some((row) => row.status === 'failed' || row.status === 'verification_required') ? 'partial' : 'completed';
-  }, now);
+  }, now, async (owner, job) => { await observer?.(owner, job); });
   return {
-    create(owner: string) {
+    create(owner: string, id: string = randomUUID(), notAfter?: number) {
       const at = timestamp();
-      return tasks.create(owner, { id: randomUUID(), status: 'queued', createdAt: at, updatedAt: at, finishedAt: null, code: null,
-        results: [], accountsCompleted: 0, accountsTotal: 0 }, true);
+      return tasks.create(owner, { id, status: 'queued', createdAt: at, updatedAt: at, finishedAt: null, code: null,
+        results: [], accountsCompleted: 0, accountsTotal: 0 }, notAfter === undefined ? {} : { notAfter });
     },
     get: tasks.get, cancel: tasks.cancel, close: tasks.close,
+    observe: (listener: typeof observer) => { observer = listener; },
   };
 }

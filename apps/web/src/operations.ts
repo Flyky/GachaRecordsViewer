@@ -18,6 +18,10 @@ export function operationMessage(value: unknown): string {
     OPERATION_LIMIT: '达到处理上限，已保存结果保留，请稍后重试。', NETWORK_ERROR: '暂时无法连接服务，请先检查任务状态再重试。', UNAUTHENTICATED: '登录已失效，请重新登录。',
     CSRF_REJECTED: '登录状态已变化，请刷新页面后重试。', ORIGIN_REJECTED: '访问地址与服务配置不一致。', OPERATION_CANCELLED: '已取消，已完成的签到和记录保留。',
     OPERATION_UNAVAILABLE: '服务正在停止，请稍后重试。',
+    AUTO_CHECKIN_RANGE_INVALID: '请选择北京时间 01:30～22:30 内的范围，每步 10 分钟，范围至少 10 分钟。',
+    AUTO_CHECKIN_BUSY: '自动签到设置已变化，请刷新状态后重试。',
+    AUTO_CHECKIN_WINDOW_MISSED: '服务未能在当天时间范围内执行，已跳过并安排下一天；可手动一键签到。',
+    AUTO_CHECKIN_INTERRUPTED: '自动任务因重启等原因中断，当天不自动重复提交；可手动一键签到，先检查官方状态。',
   } as Record<string, string>)[code] ?? '暂未完成，请稍后重试；必要时在官方 App 检查账号状态。';
 }
 export function useOperation<T extends OperationJob>(base: string, onFinished?: (job: T) => Promise<void>) {
