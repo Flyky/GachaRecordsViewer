@@ -34,7 +34,7 @@ export function communityError(error: unknown): string {
     SYNC_NOT_RETRYABLE: '该任务正在执行或已经完成。请查看当前进度，必要时另建刷新。', SYNC_BINDING_CHANGED: 'UID 绑定已变化，旧任务已停止，请更新账号后重新刷新。',
     SYNC_CANCELLED: '任务已取消，已经保存的记录仍会保留。', ACCOUNT_UNLINKED: '米游社账号已解绑，任务已取消，历史记录保留。', ROLE_UNBOUND: 'UID 已解除绑定，任务已取消。',
     SERVER_RESTARTED: '服务重启导致任务中断，可重试未完成的卡池。', SERVER_STOPPED: '服务关闭导致任务中断，可重试未完成的卡池。',
-    RECORD_CONFLICT: '上游记录与本地同 ID 历史存在冲突，该页未写入，请先核对历史数据。', ITEM_ID_UNRESOLVED: '部分物品无法唯一匹配标准 ID，请更新本地物品字典后重试，或先导入 UIGF。',
+    RECORD_CONFLICT: '上游记录与本地同 ID 历史存在冲突，该页未写入，请先核对历史数据。', ITEM_ID_UNRESOLVED: '该任务曾因物品 ID 未识别而中断。可重新刷新，未识别记录会先保存，等待字典补全。',
     SYNC_LIMIT_EXCEEDED: '本次刷新达到时间或数量限制，已保存的记录保留。', SYNC_FAILED: '刷新未完成，已保存的记录保留，请更新状态后重试。',
   };
   return messages[code] ?? (typeof error === 'string' ? '操作未完成，请更新状态后重试。' : errorMessage(error));

@@ -96,7 +96,7 @@ watch(() => [currentProfile.value?.id, currentProfile.value?.dataVersion] as con
       v-if="bundle?.items.metadataIssues.incompleteRecords"
       class="feedback analysis-feedback"
     >
-      全档案 {{ bundle.items.metadataIssues.incompleteRecords }} 条记录的元数据不完整或矛盾，其中 {{ bundle.items.metadataIssues.unknownRankRecords }} 条无法确定星级；原始记录仍保留。
+      全档案 {{ bundle.items.metadataIssues.incompleteRecords }} 条记录存在待解析 ID、元数据不完整或矛盾，其中 {{ bundle.items.metadataIssues.unknownRankRecords }} 条无法确定星级。已知的名称、星级和时间仍参与对应统计，原始记录保留。
     </p>
     <div
       class="analysis-stack"
@@ -172,12 +172,12 @@ watch(() => [currentProfile.value?.id, currentProfile.value?.dataVersion] as con
               >
                 <li
                   v-for="item in group.items"
-                  :key="item.itemId"
+                  :key="item.key ?? item.itemId ?? ''"
                 >
                   <span
                     :class="`rarity-${group.rank}`"
-                    :title="`物品 ID：${item.itemId}`"
-                  >{{ item.name ?? `未知名称 #${item.itemId}` }}</span><strong>× {{ item.quantity.toLocaleString() }}</strong>
+                    :title="item.itemId === null ? '物品 ID 待解析，当前按原始名称分组' : `物品 ID：${item.itemId}`"
+                  >{{ item.name ?? (item.itemId === null ? '未知名称' : `未知名称 #${item.itemId}`) }}{{ item.itemId === null ? '（待解析 ID）' : '' }}</span><strong>× {{ item.quantity.toLocaleString() }}</strong>
                 </li>
               </ul>
               <p
@@ -196,9 +196,9 @@ watch(() => [currentProfile.value?.id, currentProfile.value?.dataVersion] as con
             <ul>
               <li
                 v-for="item in bundle.items.unclassified.items"
-                :key="item.itemId"
+                :key="item.key ?? item.itemId ?? ''"
               >
-                <strong>{{ item.name ?? `未知物品 #${item.itemId}` }} × {{ item.quantity }}</strong><span>物品 ID {{ item.itemId }} · {{ item.reasons.map(itemIssueLabel).join('、') }}</span>
+                <strong>{{ item.name ?? (item.itemId === null ? '未知物品' : `未知物品 #${item.itemId}`) }} × {{ item.quantity }}</strong><span>{{ item.itemId === null ? '物品 ID 待解析' : `物品 ID ${item.itemId}` }} · {{ item.reasons.map(itemIssueLabel).join('、') }}</span>
               </li>
             </ul>
           </details>

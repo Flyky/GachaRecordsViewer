@@ -10,7 +10,7 @@ export interface ProfileRow {
   lang: string | null; community_account_id: string | null; history_status: string; data_version: number;
 }
 export interface RecordInput {
-  id: string; itemId: string; gachaType: string; pityGroup: string; timeLocal: string; timeUtc: string;
+  id: string; itemId: string | null; gachaType: string; pityGroup: string; timeLocal: string; timeUtc: string;
   name?: string; itemType?: string; rank?: number; source: string;
 }
 

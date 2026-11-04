@@ -1,18 +1,19 @@
 import type { AnalyzedRecord } from './history.js';
 import { compareIds, decimalId, POOLS, type ItemType, type PityGroup, type Rank } from './primitives.js';
+import { itemIdentityKey } from './metadata.js';
 
 interface ItemEntry {
-  itemId: string; rows: AnalyzedRecord[]; ranks: Set<Rank>; types: Set<ItemType>;
+  itemId: string | null; key: string; rows: AnalyzedRecord[]; ranks: Set<Rank>; types: Set<ItemType>;
 }
 type ItemIssue = 'unknown-type' | 'unknown-rank' | 'conflicting-metadata' | 'unsupported-combination';
-interface ItemCount { itemId: string; name: string | null; quantity: number }
+interface ItemCount { itemId: string | null; key?: string; name: string | null; quantity: number }
 interface MonthCounts { total: number; fiveStars: number; standard: number; characterEvent: number; weaponEvent: number }
 function indexItems(records: readonly AnalyzedRecord[]) {
   const items = new Map<string, ItemEntry>();
   for (const record of records) {
-    const itemId = decimalId(record.itemId);
-    let entry = items.get(itemId);
-    if (!entry) { entry = { itemId, rows: [], ranks: new Set(), types: new Set() }; items.set(itemId, entry); }
+    const key = itemIdentityKey(record), itemId = record.metadata.itemId === null ? null : decimalId(record.metadata.itemId);
+    let entry = items.get(key);
+    if (!entry) { entry = { itemId, key, rows: [], ranks: new Set(), types: new Set() }; items.set(key, entry); }
     entry.rows.push(record);
     if (record.metadata.rank !== null) entry.ranks.add(record.metadata.rank);
     if (record.metadata.itemType !== null) entry.types.add(record.metadata.itemType);
@@ -56,15 +57,16 @@ export function itemStatistics(records: readonly AnalyzedRecord[], itemType: Ite
     const excluded = entry.rows.length - valid.length;
     if (excluded) {
       unclassified.total += excluded;
-      unclassified.items.push({ itemId: entry.itemId, name: displayName(entry), quantity: excluded, reasons: [...reasons].sort() });
+      unclassified.items.push({ itemId: entry.itemId, ...(entry.itemId === null ? { key: entry.key } : {}), name: displayName(entry), quantity: excluded, reasons: [...reasons].sort() });
     }
     if (!valid.length) continue;
     const type = valid[0]!.metadata.itemType, rank = valid[0]!.metadata.rank;
     if (type !== itemType) { otherTypeCount += valid.length; continue; }
     const group = groups.find((candidate) => candidate.rank === rank)!;
-    group.total += valid.length; group.items.push({ itemId: entry.itemId, name: displayName({ ...entry, rows: valid }), quantity: valid.length });
+    group.total += valid.length; group.items.push({ itemId: entry.itemId, ...(entry.itemId === null ? { key: entry.key } : {}), name: displayName({ ...entry, rows: valid }), quantity: valid.length });
   }
-  const compare = (a: ItemCount, b: ItemCount) => (order === 'desc' ? b.quantity - a.quantity : a.quantity - b.quantity) || compareIds(a.itemId, b.itemId);
+  const compare = (a: ItemCount, b: ItemCount) => (order === 'desc' ? b.quantity - a.quantity : a.quantity - b.quantity)
+    || (a.itemId !== null && b.itemId !== null ? compareIds(a.itemId, b.itemId) : (a.key ?? a.itemId ?? '').localeCompare(b.key ?? b.itemId ?? ''));
   for (const group of groups) group.items.sort(compare);
   unclassified.items.sort(compare);
   return { historyCount: records.length, metadataIssues: metadataSummary(index), itemType, order, groups, unclassified,
@@ -78,7 +80,7 @@ export function monthlyStatistics(records: readonly AnalyzedRecord[]) {
     let month = counts.get(row.monthKey);
     if (!month) { month = zeroMonth(); counts.set(row.monthKey, month); }
     month.total++;
-    if (row.metadata.rank === 5 && index.get(decimalId(row.itemId))!.ranks.size <= 1) month.fiveStars++;
+    if (row.metadata.rank === 5 && index.get(itemIdentityKey(row))!.ranks.size <= 1) month.fiveStars++;
     if (row.group === '200') month.standard++;
     if (row.group === '301') month.characterEvent++;
     if (row.group === '302') month.weaponEvent++;

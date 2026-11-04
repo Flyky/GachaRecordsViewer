@@ -36,6 +36,7 @@ async function request(action: 'load' | 'create' | 'destroy') {
       MOCK_BUSY: '正在生成接口，请稍后刷新状态。', MOCK_CANCELLED: '生成已被取消，请刷新状态。',
       MOCK_UNAVAILABLE: '服务正在停止，请稍后重试。', MOCK_CAPACITY: '临时接口容量不足，请稍后重试。',
       NETWORK_ERROR: '未能确认操作结果，请刷新接口状态；服务端可能已完成操作。',
+      ITEM_IDS_PENDING: '部分物品 ID 尚未解析，暂不能创建 UIGF 格式接口。可选择祈愿链接／米游社格式，或等待字典补全。',
     };
     error.value = cause instanceof ApiError && messages[cause.code] || errorMessage(cause);
   } finally { if (active) busy.value = false; }
@@ -63,6 +64,9 @@ onMounted(() => { void request('load'); });
         为所选游戏档案生成临时数据接口，供支持自定义接口地址的应用导入。
       </p>
     </div>
+    <p class="field-hint">
+      未解析的物品在祈愿链接／米游社格式中保留名称和星级，item_id 为空，第三方应用需自行识别；UIGF 格式需全部标准 ID 已确定。
+    </p>
     <form
       class="api-mock-form"
       @submit.prevent="request('create')"

@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef } from 'vue';
+import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NButton } from 'naive-ui';
 import { BANNER_SOURCE_URL, BANNER_JSON_URL, type BannerStatus } from '@gacha/contracts';
 import { ApiError, adminSession, errorMessage, getBanners, refreshBanners, importBanners } from '../auth.js';
 import AdminManualImport from './AdminManualImport.vue';
 import AdminProxyPrompt from './AdminProxyPrompt.vue';
 const status = shallowRef<BannerStatus | null>(null), busy = ref(false), error = ref(''), notice = ref('');
+const props = defineProps<{ dictionaryVersion?: string | undefined }>();
 const proxyPrompt = ref(false), resources = [{ label: '最新上游卡池数据（banners.js，可直接粘贴或上传）', url: BANNER_SOURCE_URL }];
 let active = true;
 onUnmounted(() => { active = false; });
 async function load(refresh = false, useProxy = false, content?: string) {
-  if (busy.value) return; const session = adminSession.value; busy.value = true; error.value = ''; notice.value = '';
+  if (busy.value) return; const session = adminSession.value, version = props.dictionaryVersion; busy.value = true; error.value = ''; notice.value = '';
   proxyPrompt.value = false;
   try {
     const result = await (content !== undefined ? importBanners(content) : refresh ? refreshBanners(useProxy) : getBanners());
@@ -20,9 +21,10 @@ async function load(refresh = false, useProxy = false, content?: string) {
     error.value = errorMessage(cause);
     proxyPrompt.value = refresh && !useProxy && content === undefined && cause instanceof ApiError && cause.code === 'BANNER_REFRESH_FAILED';
   } }
-  finally { if (active) busy.value = false; }
+  finally { if (active) { busy.value = false; if (version !== props.dictionaryVersion) void load(); } }
 }
 onMounted(() => { void load(); });
+watch(() => props.dictionaryVersion, () => { void load(); });
 </script>
 <template>
   <section class="surface dictionary-settings">
@@ -36,7 +38,7 @@ onMounted(() => { void load(); });
       </NButton>
     </div>
     <p class="field-hint">
-      更新角色 UP 名单和时间范围，供欧非分析判断是否歪。数据重启后保留；失败继续使用旧版。新角色无法识别时，请先刷新物品字典。
+      更新角色 UP 名单和时间范围，供欧非分析使用。未识别的角色先保存，字典更新后自动解析；信息不足时相应分析显示未知。数据重启后保留，失败继续使用旧版。
     </p>
     <p
       v-if="status"
@@ -46,6 +48,12 @@ onMounted(() => { void load(); });
       {{ status.source }} · {{ status.version.slice(0, 12) }}<br>
       覆盖：{{ status.firstStart }} 至 {{ status.lastEnd }}<br>
       获取时间：{{ status.updatedAt ? new Date(status.updatedAt).toLocaleString() : '未知' }}
+    </p>
+    <p
+      v-if="status?.unresolvedMembers"
+      class="field-hint"
+    >
+      已保存 {{ status.unresolvedMembers }} 项待解析的 UP 角色引用，无需重复抓取；物品字典补全后自动识别。
     </p>
     <p
       v-if="status?.cacheWarning"
@@ -74,7 +82,7 @@ onMounted(() => { void load(); });
       @submit="load(false, false, $event[0])"
     >
       <p class="field-hint">
-        在能联网的电脑打开下方资源，复制完整内容或下载后上传。支持 banners.js、含 characters 的 JSON、卡池数组及应用快照 JSON。请先更新物品字典。
+        在能联网的电脑打开下方资源，复制完整内容或下载后上传。支持 banners.js、含 characters 的 JSON、卡池数组及应用快照 JSON。暂未识别的角色会先保存，之后随字典补全。
       </p>
       <p class="field-hint">
         也可以下载<a

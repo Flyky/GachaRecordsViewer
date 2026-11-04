@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { parse } from 'acorn';
 import { BANNER_SOURCE_URL, type BannerStatus } from '@gacha/contracts';
 import { snapshotRepository, type DatabaseConnection } from '@gacha/db';
-import { builtinCharacterBanners, gameTime, type BannerSnapshot, type CharacterBanner, type MetadataCatalog } from '@gacha/gacha-core';
+import { builtinCharacterBanners, gameTime, resolveBannerSnapshot, type BannerSnapshot, type CharacterBanner, type MetadataCatalog } from '@gacha/gacha-core';
 import type { FastifyInstance } from 'fastify';
 import { ApiError } from './auth/security.js';
 import { requestPublicData } from './public-data.js';
@@ -22,8 +22,7 @@ const field = (input: Node, key: string): Node | undefined => {
 const literal = (input: Node | undefined) => { if (!input || input.type !== 'Literal') throw new Error('Expected literal'); return input.value; };
 const text = (value: unknown) => { if (typeof value !== 'string' || !value.length || value.length > 1024) throw new Error('Expected text'); return value; };
 const flag = (input: Node | undefined) => { if (!input) return false; const value = literal(input); if (typeof value !== 'boolean') throw new Error('Expected flag'); return value; };
-const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
-export function parseBannerSource(source: string, catalog: MetadataCatalog): CharacterBanner[] {
+export function parseBannerSource(source: string, _catalog?: MetadataCatalog): CharacterBanner[] {
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' });
   let root: Node | undefined;
   for (const statement of ast.body) {
@@ -32,17 +31,11 @@ export function parseBannerSource(source: string, catalog: MetadataCatalog): Cha
   }
   if (!root) throw new Error('Missing banners');
   const array = field(root, 'characters'); if (array?.type !== 'ArrayExpression' || !Array.isArray(array.elements)) throw new Error('Missing characters');
-  const ids = new Map<string, string>();
-  for (const item of catalog.all()) if (item.itemType === 'character' && item.rank === 5 && item.names['en-us']) {
-    const key = normalize(item.names['en-us']); if (ids.has(key)) throw new Error('Ambiguous character name'); ids.set(key, item.id);
-  }
   return array.elements.map((input) => {
     const entry = node(input), featured = field(entry, 'featured');
     if (featured?.type !== 'ArrayExpression' || !Array.isArray(featured.elements)) throw new Error('Missing featured');
     return { start: text(literal(field(entry, 'start'))), end: text(literal(field(entry, 'end'))), startGlobal: flag(field(entry, 'timezoneDependent')),
-      endGlobal: flag(field(entry, 'timezoneDependentEnd')), itemIds: [...new Set(featured.elements.map((item) => {
-        const id = ids.get(normalize(text(literal(node(item))))); if (!id) throw new ApiError(422, 'BANNER_CHARACTER_UNKNOWN'); return id;
-      }))] };
+      endGlobal: flag(field(entry, 'timezoneDependentEnd')), itemIds: [], featured: [...new Set(featured.elements.map((item) => text(literal(node(item)))))] };
   });
 }
 function validate(input: unknown): BannerSnapshot & { source: BannerSnapshot['source'] & { retrievedAt?: string } } {
@@ -54,7 +47,9 @@ function validate(input: unknown): BannerSnapshot & { source: BannerSnapshot['so
     || !Array.isArray(value.entries) || value.entries.length < 100 || value.entries.length > 4096) throw new Error('Invalid banner snapshot');
   for (const entry of value.entries) {
     if (gameTime(entry.start, 8).timestamp >= gameTime(entry.end, 8).timestamp || typeof entry.startGlobal !== 'boolean' || typeof entry.endGlobal !== 'boolean'
-      || !Array.isArray(entry.itemIds) || !entry.itemIds.length || entry.itemIds.length > 16 || entry.itemIds.some((id) => typeof id !== 'string' || !/^[1-9]\d{0,19}$/.test(id))) throw new Error('Invalid banner period');
+      || !Array.isArray(entry.itemIds) || entry.itemIds.length > 16 || entry.itemIds.some((id) => typeof id !== 'string' || !/^[1-9]\d{0,19}$/.test(id))
+      || entry.featured !== undefined && (!Array.isArray(entry.featured) || !entry.featured.length || entry.featured.length > 16 || entry.featured.some((name) => typeof name !== 'string' || !name.trim() || name.length > 512))
+      || !entry.itemIds.length && !entry.featured?.length) throw new Error('Invalid banner period');
   }
   return value;
 }
@@ -71,14 +66,14 @@ export async function bannerService(connection: DatabaseConnection, catalog: Met
   try { const saved = await repo.load('hk4e-character-banners'); if (saved !== undefined) { current = validate(saved); storage = 'database'; } } catch { cacheWarning = true; }
   let controller: AbortController | undefined, pending: Promise<BannerStatus> | undefined, closed = false;
   const status = (): BannerStatus => ({ source: current.source.name, version: current.source.revision, count: current.entries.length, ...range(current),
-    updatedAt: current.source.retrievedAt ?? '', storage, updating: !!pending, cacheWarning });
+    updatedAt: current.source.retrievedAt ?? '', storage, updating: !!pending, cacheWarning,
+    unresolvedMembers: resolveBannerSnapshot(current, catalog).entries.reduce((sum, entry) => sum + (entry.unresolvedMembers ?? 0), 0) });
   const execute = (load: (signal: AbortSignal) => Promise<BannerSnapshot>, manual = false) => {
     if (closed) throw new ApiError(503, 'BANNER_UNAVAILABLE'); if (pending) throw new ApiError(409, 'BANNER_BUSY');
     controller = new AbortController(); const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(45000)]);
     pending = (async () => {
       try {
         const candidate = validate(await load(signal));
-        if (candidate.entries.some((entry) => entry.itemIds.some((id) => catalog.get(id)?.itemType !== 'character' || catalog.get(id)?.rank !== 5))) throw new ApiError(422, 'BANNER_CHARACTER_UNKNOWN');
         const before = range(current), after = range(candidate);
         if (after.firstStart > before.firstStart || after.lastEnd < before.lastEnd) throw new Error('Banner coverage shrank');
         signal.throwIfAborted(); if (closed) throw new Error('Closed');
@@ -88,7 +83,7 @@ export async function bannerService(connection: DatabaseConnection, catalog: Met
       finally { controller?.abort(); controller = undefined; pending = undefined; }
     })(); return pending;
   };
-  return { get: () => current, status,
+  return { get: () => resolveBannerSnapshot(current, catalog), status,
     refresh: (useProxy = false) => {
       const proxy = useProxy ? options.githubProxy?.() : '';
       if (useProxy && !proxy) throw new ApiError(400, 'DATA_PROXY_REQUIRED');

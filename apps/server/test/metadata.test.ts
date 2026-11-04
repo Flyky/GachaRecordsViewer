@@ -152,4 +152,39 @@ describe('administrator runtime dictionary', () => {
     expect((await post('/admin/dictionary/refresh', { useProxy: true })).statusCode).toBe(502);
     expect(calls).toEqual(['https://proxy.example.test/https://github.com/theBowja/genshin-db/archive/refs/heads/main.tar.gz']);
   });
+
+  it('resolves saved raw records after a dictionary update without changing source facts, and enriches the same row from UIGF', async () => {
+    const document = { format: 'GachaRecordsViewer.raw', version: 1, profiles: [{ uid: '123456789', timezone: 8, lang: 'zh-cn', list: [{
+      id: '9007199254740993001', item_id: null, time: '2026-10-28 12:00:00', gacha_type: '301', uigf_gacha_type: '301',
+      name: extra.names['zh-cn'], item_type: '角色', rank_type: '5', count: '1', lang: 'zh-cn',
+    }] }] };
+    const preview = await post('/uigf/preview', { document }, user);
+    expect(preview.statusCode).toBe(200); expect(preview.json().version).toBe('raw-v1');
+    const saved = await post('/uigf/import', { document, profileIndexes: [0], previewToken: preview.json().previewToken }, user);
+    const profileId = saved.json().profiles[0].targetProfileId as string;
+    const before = await deployment.connection.executor.query(sql`SELECT * FROM gacha_records`);
+    expect((await get(`/profiles/${profileId}/records`, user)).json().records[0]).toMatchObject({ itemId: null, name: extra.names['zh-cn'], rank: 5, metadataStatus: 'incomplete' });
+    expect((await get(`/profiles/${profileId}/analysis/items`, user)).json().groups[0].total).toBe(1);
+    expect((await get(`/profiles/${profileId}/analysis/monthly`, user)).json().totals).toMatchObject({ total: 1, fiveStars: 1 });
+    expect((await get(`/uigf/export/${profileId}`, user)).json().error.code).toBe('ITEM_IDS_PENDING');
+    expect((await post('/mock', { profileId, format: 'uigf' }, user)).json().error.code).toBe('ITEM_IDS_PENDING');
+    const mock = await post('/mock', { profileId, format: 'wish-link' }, user);
+    const publicUrl = new URL(mock.json().link.url);
+    expect((await app.inject({ url: publicUrl.pathname + publicUrl.search })).json().data.list[0]).toMatchObject({ item_id: '', name: extra.names['zh-cn'], rank_type: '5' });
+    expect((await get(`/raw-backup/export/${profileId}`, admin)).statusCode).toBe(401);
+    const backup = (await get(`/raw-backup/export/${profileId}`, user)).json(); expect(backup.profiles[0].list[0].item_id).toBeNull();
+    await post('/admin/dictionary/refresh', {});
+    expect((await get(`/profiles/${profileId}/records`, user)).json().records[0]).toMatchObject({ itemId: extra.id, metadataStatus: 'complete' });
+    expect((await get(`/uigf/export/${profileId}`, user)).json().hk4e[0].list[0].item_id).toBe(extra.id);
+    expect(await deployment.connection.executor.query(sql`SELECT * FROM gacha_records`)).toEqual(before);
+    const after = (await get(`/raw-backup/export/${profileId}`, user)).json(); expect(after.profiles).toEqual(backup.profiles);
+    const standard = sample('v4.1', [pull('9007199254740993001', { item_id: extra.id, time: '2026-10-28 12:00:00', gacha_type: '301', uigf_gacha_type: '301' })]);
+    standard.hk4e![0]!.uid = '123456789';
+    const enrichedPreview = await post('/uigf/preview', { document: standard }, user);
+    expect(enrichedPreview.json().profiles[0]).toMatchObject({ inserted: 0, enriched: 1, conflicts: 0 });
+    expect((await post('/uigf/import', { document: standard, profileIndexes: [0], previewToken: enrichedPreview.json().previewToken }, user)).statusCode).toBe(200);
+    const rows = await deployment.connection.executor.query<{ item_id: string }>(sql`SELECT * FROM gacha_records`); expect(rows).toHaveLength(1); expect(rows[0]!.item_id).toBe(extra.id);
+    const restorePreview = await post('/uigf/preview', { document: backup }, user);
+    expect(restorePreview.json().profiles[0]).toMatchObject({ inserted: 0, conflicts: 0 });
+  });
 });

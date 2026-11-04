@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from 'vitest';
-import { builtinCharacterBanners, genshinMetadata } from '@gacha/gacha-core';
+import { builtinCharacterBanners, genshinMetadata, resolveBannerSnapshot, createMetadataCatalog, type MetadataCatalog } from '@gacha/gacha-core';
 import { temporaryDirectory } from '../../../packages/db/test/helpers.js';
 import { buildApp } from '../src/app.js';
 import { initializeDeployment } from '../src/deployment.js';
@@ -10,6 +10,7 @@ const revision = 'f'.repeat(40), origin = 'https://banners.example.test';
 const entries = builtinCharacterBanners.entries.map((entry) => ({ start: entry.start, end: entry.end, timezoneDependent: entry.startGlobal,
   timezoneDependentEnd: entry.endGlobal, featured: entry.itemIds.map((id) => genshinMetadata.get(id)!.names['en-us']) }));
 const source = (rows = entries) => `export const banners = { /* data only */ characters: ${JSON.stringify(rows)} };`;
+const baseEntries = (rows: typeof builtinCharacterBanners.entries) => rows.map(({ start, end, startGlobal, endGlobal, itemIds }) => ({ start, end, startGlobal, endGlobal, itemIds }));
 let fixture: Awaited<ReturnType<typeof temporaryDirectory>>, deployment: Awaited<ReturnType<typeof initializeDeployment>>, app: Awaited<ReturnType<typeof buildApp>>;
 let session: { cookie: string; 'x-csrf-token': string }, mode: 'good' | 'unknown' | 'network' | 'shrunk' | 'proxy';
 let calls: string[];
@@ -44,11 +45,11 @@ it('refreshes and persists a fully parsed banner snapshot behind administrator a
   expect(analysis.json()).toMatchObject({ bannerVersion: revision, bannerSource: { revision } });
   const reloaded = await bannerService(deployment.connection, genshinMetadata);
   expect(reloaded.get().source.revision).toBe(revision); expect(reloaded.status().storage).toBe('database');
-  expect(reloaded.get().entries).toEqual(builtinCharacterBanners.entries); await reloaded.close();
+  expect(baseEntries(reloaded.get().entries)).toEqual(builtinCharacterBanners.entries); await reloaded.close();
 });
-it('keeps the previous snapshot on network failure or unknown featured characters', async () => {
+it('saves unknown featured characters and keeps the previous snapshot on network or invalid coverage failures', async () => {
   expect((await post()).statusCode).toBe(200);
-  mode = 'unknown'; expect((await post()).json().error.code).toBe('BANNER_CHARACTER_UNKNOWN');
+  mode = 'unknown'; expect((await post()).json()).toMatchObject({ storage: 'database', unresolvedMembers: 1 });
   mode = 'shrunk'; expect((await post()).json().error.code).toBe('BANNER_REFRESH_FAILED');
   mode = 'network'; expect((await post()).json().error.code).toBe('BANNER_REFRESH_FAILED');
   const response = await app.inject({ url: '/gacha/api/admin/banners', headers: session });
@@ -57,7 +58,9 @@ it('keeps the previous snapshot on network failure or unknown featured character
 it('does not execute expressions and rejects nonliteral featured lists and duplicate properties', () => {
   expect(() => parseBannerSource('export const banners={characters:[{start:"x",end:"y",featured:[globalThis.fetch("https://invalid.test")]}]}', genshinMetadata)).toThrow();
   expect(() => parseBannerSource('export const banners={characters:[],characters:[]}', genshinMetadata)).toThrow();
-  expect(parseBannerSource(source(), genshinMetadata)).toEqual(builtinCharacterBanners.entries);
+  const raw = parseBannerSource(source(), genshinMetadata);
+  expect(raw[0]?.featured).toEqual(entries[0]?.featured); expect(raw.every((entry) => entry.itemIds.length === 0)).toBe(true);
+  expect(baseEntries(resolveBannerSnapshot({ source: builtinCharacterBanners.source, entries: raw }, genshinMetadata).entries)).toEqual(builtinCharacterBanners.entries);
 });
 
 it('protects and persists proxy settings, and only uses the proxy after explicit confirmation', async () => {
@@ -101,7 +104,21 @@ it('imports local JSON snapshots or literal upstream JS without network access a
     expect((await upload(content)).json().error.code).toBe('BANNER_IMPORT_INVALID');
   }
   const unknown = structuredClone(builtinCharacterBanners); unknown.entries[0]!.itemIds = ['199999999'];
-  expect((await upload(JSON.stringify(unknown))).json().error.code).toBe('BANNER_CHARACTER_UNKNOWN');
   expect((await app.inject({ url: '/gacha/api/admin/banners', headers })).json()).toEqual(before);
+  expect((await upload(JSON.stringify(unknown))).statusCode).toBe(200);
   expect(calls).toHaveLength(0);
+});
+
+it('re-resolves saved banner names when the catalog changes without another source request', async () => {
+  let current = genshinMetadata;
+  const catalog: MetadataCatalog = { get source() { return current.source; }, get size() { return current.size; }, all: () => current.all(), get: (id) => current.get(id), find: (...args) => current.find(...args) };
+  const service = await bannerService(deployment.connection, catalog, { fetch: fetcher });
+  try {
+    mode = 'unknown'; await service.refresh(); const count = calls.length;
+    expect(service.status().unresolvedMembers).toBe(1); expect(service.get().entries[0]?.itemIds).toEqual([]);
+    current = createMetadataCatalog({ schemaVersion: 1, game: 'hk4e', source: genshinMetadata.source,
+      items: [...genshinMetadata.all(), { id: '199999999', itemType: 'character', rank: 5, names: { 'zh-cn': '新角色', 'en-us': 'not_in_dictionary' } }] });
+    expect(service.status().unresolvedMembers).toBe(0); expect(service.get().entries[0]?.itemIds).toEqual(['199999999']);
+    expect(calls).toHaveLength(count);
+  } finally { await service.close(); }
 });

@@ -57,8 +57,8 @@ const columns = computed<DataTableColumns<RecordListItem>>(() => {
   const list: DataTableColumns<RecordListItem> = [
     { title: '时间', key: 'time', width: 180, render: (row) => h('span', { title: `记录 ID：${row.id}` }, row.time) },
     { title: '物品名称', key: 'name', minWidth: 190, render: (row) => h('div', [
-      h('span', { class: `item-name rarity-${row.rank ?? 'unknown'}`, title: `物品 ID：${row.itemId}` }, row.name ?? `未知物品 #${row.itemId}`),
-      ...(row.metadataStatus === 'complete' ? [] : [h('small', { class: 'record-metadata-label' }, row.metadataStatus === 'conflict' ? '元数据冲突' : '元数据待补全')]),
+      h('span', { class: `item-name rarity-${row.rank ?? 'unknown'}`, title: row.itemId === null ? '标准物品 ID 待解析，原始记录已保存' : `物品 ID：${row.itemId}` }, row.name ?? (row.itemId === null ? '未知物品' : `未知物品 #${row.itemId}`)),
+      ...(row.metadataStatus === 'complete' ? [] : [h('small', { class: 'record-metadata-label' }, row.itemId === null ? '物品 ID 待解析' : row.metadataStatus === 'conflict' ? '元数据冲突' : '元数据待补全')]),
     ]) },
     { title: '物品类型', key: 'itemType', width: 85, render: (row) => row.itemType === 'character' ? '角色' : row.itemType === 'weapon' ? '武器' : '未知' },
     { title: '星级', key: 'rank', width: 65, render: (row) => row.rank === null ? '未知' : `${row.rank} 星` },

@@ -17,6 +17,8 @@ export interface MetadataHints {
 }
 export type MetadataField = 'name' | 'itemType' | 'rank';
 export interface ResolvedMetadata {
+  itemId: string | null;
+  identityStatus: 'stored' | 'dictionary' | 'unresolved';
   name: string | null;
   nameLanguage: string | null;
   itemType: ItemType | null;
@@ -58,18 +60,23 @@ export function createMetadataCatalog(input: unknown): MetadataCatalog {
     if (!Object.keys(names).length) throw new GachaError('INVALID_METADATA');
     items.set(id, Object.freeze({ id, itemType: row.itemType, rank: row.rank, names: Object.freeze(names) }));
   }
+  const byName = new Map<string, Readonly<ItemMetadata> | null>();
+  const nameKey = (name: string, language: string, type: ItemType, rank: Rank) => JSON.stringify([language.toLowerCase(), type, rank, name]);
+  for (const item of items.values()) for (const [language, name] of Object.entries(item.names)) {
+    const key = nameKey(name, language, item.itemType, item.rank); byName.set(key, byName.has(key) ? null : item);
+  }
   return Object.freeze({ source: Object.freeze(origin), size: items.size, all: () => [...items.values()], get: (itemId: string) => items.get(decimalId(itemId)),
-    find: (name: string, language: string, itemType: ItemType, rank: Rank) => {
-      const matches = [...items.values()].filter((item) => item.names[language.toLowerCase()] === name && item.itemType === itemType && item.rank === rank);
-      return matches.length === 1 ? matches[0] : undefined;
-    },
+    find: (name: string, language: string, itemType: ItemType, rank: Rank) => byName.get(nameKey(name, language, itemType, rank)) ?? undefined,
   });
 }
 
 /** Names can differ by language; conflicting rank/type are not silently trusted. */
-export function resolveMetadata(itemId: string, hints: MetadataHints, catalog: MetadataCatalog, language = 'zh-cn'): ResolvedMetadata {
+export function resolveMetadata(itemId: string | null, hints: MetadataHints, catalog: MetadataCatalog, language = 'zh-cn'): ResolvedMetadata {
   if (hints.rank != null && !validRank(hints.rank) || hints.itemType != null && !validType(hints.itemType)) throw new GachaError('INVALID_METADATA');
-  const item = catalog.get(itemId), requestedLanguage = language.toLowerCase();
+  const matched = itemId === null && hints.name && hints.lang && hints.itemType && hints.rank
+    ? catalog.find(hints.name, hints.lang.toLowerCase(), hints.itemType, hints.rank) : undefined;
+  const effectiveId = itemId ?? matched?.id ?? null;
+  const item = effectiveId === null ? undefined : catalog.get(effectiveId), requestedLanguage = language.toLowerCase();
   const recordLanguage = hints.lang?.toLowerCase() || null;
   const recordName = hints.name?.trim() || null;
   const sameLanguage = !recordLanguage || recordLanguage === requestedLanguage;
@@ -90,11 +97,17 @@ export function resolveMetadata(itemId: string, hints: MetadataHints, catalog: M
   const itemType = typeConflict ? null : hints.itemType ?? item?.itemType ?? null;
   const missing: MetadataField[] = [];
   if (!name) missing.push('name'); if (!rank) missing.push('rank'); if (!itemType) missing.push('itemType');
-  return { name, nameLanguage, rank, itemType, missing, conflicts,
-    status: conflicts.length ? 'conflict' : missing.length ? 'incomplete' : 'complete',
+  return { itemId: effectiveId, identityStatus: itemId !== null ? 'stored' : matched ? 'dictionary' : 'unresolved', name, nameLanguage, rank, itemType, missing, conflicts,
+    status: conflicts.length ? 'conflict' : missing.length || effectiveId === null ? 'incomplete' : 'complete',
     provenance: { name: nameSource,
       rank: rankConflict ? 'conflict' : hints.rank != null ? 'record' : item ? 'dictionary' : 'unknown',
       itemType: typeConflict ? 'conflict' : hints.itemType != null ? 'record' : item ? 'dictionary' : 'unknown' },
     dictionaryVersion: `${catalog.source.name}@${catalog.source.version}`,
   };
+}
+
+/** A grouping key is local metadata, never a substitute game item ID. */
+export function itemIdentityKey(record: { id: string; metadata: ResolvedMetadata }) {
+  const value = record.metadata;
+  return value.itemId !== null ? decimalId(value.itemId) : `pending:${JSON.stringify([value.nameLanguage, value.itemType, value.rank, value.name ?? record.id])}`;
 }

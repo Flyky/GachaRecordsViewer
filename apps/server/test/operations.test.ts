@@ -14,7 +14,7 @@ const prefix = '/gacha/api', origin = 'https://operations.example.test';
 const url = 'https://webstatic.mihoyo.com/wish?auth_appid=webview_gacha&authkey=synthetic-private-authkey&game_biz=hk4e_cn';
 describe('owned check-in batches and wish-link import', () => {
   let directory: Awaited<ReturnType<typeof temporaryDirectory>>, deployment: Awaited<ReturnType<typeof initializeDeployment>>, app: Awaited<ReturnType<typeof buildApp>>;
-  let a: Session, b: Session, admin: Session, logs: string, signCalls: string[], signed: Set<string>, mode: 'good' | 'challenge' | 'uncertain' | 'expired';
+  let a: Session, b: Session, admin: Session, logs: string, signCalls: string[], signed: Set<string>, mode: 'good' | 'challenge' | 'uncertain' | 'expired' | 'unknown-item';
   let pageGate: Promise<void> | undefined, onPage: (() => void) | undefined;
   const response = (data: unknown, retcode = 0) => new Response(JSON.stringify({ retcode, data }));
   const transport: Transport = async (upstream, init) => {
@@ -40,7 +40,7 @@ describe('owned check-in batches and wish-link import', () => {
       if (mode === 'expired') return response(null, -3501);
       if (upstream.searchParams.get('gacha_type') !== '301' || upstream.searchParams.get('end_id') !== '0') return response({ list: [] });
       onPage?.(); if (pageGate) await pageGate;
-      return response({ list: [{ uid: '123456789', id: '9007199254740993002', item_id: '', name: '迪卢克', item_type: '角色', rank_type: '5', count: '1', gacha_type: '400', time: '2026-10-28 12:00:01' },
+      return response({ list: [{ uid: '123456789', id: '9007199254740993002', item_id: '', name: mode === 'unknown-item' ? '新角色待解析' : '迪卢克', item_type: '角色', rank_type: '5', count: '1', gacha_type: '400', time: '2026-10-28 12:00:01' },
         { uid: '123456789', id: '9007199254740993001', item_id: '11301', name: '冷刃', item_type: '武器', rank_type: '3', count: '1', gacha_type: '301', time: '2026-10-28 12:00:00' }] });
     }
     throw new Error('Unexpected synthetic endpoint');
@@ -127,6 +127,17 @@ describe('owned check-in batches and wish-link import', () => {
     expect(again.pools.reduce((sum, pool) => sum + pool.inserted, 0)).toBe(0); expect(again.pools.reduce((sum, pool) => sum + pool.duplicates, 0)).toBe(2);
     expect((await get(`/profiles/${first.profileId}/records`)).json().total).toBe(3);
     expect(logs).not.toContain('synthetic-private-authkey');
+  });
+  it('imports new unknown items from wish links, retaining their names, rarity and all other rows', async () => {
+    mode = 'unknown-item'; await post('/wish-link/jobs', { url, region: 'cn_gf01' });
+    const job = await finished<WishLinkJob>('/wish-link'); expect(job.status).toBe('completed');
+    const records = (await get(`/profiles/${job.profileId}/records`)).json().records;
+    expect(records).toHaveLength(2);
+    expect(records[0]).toMatchObject({ itemId: null, name: '新角色待解析', rank: 5, itemType: 'character' });
+    expect(records[1]).toMatchObject({ itemId: '11301', rank: 3 });
+    await post('/wish-link/jobs', { url, region: 'cn_gf01' }); await finished<WishLinkJob>('/wish-link');
+    expect(await repositories(deployment.connection).records.count('a', job.profileId!)).toBe(2);
+    expect((await get('/profiles', b)).json().profiles).toEqual([]);
   });
   it('rejects expired links and discards cancelled late pages without touching another owner', async () => {
     mode = 'expired'; await post('/wish-link/jobs', { url, region: 'cn_gf01' });

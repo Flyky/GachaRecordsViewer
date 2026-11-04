@@ -1,7 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import type { SyncJob, SyncPool } from '@gacha/contracts';
 import { ImportError, publicJob, SyncError, syncRepository, syncState, type DatabaseConnection, type PoolState, type StoredJob, type SyncState } from '@gacha/db';
-import { gameTime, genshinMetadata, pityGroup, type Rank, type MetadataCatalog } from '@gacha/gacha-core';
+import { gameTime, genshinMetadata, pityGroup, type MetadataCatalog } from '@gacha/gacha-core';
 import { MiyousheClient, ProbeError, type DeviceContext } from '@gacha/providers';
 import { resolveRawMetadata, type ImportRecord, type RawMetadata } from '@gacha/uigf';
 import { ApiError } from '../auth/security.js';
@@ -77,10 +77,7 @@ export async function syncService(connection: DatabaseConnection, community: Ret
               const metadata: RawMetadata = { lang: 'zh-cn', ...(record.name ? { name: record.name } : {}),
                 ...(record.itemType ? { item_type: record.itemType } : {}), ...(record.rankType ? { rank_type: record.rankType } : {}), ...(record.count ? { count: record.count } : {}) };
               try {
-                const type = record.itemType === '角色' ? 'character' : record.itemType === '武器' ? 'weapon' : null;
-                const itemId = record.itemId ?? (record.name && type && ['3', '4', '5'].includes(record.rankType ?? '')
-                  ? catalog.find(record.name, 'zh-cn', type, Number(record.rankType) as Rank)?.id : undefined);
-                if (!itemId) throw new SyncError('ITEM_ID_UNRESOLVED');
+                const itemId = record.itemId;
                 const resolved = resolveRawMetadata(itemId, metadata, catalog);
                 return { id: record.id, itemId, gachaType: record.gachaType, pityGroup: pityGroup(record.gachaType), timeLocal: record.time,
                   timeUtc: gameTime(record.time, 8).timeUtc, name: resolved.name, itemType: resolved.itemType, rank: resolved.rank, metadata };

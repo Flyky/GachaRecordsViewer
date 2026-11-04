@@ -28,7 +28,7 @@ export interface ImportProfileReport {
   firstTime: string | null; lastTime: string | null;
 }
 export interface ImportPreviewResponse {
-  version: 'v4.0' | 'v4.1' | 'v4.2'; fileHash: string; previewToken: string; expiresAt: number;
+  version: 'v4.0' | 'v4.1' | 'v4.2' | 'raw-v1'; fileHash: string; previewToken: string; expiresAt: number;
   profiles: ImportProfileReport[]; skippedBlocks: string[]; warnings: string[];
 }
 export interface ImportResultResponse { batchId: string; profiles: ImportProfileReport[]; skippedBlocks: string[] }
@@ -48,7 +48,7 @@ export interface RecordFilters {
 }
 export interface RecordPageRequest extends RecordFilters { page?: number; pageSize?: typeof RECORD_PAGE_SIZES[number] }
 export interface RecordListItem {
-  id: string; itemId: string; time: string; name: string | null; itemType: 'character' | 'weapon' | null;
+  id: string; itemId: string | null; time: string; name: string | null; itemType: 'character' | 'weapon' | null;
   rank: 3 | 4 | 5 | null; gachaType: string; pool: RecordPool; groupOrdinal: number;
   metadataStatus: 'complete' | 'incomplete' | 'conflict';
   pity: { count: number | null; status: 'exact' | 'partial-history' | 'unknown-rarity'; reasons: ('unknown-start' | 'known-gap' | 'unknown-rarity')[] };
@@ -61,7 +61,7 @@ export interface RecordPageResponse {
 
 export interface AnalysisMetadata { incompleteRecords: number; conflictRecords: number; unknownRankRecords: number }
 export interface AnalysisContext { profileId: string; uid: string; timezone: number; dataVersion: number; dictionaryVersion: string; bannerVersion: string; historyCount: number; metadataIssues: AnalysisMetadata }
-export interface ItemStatistic { itemId: string; name: string | null; quantity: number }
+export interface ItemStatistic { itemId: string | null; key?: string; name: string | null; quantity: number }
 export interface ItemAnalysisResponse extends AnalysisContext {
   itemType: 'character' | 'weapon'; order: 'asc' | 'desc'; selectedTypeCount: number; otherTypeCount: number;
   groups: { rank: 3 | 4 | 5; total: number; items: ItemStatistic[] }[];
@@ -174,6 +174,7 @@ export interface ApiMockLink {
 export interface ApiMockResponse { link: ApiMockLink | null; serverTime: number }
 
 export interface BannerStatus {
+  unresolvedMembers?: number;
   source: string; version: string; count: number; firstStart: string; lastEnd: string; updatedAt: string;
   storage: 'builtin' | 'database'; updating: boolean; cacheWarning: boolean;
 }

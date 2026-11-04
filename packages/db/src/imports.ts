@@ -10,7 +10,7 @@ export class ImportError extends Error {
 }
 export interface PreviewState { index: number; targetProfileId: string | null; dataVersion: number | null }
 interface RecordRow {
-  record_id: string; item_id: string; gacha_type: string; pity_group: string; time_local: string; time_utc: string;
+  record_id: string; item_id: string | null; gacha_type: string; pity_group: string; time_local: string; time_utc: string;
   name: string | null; item_type: ImportRecord['itemType']; rank: ImportRecord['rank']; metadata_json: string;
 }
 function recordFromRow(row: RecordRow): ImportRecord {
@@ -23,7 +23,8 @@ async function records(tx: SqlExecutor, owner: string, profile: string) {
 }
 function mergeMetadata(existing: ImportRecord, incoming: ImportRecord, catalog?: MetadataCatalog) {
   const metadata = { ...existing.metadata };
-  let warning = false, changed = false;
+  const itemId = existing.itemId ?? incoming.itemId;
+  let warning = false, changed = itemId !== existing.itemId;
   for (const key of ['name', 'item_type', 'rank_type', 'count'] as const) {
     const value = incoming.metadata[key];
     if (!value) continue;
@@ -38,8 +39,8 @@ function mergeMetadata(existing: ImportRecord, incoming: ImportRecord, catalog?:
     }
   }
   if (!changed) return { record: existing, changed, warning };
-  const effective = resolveRawMetadata(existing.itemId, metadata, catalog);
-  return { record: { ...existing, metadata, name: effective.name, itemType: effective.itemType, rank: effective.rank }, changed, warning };
+  const effective = resolveRawMetadata(itemId, metadata, catalog);
+  return { record: { ...existing, itemId, metadata, name: effective.name, itemType: effective.itemType, rank: effective.rank }, changed, warning };
 }
 async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profileId?: string, catalog?: MetadataCatalog) {
   const target = profileId ? sql` AND id=${profileId}` : sql``;
@@ -66,7 +67,9 @@ async function plan(tx: SqlExecutor, owner: string, input: ImportProfile, profil
     const key = decimalId(incoming.id), existing = combined.get(key);
     if (!existing) { combined.set(key, incoming); inserts.add(key); continue; }
     const fields = (['gachaType', 'pityGroup', 'timeLocal', 'timeUtc'] as const).filter((field) => existing[field] !== incoming[field]) as string[];
-    if (decimalId(existing.itemId) !== decimalId(incoming.itemId)) fields.push('itemId');
+    const previousId = existing.itemId ?? resolveRawMetadata(null, existing.metadata, catalog).itemId;
+    const nextId = incoming.itemId ?? resolveRawMetadata(null, incoming.metadata, catalog).itemId;
+    if (previousId !== null && nextId !== null && decimalId(previousId) !== decimalId(nextId)) fields.push('itemId');
     if (existing.metadata.count && incoming.metadata.count && existing.metadata.count !== incoming.metadata.count) fields.push('count');
     if (fields.length) {
       report.conflicts++;
@@ -93,7 +96,7 @@ export async function mergeOnlineRecords(tx: SqlExecutor, owner: string, profile
     (owner_id, profile_id, record_id, item_id, gacha_type, pity_group, time_local, time_utc, name, item_type, rank, source, metadata_json)
     VALUES (${owner}, ${profile.id}, ${record.id}, ${record.itemId}, ${record.gachaType}, ${record.pityGroup}, ${record.timeLocal}, ${record.timeUtc},
       ${record.name}, ${record.itemType}, ${record.rank}, ${source}, ${JSON.stringify(record.metadata)})`);
-  for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
+  for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET item_id=${record.itemId}, name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
     WHERE owner_id=${owner} AND profile_id=${profile.id} AND record_id=${record.id}`);
   if (entry.inserts.length || entry.updates.length) await tx.execute(sql`UPDATE game_profiles SET data_version=data_version+1 WHERE owner_id=${owner} AND id=${profile.id}`);
   assertActive?.();
@@ -139,7 +142,7 @@ export function uigfRepository(connection: DatabaseConnection, catalog?: Metadat
           (owner_id, profile_id, record_id, item_id, gacha_type, pity_group, time_local, time_utc, name, item_type, rank, source, metadata_json)
           VALUES (${owner}, ${profileId}, ${record.id}, ${record.itemId}, ${record.gachaType}, ${record.pityGroup}, ${record.timeLocal}, ${record.timeUtc},
             ${record.name}, ${record.itemType}, ${record.rank}, 'uigf', ${JSON.stringify(record.metadata)})`);
-        for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
+        for (const record of entry.updates) await tx.execute(sql`UPDATE gacha_records SET item_id=${record.itemId}, name=${record.name}, item_type=${record.itemType}, rank=${record.rank}, metadata_json=${JSON.stringify(record.metadata)}
           WHERE owner_id=${owner} AND profile_id=${profileId} AND record_id=${record.id}`);
         if (entry.inserts.length || entry.updates.length) await tx.execute(sql`UPDATE game_profiles SET data_version=data_version+1 WHERE owner_id=${owner} AND id=${profileId}`);
         report.targetProfileId = profileId;
@@ -161,7 +164,7 @@ export function uigfRepository(connection: DatabaseConnection, catalog?: Metadat
         (SELECT min(time_local) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS first_time,
         (SELECT max(time_local) FROM gacha_records r WHERE r.owner_id=p.owner_id AND r.profile_id=p.id) AS last_time
         FROM game_profiles p WHERE owner_id=${owner} AND game='hk4e' ORDER BY uid, region, id`);
-      const metadataRows = await tx.query<{ profile_id: string; item_id: string; metadata_json: string }>(sql`SELECT profile_id,item_id,metadata_json FROM gacha_records WHERE owner_id=${owner}`);
+      const metadataRows = await tx.query<{ profile_id: string; item_id: string | null; metadata_json: string }>(sql`SELECT profile_id,item_id,metadata_json FROM gacha_records WHERE owner_id=${owner}`);
       const incomplete = new Map<string, number>();
       for (const row of metadataRows) if (resolveRawMetadata(row.item_id, JSON.parse(row.metadata_json) as RawMetadata, catalog).incomplete) {
         incomplete.set(row.profile_id, (incomplete.get(row.profile_id) ?? 0) + 1);

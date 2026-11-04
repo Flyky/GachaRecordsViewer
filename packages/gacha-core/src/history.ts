@@ -3,7 +3,7 @@ import { resolveMetadata, type MetadataCatalog, type MetadataHints } from './met
 
 export interface GachaRecord extends MetadataHints {
   id: string;
-  itemId: string;
+  itemId: string | null;
   gachaType: string;
   uigfGachaType?: string;
   time: string;

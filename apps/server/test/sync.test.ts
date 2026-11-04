@@ -151,9 +151,16 @@ for (const driver of ['sqlite', 'postgres'] as const) {
       const job = await finished((await create(['301', '200'])).id); expect(job.status).toBe('partial'); expect(job.pools[0]?.code).toBe('RECORD_CONFLICT');
       expect(await repositories(connection).records.count('a', profileId)).toBe(1);
       expect((await syncRepository(connection).get('a', job.id)).failure_code).toBe('RECORD_CONFLICT');
+    });
+    it('persists unknown items and advances the complete page without requiring a dictionary match', async () => {
       mode = 'unknown-item'; const unknown = await finished((await create(['301', '200'])).id);
-      expect(unknown.pools[0]?.code).toBe('ITEM_ID_UNRESOLVED'); expect(unknown.pools[1]?.status).toBe('completed');
-      expect(await repositories(connection).records.count('a', profileId)).toBe(1);
+      expect(unknown.status).toBe('completed'); expect(unknown.pools.every((pool) => pool.status === 'completed')).toBe(true);
+      expect(await repositories(connection).records.count('a', profileId)).toBe(3);
+      const records = (await get(`/api/profiles/${profileId}/records`)).json().records;
+      expect(records).toHaveLength(3); expect(records.every((row: { itemId: unknown; name: string }) => row.itemId === null && row.name === '不存在的物品')).toBe(true);
+      expect((await get(`/api/uigf/export/${profileId}`)).json().error.code).toBe('ITEM_IDS_PENDING');
+      expect((await get(`/api/raw-backup/export/${profileId}`)).json().profiles[0].list).toHaveLength(3);
+      await finished((await create()).id); expect(await repositories(connection).records.count('a', profileId)).toBe(3);
     });
   });
 }

@@ -51,7 +51,7 @@ export const gameProfiles = sqliteTable('game_profiles', {
 
 export const gachaRecords = sqliteTable('gacha_records', {
   ownerId: text('owner_id').notNull(), profileId: text('profile_id').notNull(), recordId: text('record_id').notNull(),
-  itemId: text('item_id').notNull(), gachaType: text('gacha_type').notNull(), pityGroup: text('pity_group').notNull(),
+  itemId: text('item_id'), gachaType: text('gacha_type').notNull(), pityGroup: text('pity_group').notNull(),
   timeLocal: text('time_local').notNull(), timeUtc: text('time_utc').notNull(),
   name: text('name'), itemType: text('item_type'), rank: integer('rank'), source: text('source').notNull(),
   metadataJson: text('metadata_json').notNull().default('{}'),

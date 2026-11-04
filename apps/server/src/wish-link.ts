@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { WISH_LINK_REGIONS, type WishLinkJob, type WishLinkRegion } from '@gacha/contracts';
 import { wishLinkRepository, type DatabaseConnection } from '@gacha/db';
-import { gameTime, pityGroup, type Rank, type MetadataCatalog } from '@gacha/gacha-core';
+import { gameTime, pityGroup, type MetadataCatalog } from '@gacha/gacha-core';
 import { MiyousheClient, parseWishLink, ProbeError, type ParsedWishLink } from '@gacha/providers';
 import { resolveRawMetadata, type RawMetadata } from '@gacha/uigf';
 import type { FastifyInstance } from 'fastify';
@@ -32,10 +32,7 @@ export function wishLinkService(connection: DatabaseConnection, catalog: Metadat
           const records = page.records.map((record) => {
             const metadata: RawMetadata = { lang: 'zh-cn', ...(record.name ? { name: record.name } : {}), ...(record.itemType ? { item_type: record.itemType } : {}),
               ...(record.rankType ? { rank_type: record.rankType } : {}), ...(record.count ? { count: record.count } : {}) };
-            const type = record.itemType === '角色' ? 'character' : record.itemType === '武器' ? 'weapon' : null;
-            const itemId = record.itemId ?? (record.name && type && ['3', '4', '5'].includes(record.rankType ?? '')
-              ? catalog.find(record.name, 'zh-cn', type, Number(record.rankType) as Rank)?.id : undefined);
-            if (!itemId) throw new ApiError(422, 'ITEM_ID_UNRESOLVED');
+            const itemId = record.itemId;
             const resolved = resolveRawMetadata(itemId, metadata, catalog);
             return { id: record.id, itemId, gachaType: record.gachaType, pityGroup: pityGroup(record.gachaType), timeLocal: record.time,
               timeUtc: gameTime(record.time, region.timezone).timeUtc, name: resolved.name, itemType: resolved.itemType, rank: resolved.rank, metadata };

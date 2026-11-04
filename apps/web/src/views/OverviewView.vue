@@ -45,7 +45,7 @@ import { currentProfile, profilesLoading, profilesError, regionLabel, timezoneLa
       v-if="currentProfile.metadataIncomplete"
       class="feedback"
     >
-      {{ currentProfile.metadataIncomplete }} 条记录的名称、类型或星级尚不完整；原始记录已保留。
+      {{ currentProfile.metadataIncomplete }} 条记录的物品 ID、名称、类型或星级尚未完整解析；原始记录已保留。
     </p>
     <p class="form-help">
       以上时间按游戏时区显示。已保存记录可能不是完整历史，首段保底次数仍需结合历史完整性判断。

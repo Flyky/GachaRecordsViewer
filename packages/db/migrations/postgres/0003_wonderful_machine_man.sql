@@ -1,0 +1,1 @@
+ALTER TABLE "gacha_records" ALTER COLUMN "item_id" DROP NOT NULL;

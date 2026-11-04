@@ -9,7 +9,8 @@ export function importErrorMessage(error: unknown) {
   if (!(error instanceof ApiError)) return errorMessage(error);
   if (error.status === 413) return '请求超过 16 MiB，请减少单次文件内容后重试。';
   const messages: Record<string, string> = {
-    UNSUPPORTED_FORMAT: '不支持旧工具内部 JSON，也不提供历史迁移。请使用 UIGF v4.0、v4.1 或 v4.2 文件。',
+    UNSUPPORTED_FORMAT: '请选择 UIGF v4.0、v4.1、v4.2 或本应用的原始备份文件；旧工具内部 JSON 不支持。',
+    INVALID_RAW_BACKUP: '原始备份格式不合法，请使用本应用导出的完整 JSON 文件。',
     UNSUPPORTED_UIGF_VERSION: '暂只支持 UIGF v4.0、v4.1、v4.2，请检查文件版本。',
     INVALID_UIGF: '文件不符合对应版本的 UIGF 标准，请检查必填字段和数据类型。',
     INVALID_RECORD: '记录的日期、卡池类型或保底分组不合法，请核对源文件。',
@@ -24,6 +25,7 @@ export function importErrorMessage(error: unknown) {
     PREVIEW_STALE: '档案已有变化，请重新预览最新的合并结果。',
     IMPORT_CONFLICT: '所选档案存在冲突，本次没有写入。请重新预览并查看冲突详情。',
     EXPORT_INCOMPATIBLE_VERSION: '现有数据不符合所选版本的标准。v4.2 的记录 ID 最多 19 位，请尝试 v4.0 或 v4.1。',
+    ITEM_IDS_PENDING: '部分物品 ID 尚未解析，暂不能完整导出 UIGF。可以先下载无损原始备份；字典补全后无需重新抓取即可导出。',
     PROFILE_NOT_FOUND: '档案已不存在或不可访问，请刷新档案列表。',
   };
   let message = messages[error.code] ?? errorMessage(error);

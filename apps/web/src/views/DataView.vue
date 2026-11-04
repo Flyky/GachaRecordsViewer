@@ -40,7 +40,7 @@ async function chooseFile(event: Event) {
     if (!active || requestRevision !== revision) return;
     let parsed: unknown;
     try { parsed = JSON.parse(text.replace(/^\uFEFF/, '')); } catch { error.value = '无法解析 JSON，请检查文件内容是否完整。'; return; }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !('info' in parsed)) {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !('info' in parsed || 'format' in parsed && parsed.format === 'GachaRecordsViewer.raw')) {
       error.value = importErrorMessage(new ApiError('UNSUPPORTED_FORMAT')); return;
     }
     document.value = parsed;
@@ -83,16 +83,17 @@ async function importFile() {
     await refreshProfiles();
   } finally { if (active && requestRevision === revision) phase.value = 'idle'; }
 }
-async function download() {
+async function download(raw = false) {
   const profile = currentProfile.value, version = exportVersion.value;
   if (!profile || exportBusy.value) return;
   exportBusy.value = true; exportError.value = '';
   try {
-    const data = await userRequest<unknown>(`/api/uigf/export/${encodeURIComponent(profile.id)}?version=${encodeURIComponent(version)}`, undefined, 120000);
+    const endpoint = raw ? `/api/raw-backup/export/${encodeURIComponent(profile.id)}` : `/api/uigf/export/${encodeURIComponent(profile.id)}?version=${encodeURIComponent(version)}`;
+    const data = await userRequest<unknown>(endpoint, undefined, 120000);
     if (!active) return;
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' }));
     const link = globalThis.document.createElement('a');
-    link.href = url; link.download = `UIGF_${version}_${profile.uid}_${Date.now()}.json`;
+    link.href = url; link.download = raw ? `GachaRecordsViewer_raw_${profile.uid}_${Date.now()}.json` : `UIGF_${version}_${profile.uid}_${Date.now()}.json`;
     globalThis.document.body.append(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (cause) { if (active) exportError.value = importErrorMessage(cause); }
@@ -116,9 +117,9 @@ async function download() {
     >
       <div class="section-heading">
         <h2 id="import-title">
-          导入 UIGF 文件
+          导入 UIGF／原始备份
         </h2><p class="muted">
-          支持 v4.0、v4.1、v4.2。一个文件可包含多个原神 UID，确认前可以分别选择。
+          支持 UIGF v4.0、v4.1、v4.2 和本应用的无损原始备份。一个文件可包含多个原神 UID，确认前可以分别选择。
         </p>
       </div>
       <ol
@@ -143,7 +144,7 @@ async function download() {
         <label
           for="uigf-file"
           class="file-label"
-        >选择 UIGF JSON 文件</label>
+        >选择 UIGF 或原始备份 JSON 文件</label>
         <input
           id="uigf-file"
           ref="fileInput"
@@ -193,7 +194,7 @@ async function download() {
         class="import-preview"
       >
         <div class="list-heading">
-          <h3>导入预览 <small>{{ preview.version }}</small></h3><span class="profile-caption">{{ preview.profiles.length }} 个原神档案</span>
+          <h3>导入预览 <small>{{ preview.version === 'raw-v1' ? '无损原始备份' : preview.version }}</small></h3><span class="profile-caption">{{ preview.profiles.length }} 个原神档案</span>
         </div>
         <p
           v-if="preview.skippedBlocks.length"
@@ -287,7 +288,7 @@ async function download() {
         <h2 id="export-title">
           导出当前档案
         </h2><p class="muted">
-          保存当前 UID 的全部记录为 UIGF 文件。
+          标准 ID 已识别时可导出 UIGF；无损原始备份保留全部已保存记录，包括待解析项，可在本页重新导入。
         </p>
       </div>
       <div
@@ -320,9 +321,16 @@ async function download() {
         <NButton
           :loading="exportBusy"
           :disabled="!currentProfile || exportBusy"
-          @click="download"
+          @click="download(false)"
         >
           下载 UIGF 文件
+        </NButton>
+        <NButton
+          :loading="exportBusy"
+          :disabled="!currentProfile || exportBusy"
+          @click="download(true)"
+        >
+          下载无损原始备份
         </NButton>
       </div>
       <p class="form-help">

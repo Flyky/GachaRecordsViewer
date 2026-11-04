@@ -44,7 +44,7 @@ export function queryRecords(profileId: string, profile: ExportProfile, query: R
   return { profileId, uid: profile.uid, timezone: profile.timezone, historyCount: history.records.length,
     total: filtered.length, page, pageSize, pageCount, totalsByPool: history.totals, metadataIncomplete: history.metadataIncomplete,
     records: filtered.slice((page - 1) * pageSize, page * pageSize).map((record) => ({
-      id: record.id, itemId: record.itemId, time: record.time, name: record.metadata.name,
+      id: record.id, itemId: record.metadata.itemId, time: record.time, name: record.metadata.name,
       itemType: record.metadata.itemType, rank: record.metadata.rank, gachaType: record.gachaType, pool: record.group,
       groupOrdinal: record.groupOrdinal, metadataStatus: record.metadata.status,
       pity: { count: record.pity.count, status: record.pity.status, reasons: record.pity.reasons },

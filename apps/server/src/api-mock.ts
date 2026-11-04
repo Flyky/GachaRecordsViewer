@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { API_MOCK_FORMATS, type ApiMockFormat, type ApiMockLink, type ApiMockResponse } from '@gacha/contracts';
 import { ImportError, uigfRepository } from '@gacha/db';
-import { compareIds, encodeUigf, resolveRawMetadata, type ExportProfile, type MetadataCatalog } from '@gacha/uigf';
+import { compareIds, encodeUigf, resolveRawMetadata, UigfError, type ExportProfile, type MetadataCatalog } from '@gacha/uigf';
 import type { FastifyInstance } from 'fastify';
 import type { AuthOptions } from './auth/routes.js';
 import { ApiError, digest } from './auth/security.js';
@@ -12,7 +12,7 @@ function wishResponse(profile: ExportProfile, catalog?: MetadataCatalog, empty =
     const effective = resolveRawMetadata(record.itemId, record.metadata, catalog), lang = record.metadata.lang ?? profile.lang ?? 'zh-cn';
     const types = lang.startsWith('zh') ? { character: '角色', weapon: '武器' } : { character: 'Character', weapon: 'Weapon' };
     return {
-      uid: profile.uid, id: record.id, item_id: record.itemId, gacha_type: record.gachaType, time: record.timeLocal,
+      uid: profile.uid, id: record.id, item_id: effective.itemId ?? '', gacha_type: record.gachaType, time: record.timeLocal,
       name: effective.name ?? '', item_type: record.metadata.item_type ?? (effective.itemType ? types[effective.itemType] : ''),
       rank_type: effective.rank === null ? '' : String(effective.rank), count: record.metadata.count ?? '1', lang,
     };
@@ -48,7 +48,7 @@ export function registerApiMock(app: FastifyInstance, options: AuthOptions) {
     const reservation = {}; pending.set(owner, reservation);
     try {
       const profile = await repo.export(owner, request.body.profileId), format = request.body.format ?? 'wish-link';
-      const createdAt = now(), body = JSON.stringify(format === 'uigf' ? encodeUigf([profile], 'v4.0', createdAt) : wishResponse(profile, options.metadataCatalog));
+      const createdAt = now(), body = JSON.stringify(format === 'uigf' ? encodeUigf([profile], 'v4.0', createdAt, options.metadataCatalog) : wishResponse(profile, options.metadataCatalog));
       const empty = format === 'uigf' ? '' : JSON.stringify(wishResponse(profile, options.metadataCatalog, true)), bytes = Buffer.byteLength(body) + Buffer.byteLength(empty);
       if (closed || pending.get(owner) !== reservation) throw new ApiError(409, 'MOCK_CANCELLED');
       prune();
@@ -67,7 +67,7 @@ export function registerApiMock(app: FastifyInstance, options: AuthOptions) {
       entry.timer.unref(); owners.set(owner, entry); tokens.set(entry.tokenHash, entry); usedBytes += bytes;
       reply.code(201); return response(owner);
     } catch (error) {
-      if (error instanceof ImportError) throw new ApiError(error.code === 'PROFILE_NOT_FOUND' ? 404 : 400, error.code);
+      if (error instanceof ImportError || error instanceof UigfError) throw new ApiError(error.code === 'PROFILE_NOT_FOUND' ? 404 : 400, error.code);
       throw error;
     } finally { if (pending.get(owner) === reservation) pending.delete(owner); }
   });

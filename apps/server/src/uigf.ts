@@ -1,7 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import type { ImportPreviewResponse } from '@gacha/contracts';
 import { ImportError, uigfRepository, type PreviewState } from '@gacha/db';
-import { decodeUigf, encodeUigf, isUigfVersion, MAX_PROFILES, MAX_UPLOAD_BYTES, UigfError } from '@gacha/uigf';
+import { decodeImportDocument, encodeUigf, encodeRawBackup, isUigfVersion, MAX_PROFILES, MAX_UPLOAD_BYTES, UigfError } from '@gacha/uigf';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { AuthOptions } from './auth/routes.js';
 import { ApiError, equalSecret } from './auth/security.js';
@@ -45,7 +45,7 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
   app.post<{ Body: { document: unknown } }>('/api/uigf/preview', {
     onRequest: app.authenticateUser, bodyLimit: MAX_UPLOAD_BYTES, schema: { body: bodySchema() },
   }, (request, reply) => respond(reply, async (): Promise<ImportPreviewResponse> => {
-    const owner = request.principal!.user!.id, input = decodeUigf(request.body.document, options.metadataCatalog);
+    const owner = request.principal!.user!.id, input = decodeImportDocument(request.body.document, options.metadataCatalog);
     const profiles = await repo.preview(owner, input), fileHash = fingerprint(request.body.document), expiresAt = now() + 15 * 60_000;
     return { version: input.version, fileHash, expiresAt, profiles, skippedBlocks: input.skippedBlocks,
       warnings: input.profiles.length ? [] : ['NO_GENSHIN_DATA'],
@@ -58,9 +58,16 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
   }, (request, reply) => respond(reply, async () => {
     const owner = request.principal!.user!.id, { document, previewToken, profileIndexes } = request.body;
     const fileHash = fingerprint(document), ticket = verify(previewToken, owner, fileHash);
-    return repo.import(owner, decodeUigf(document, options.metadataCatalog), profileIndexes, ticket.states, fileHash);
+    return repo.import(owner, decodeImportDocument(document, options.metadataCatalog), profileIndexes, ticket.states, fileHash);
   }));
   app.get('/api/profiles', { onRequest: app.authenticateUser }, (request, reply) => respond(reply, async () => ({ profiles: await repo.list(request.principal!.user!.id) })));
+  app.get<{ Params: { profileId: string } }>('/api/raw-backup/export/:profileId', {
+    onRequest: app.authenticateUser, schema: { params: { type: 'object', required: ['profileId'], additionalProperties: false, properties: { profileId: { type: 'string', minLength: 1, maxLength: 128 } } } },
+  }, (request, reply) => respond(reply, async () => {
+    const profile = await repo.export(request.principal!.user!.id, request.params.profileId);
+    reply.header('Content-Disposition', `attachment; filename="GachaRecordsViewer_raw_${profile.uid.replace(/[^0-9]/g, '').slice(0, 20)}_${now()}.json"`);
+    return encodeRawBackup([profile], now());
+  }));
   app.get<{ Params: { profileId: string }; Querystring: { version?: string } }>('/api/uigf/export/:profileId', {
     onRequest: app.authenticateUser,
     schema: { params: { type: 'object', required: ['profileId'], properties: { profileId: { type: 'string', minLength: 1, maxLength: 128 } } },
@@ -69,7 +76,7 @@ export function registerUigf(app: FastifyInstance, options: AuthOptions) {
     const version = request.query.version ?? 'v4.0';
     if (!isUigfVersion(version)) throw new UigfError('UNSUPPORTED_UIGF_VERSION');
     const profile = await repo.export(request.principal!.user!.id, request.params.profileId);
-    const document = encodeUigf([profile], version, now());
+    const document = encodeUigf([profile], version, now(), options.metadataCatalog);
     // UID came through persistence; sanitize even if a future source stores an unexpected value.
     const uid = profile.uid.replace(/[^0-9]/g, '').slice(0, 20) || 'profile';
     reply.header('Content-Disposition', `attachment; filename="UIGF_${version}_${uid}_${now()}.json"`);

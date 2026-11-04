@@ -166,7 +166,7 @@ async function reset() {
         {{ error }}
       </p>
       <AdminDataSources />
-      <AdminBanners />
+      <AdminBanners :dictionary-version="dictionary?.version" />
       <AdminFeatures />
       <section class="surface dictionary-settings">
         <div class="list-heading">
